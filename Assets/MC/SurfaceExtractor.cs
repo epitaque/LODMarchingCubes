@@ -12,7 +12,10 @@ public static class SurfaceExtractor {
             cell.points[i].position = new Vector3();
         }
 
+
         List<Vector3> vertices = new List<Vector3>();
+
+        List<Vector3> sampledPoints = new List<Vector3>();
 
         Vector3[] OFFSETS = {
             new Vector3(0f,0f,0f), new Vector3(1f,0f,0f), new Vector3(1f,1f,0f), new Vector3(0f,1f,0f), 
@@ -25,23 +28,24 @@ public static class SurfaceExtractor {
                     for(int i = 0; i < 8; i++) {
                         cell.points[i].position = new Vector3(x, y, z) + new Vector3(xSize *OFFSETS[i].x, ySize * OFFSETS[i].y, zSize*OFFSETS[i].z);
                         cell.points[i].density = sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
+                        sampledPoints.Add(cell.points[i].position);
                     }
                     SE.Polyganiser.Polyganise(cell, vertices, isovalue);
-
                 }
             //}
         }
 
         int x_ = (resolution * xSize) - xSize;
         int y_ = 0;
-            for(int z = 0; z < resolution * zSize; z += zSize) {
-
-                for(int i = 0; i < 8; i++) {
-                    cell.points[i].position = new Vector3(x_, y_, z) + new Vector3(xSize *OFFSETS[i].x, ySize * OFFSETS[i].y, zSize*OFFSETS[i].z);
-                    cell.points[i].density = sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
+            for(int z = resolution * zSize; z < resolution * zSize * 2; z += zSize * 2) {
+                for(int j = 0; j < 3; j++) {
+                    for(int i = 0; i < 8; i++) {
+                        cell.points[i].position = new Vector3(x_, y_, z) + new Vector3(xSize * LODOffsets[j,i].x, ySize * LODOffsets[j,i].y, zSize*LODOffsets[j,i].z);
+                        cell.points[i].density = sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
+                        sampledPoints.Add(cell.points[i].position);
+                    }
+                    SE.Polyganiser.Polyganise(cell, vertices, isovalue);
                 }
-                SE.Polyganiser.Polyganise(cell, vertices, isovalue);
-
             }
 
 
@@ -50,10 +54,41 @@ public static class SurfaceExtractor {
             triangles[i] = i;
         }
 
+        mesh.normals = sampledPoints.ToArray();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles;
         return mesh;
     }
 
-    //public static Vector3 FirstTriOffsets
+    // [triNum][offsetNum]
+    public readonly static Vector3[,] LODOffsets = {
+        {           
+            new Vector3(0f,0f,0f), new Vector3(0f,0f,0f), new Vector3(0f,1f,0f), new Vector3(0f,1f,0f), 
+            new Vector3(0f,0f,1f), new Vector3(1f,0f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,1f)	
+        },
+        {
+            new Vector3(0f,0f,0f), new Vector3(1f,0f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,0f), 
+            new Vector3(0f,0f,0f), new Vector3(1f,0f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,0f)	
+        },
+        {
+            new Vector3(0f,0f,-1f), new Vector3(1f,0f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,-1f), 
+            new Vector3(0f,0f,0f), new Vector3(1f,0f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,0f)
+        }	
+    };
 }
+/*
+Vertex and Edge Index Map
+		
+        7-------6------6
+       /.             /|
+      10.           11 |
+     /  0           /  2
+    /   .          /   |     ^ Y
+   3-------7------2    |     |
+   |    4 . . 4 . |. . 5     --> X
+   |   .          |   /		 \/ -Z
+   1  8           3  9
+   | .            | /
+   |.             |/
+   0-------5------1
+*/

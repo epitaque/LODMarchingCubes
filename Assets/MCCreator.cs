@@ -6,6 +6,7 @@ public class MCCreator : MonoBehaviour {
 	public GameObject MeshPrefab;
 
 	private List<GameObject> Meshes;
+	private List<Vector3> sampledPoints;
 
 	// Use this for initialization
 	void Start () {
@@ -14,6 +15,12 @@ public class MCCreator : MonoBehaviour {
 		Mesh smallMesh = SurfaceExtractor.ExtractSurface(Util.Sample, 0, 2, 1, 1, 1);
 		Mesh largeMesh = SurfaceExtractor.ExtractSurface((float x, float y, float z) => Util.Sample(x + 2, y, z),
 		 0, 2, 2, 1, 2);
+
+		sampledPoints = new List<Vector3>();
+		sampledPoints.AddRange(smallMesh.normals);
+
+		sampledPoints.AddRange(largeMesh.normals);
+
 		CreateMesh(smallMesh, new Vector3(0, 0, 0));
 		CreateMesh(largeMesh, new Vector3(2, 0, 0));
 	}
@@ -35,11 +42,13 @@ public class MCCreator : MonoBehaviour {
 	}
 
 	// Update is called once per frame
-	void Update () {
-		DrawCorners();	
+	void OnDrawGizmos() {
+		DrawCorners();
 	}
 
 	void DrawCorners() {
-
+		foreach(Vector3 v in sampledPoints) {
+			Gizmos.DrawCube(v, Vector3.one * 0.1f);
+		}
 	}
 }
