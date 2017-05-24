@@ -3,7 +3,11 @@ using System.Collections.Generic;
 
 
 public static class SurfaceExtractor {
-    public static Mesh ExtractSurface(Util.Sampler sample, float isovalue, int resolution, int xSize, int ySize, int zSize) {
+    public static ExtractionResult ExtractSurface(ExtractionInput input) {
+        ExtractionResult r = new ExtractionResult();
+
+        List<Util.GridCell> cells = new List<Util.GridCell>();
+
         Mesh mesh = new Mesh();
         Util.GridCell cell = new Util.GridCell();
         cell.points = new Util.Point[8];
@@ -21,32 +25,36 @@ public static class SurfaceExtractor {
             new Vector3(0f,0f,0f), new Vector3(1f,0f,0f), new Vector3(1f,1f,0f), new Vector3(0f,1f,0f), 
             new Vector3(0f,0f,1f), new Vector3(1f,0f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,1f) };	
 
-        for(int x = 0; x < (resolution * xSize) - xSize; x += xSize) {
+        for(int x = 0; x < (input.Resolution.x * input.Size.x) - input.Size.x; x += input.Size.x) {
             //for(int y = 0; y < resolution * size; y += size) {
                 int y = 0;
-                for(int z = 0; z < resolution * zSize; z += zSize) {										
+                for(int z = 0; z < input.Resolution.z * input.Size.z; z += input.Size.z) {										
                     for(int i = 0; i < 8; i++) {
-                        cell.points[i].position = new Vector3(x, y, z) + new Vector3(xSize *OFFSETS[i].x, ySize * OFFSETS[i].y, zSize*OFFSETS[i].z);
-                        cell.points[i].density = sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
+                        cell.points[i].position = new Vector3(x, y, z) + new Vector3(input.Size.x * OFFSETS[i].x, input.Size.y * OFFSETS[i].y, input.Size.z * OFFSETS[i].z);
+                        cell.points[i].density = input.Sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
                         sampledPoints.Add(cell.points[i].position);
                     }
-                    SE.Polyganiser.Polyganise(cell, vertices, isovalue);
+                    cells.Add(cell.Clone());
+                    SE.Polyganiser.Polyganise(cell, vertices, input.Isovalue);
                 }
             //}
         }
 
-        int x_ = (resolution * xSize) - xSize;
+        int x_ = (input.Resolution.x * input.Size.x) - input.Size.x;
         int y_ = 0;
-            for(int z = resolution * zSize; z < resolution * zSize * 2; z += zSize * 2) {
-                for(int j = 0; j < 3; j++) {
-                    for(int i = 0; i < 8; i++) {
-                        cell.points[i].position = new Vector3(x_, y_, z) + new Vector3(xSize * LODOffsets[j,i].x, ySize * LODOffsets[j,i].y, zSize*LODOffsets[j,i].z);
-                        cell.points[i].density = sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
-                        sampledPoints.Add(cell.points[i].position);
-                    }
-                    SE.Polyganiser.Polyganise(cell, vertices, isovalue);
+        for(int z = input.Size.z; z < input.Resolution.z * input.Size.z; z += input.Size.z * 2) {
+            for(int j = 0; j < 3; j++) {
+                for(int i = 0; i < 8; i++) {
+                    cell.points[i].position = new Vector3(x_, y_, z) + new Vector3(input.Size.x * LODOffsets[j,i].x, 
+                                                                                   input.Size.y * LODOffsets[j,i].y, 
+                                                                                   input.Size.z * LODOffsets[j,i].z);
+                    cell.points[i].density = input.Sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
+                    sampledPoints.Add(cell.points[i].position);
                 }
+                cells.Add(cell.Clone());
+                SE.Polyganiser.Polyganise(cell, vertices, input.Isovalue);
             }
+        }
 
 
         int[] triangles = new int[vertices.Count];
@@ -54,10 +62,13 @@ public static class SurfaceExtractor {
             triangles[i] = i;
         }
 
-        mesh.normals = sampledPoints.ToArray();
+        r.sampledPoints = sampledPoints;
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles;
-        return mesh;
+        r.m = mesh;
+        r.cells = cells;
+
+        return r;
     }
 
     // [triNum][offsetNum]
@@ -76,6 +87,22 @@ public static class SurfaceExtractor {
         }	
     };
 }
+
+public class ExtractionResult {
+     public UnityEngine.Mesh m;
+     public List<Util.GridCell> cells;
+     public List<Vector3> sampledPoints;
+     public Vector3 offset;
+}
+
+public class ExtractionInput {
+    public Util.Sampler Sample;
+    public float Isovalue;
+    
+    public Util.Vector3i Resolution;
+    public Util.Vector3i Size;
+}
+
 /*
 Vertex and Edge Index Map
 		

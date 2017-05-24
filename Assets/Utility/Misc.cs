@@ -13,9 +13,17 @@ public static class Util {
 
     public struct GridCell {
         public Point[] points;
+        public GridCell Clone() {
+            GridCell c = new GridCell();
+            c.points = new Point[points.Length];
+            for(int i = 0; i < points.Length; i++) {
+                c.points[i] = points[i];
+            }
+            return c;
+        }
     }
 
-    public class Point {
+    public struct Point {
         public Vector3 position;
         public float density;    
     }
@@ -28,5 +36,13 @@ public static class Util {
             return(point2.position);
         float mu = (isolevel - point1.density) / (point2.density - point1.density); 
         return point1.position + mu * (point2.position - point1.position); 
+    }
+
+    public struct Vector3i {
+        public int x;
+        public int y;
+        public int z;
+
+        public Vector3i(int x, int y, int z) { this.x = x; this.y = y; this.z = z; }
     }
 }
