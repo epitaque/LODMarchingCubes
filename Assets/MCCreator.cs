@@ -21,10 +21,11 @@ public class MCCreator : MonoBehaviour {
 		for(int i = 0; i < lods; i++) {
 			ExtractionInput input = new ExtractionInput();
 			input.Isovalue = 0;
-			input.Resolution = new Util.Vector3i(2, 2, (int)((float)startingSize * (1f/Mathf.Pow((float)i, 2f)));
+			input.Resolution = new Util.Vector3i(2, 2, (int)((float)startingSize / Mathf.Pow(2f, i)));
+			print("resolution" + input.Resolution.z);
 			int size = (int)Mathf.Pow(2, i);
 			input.Size = new Util.Vector3i(size, 1, size);
-			runningOffset += size - 1;
+			runningOffset += size;
 			Vector3 off = new Vector3(runningOffset, 0, 0);
 			input.Sample = (float x, float y, float z) => Util.Sample(x + off.x, y + off.y, z + off.z);;
 
