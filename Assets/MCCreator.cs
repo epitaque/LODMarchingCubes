@@ -14,8 +14,8 @@ public class MCCreator : MonoBehaviour {
 		Meshes = new List<GameObject>();
 		results = new List<ExtractionResult>();
 
-		int lods = 4;
-		int startingSize = 32;
+		int lods = 2;
+		int startingSize = 2;
 		int runningOffset = 0;
 
 		for(int i = 0; i < lods; i++) {
