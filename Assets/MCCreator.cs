@@ -14,18 +14,20 @@ public class MCCreator : MonoBehaviour {
 		Meshes = new List<GameObject>();
 		results = new List<ExtractionResult>();
 
-		int lods = 2;
-		int startingSize = 2;
+		int lods = 4;
+		int startingSize = 16;
 		int runningOffset = 0;
+	
 
 		for(int i = 0; i < lods; i++) {
 			ExtractionInput input = new ExtractionInput();
 			input.Isovalue = 0;
-			input.Resolution = new Util.Vector3i(2, 2, (int)((float)startingSize / Mathf.Pow(2f, i)));
+			int res = (int)((float)startingSize / Mathf.Pow(2f, i));
+			input.Resolution = new Util.Vector3i(res, res, res);
 			print("resolution" + input.Resolution.z);
 			int size = (int)Mathf.Pow(2, i);
-			input.Size = new Util.Vector3i(size, 1, size);
-			runningOffset += size;
+			input.Size = new Util.Vector3i(size, size, size);
+			runningOffset += size * res;
 			Vector3 off = new Vector3(runningOffset, 0, 0);
 			input.Sample = (float x, float y, float z) => Util.Sample(x + off.x, y + off.y, z + off.z);;
 
@@ -56,7 +58,7 @@ public class MCCreator : MonoBehaviour {
 
 	// Update is called once per frame
 	void OnDrawGizmos() {
-		DrawGridCells();
+		//DrawGridCells();
 	}
 
 	void DrawGridCells() {

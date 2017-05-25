@@ -6,7 +6,8 @@ public static class Util {
     public delegate float Sampler(float x, float y, float z);
 
     public static float Sample(float x, float y, float z) {
-        float r = 0.4f;
+        float r = 0.14f;
+        //float result = 0.5f - y;
         float result = (float)s.Evaluate((double)x * r, (double)y * r, (double)z * r);
         return result;
     }

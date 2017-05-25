@@ -40,13 +40,12 @@ public static class SurfaceExtractor {
             }
         }
 
-        int x_ = (input.Resolution.x * input.Size.x) - input.Size.x;
-        int y_ = 0;
-        for(int y = 0; y < input.Size.y * input.Resolution.y; y += input.Size.y * 2) {
+        int x_ = input.Size.x * (input.Resolution.x - 1);
+        for(int y = 0; y < input.Size.y * (input.Resolution.y); y += input.Size.y * 2) {
             for(int z = input.Size.z; z < input.Resolution.z * input.Size.z; z += input.Size.z * 2) {
                 for(int j = 0; j < LOD2Offsets.GetLength(0); j++) {
                     for(int i = 0; i < 8; i++) {
-                        cell.points[i].position = new Vector3(x_, y_, z) + new Vector3(input.Size.x * LOD2Offsets[j,i].x, 
+                        cell.points[i].position = new Vector3(x_, y, z) + new Vector3(input.Size.x * LOD2Offsets[j,i].x, 
                                                                                     input.Size.y * LOD2Offsets[j,i].y, 
                                                                                     input.Size.z * LOD2Offsets[j,i].z);
                         cell.points[i].density = input.Sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
@@ -92,26 +91,42 @@ public static class SurfaceExtractor {
     // total of 5 gridcells
 
     public readonly static Vector3[,] LOD2Offsets = {
-       /* { // bottom left corner cell
-            new Vector3(0f,0f,-1f), new Vector3(1f,0f,1f), new Vector3(1f,0f,1f), new Vector3(0f,2f,-1f), 
-            new Vector3(0f,0f,1f), new Vector3(1f,0f,1f), new Vector3(1f,0f,1f), new Vector3(0f,2f,1f) 
-        },*/
-        { // top left corner cell
-            new Vector3(0f,0f,-1f), new Vector3(1f,2f,1f), new Vector3(1f,2f,1f), new Vector3(0f,2f,-1f), 
-            new Vector3(0f,0f,1f), new Vector3(1f,2f,1f), new Vector3(1f,2f,1f), new Vector3(0f,2f,1f) 
-        },
-        /*{ // top left corner cell
-            new Vector3(0f,0f,0f), new Vector3(1f,0f,0f), new Vector3(1f,1f,0f), new Vector3(0f,1f,0f), 
-            new Vector3(0f,0f,1f), new Vector3(1f,0f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,1f) 
-        },
+        { // top left corner cell ISSUE CELL
+            new Vector3(0f,1f,0f), new Vector3(1f,2f,1f), new Vector3(1f,2f,1f), new Vector3(0f,2f,0f), 
+            new Vector3(0f,1f,1f), new Vector3(1f,2f,1f), new Vector3(1f,2f,1f), new Vector3(0f,2f,1f) 
+        }, 
+        { // bottom left corner cell
+            new Vector3(0f,0f,0f), new Vector3(1f,0f,1f), new Vector3(1f,0f,1f), new Vector3(0f,1f,0f), 
+            new Vector3(0f,0f,1f), new Vector3(1f,0f,1f), new Vector3(1f,0f,1f), new Vector3(0f,1f,1f) 
+        }, 
         { // top right corner cell
-            new Vector3(0f,0f,0f), new Vector3(1f,0f,0f), new Vector3(1f,1f,0f), new Vector3(0f,1f,0f), 
-            new Vector3(0f,0f,1f), new Vector3(1f,0f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,1f) 
+            new Vector3(0f,1f,-1f), new Vector3(1f,2f,-1f), new Vector3(1f,2f,-1f), new Vector3(0f,2f,-1f), 
+            new Vector3(0f,1f,0f), new Vector3(1f,2f,-1f), new Vector3(1f,2f,-1f), new Vector3(0f,2f,0f) 
         },
-        { // middle to 4 cell
-            new Vector3(0f,0f,0f), new Vector3(1f,0f,0f), new Vector3(1f,1f,0f), new Vector3(0f,1f,0f), 
-            new Vector3(0f,0f,1f), new Vector3(1f,0f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,1f) 
-        }*/
+        { // bottom right corner cell
+            new Vector3(0f,0f,-1f), new Vector3(1f,0f,-1f), new Vector3(1f,0f,-1f), new Vector3(0f,1f,-1f), 
+            new Vector3(0f,0f,0f), new Vector3(1f,0f,-1f), new Vector3(1f,0f,-1f), new Vector3(0f,1f,0f) 
+        },
+        { // left edge cell
+            new Vector3(0f,1f,1f), new Vector3(1f,0f,1f), new Vector3(0f,1f,0f), new Vector3(0f,1f,0f), 
+            new Vector3(0f,1f,1f), new Vector3(1f,0f,1f), new Vector3(1f,2f,1f), new Vector3(0f,1f,1f) 
+        },
+        { // right edge cell
+            new Vector3(0f,1f,0f), new Vector3(1f,0f,-1f), new Vector3(0f,1f,-1f), new Vector3(0f,1f,-1f), 
+            new Vector3(0f,1f,0f), new Vector3(1f,0f,-1f), new Vector3(1f,2f,-1f), new Vector3(0f,1f,0f) 
+        },
+        { // bottom edge cell
+            new Vector3(0f,0f,0f), new Vector3(1f,0f,-1f), new Vector3(1f,0f,-1f), new Vector3(0f,1f,0f), 
+            new Vector3(0f,0f,0f), new Vector3(1f,0f,1f), new Vector3(1f,0f,1f), new Vector3(0f,1f,0f)	
+        },
+        { // top edge cell
+            new Vector3(0f,1f,0f), new Vector3(1f,2f,-1f), new Vector3(1f,2f,-1f), new Vector3(0f,2f,0f), 
+            new Vector3(0f,1f,0f), new Vector3(1f,2f,1f), new Vector3(1f,2f,1f), new Vector3(0f,2f,0f)	
+        },
+        { // middle cell
+            new Vector3(0f,1f,0f), new Vector3(1f,0f,-1f), new Vector3(1f,2f,-1f), new Vector3(0f,1f,0f), 
+            new Vector3(0f,1f,0f), new Vector3(1f,0f,1f), new Vector3(1f,2f,1f), new Vector3(0f,1f,0f) 
+        }
     };
 }
 
