@@ -1,21 +1,38 @@
 using UnityEngine;
 using System.Collections.Generic;
-
+using Util;
 
 public static class SurfaceExtractor {
     public static ExtractionResult ExtractSurface(ExtractionInput input) {
         ExtractionResult r = new ExtractionResult();
 
-        List<Util.GridCell> cells = new List<Util.GridCell>();
+        List<GridCell> cells = new List<GridCell>();
 
         Mesh mesh = new Mesh();
-        Util.GridCell cell = new Util.GridCell();
-        cell.points = new Util.Point[8];
+        GridCell cell = new GridCell();
+        cell.points = new Point[8];
         for(int i = 0; i < 8; i++) {
-            cell.points[i] = new Util.Point();
+            cell.points[i] = new Point();
             cell.points[i].position = new Vector3();
         }
 
+        Vector3i rangeMins = new Vector3i(0, 0, 0);
+        Vector3i rangeMaxs = new Vector3i(input.Size.x * input.Resolution.x,
+                                        input.Size.y * input.Resolution.y,
+                                        input.Size.z * input.Resolution.z);
+          if(input.LODSides[0]) { // -x
+            rangeMins.x += input.Size.x;
+        } if(input.LODSides[1]) { // +x
+            rangeMaxs.x -= input.Size.x;
+        } if(input.LODSides[2]) { // -y
+            rangeMins.y += input.Size.y;
+        } if(input.LODSides[3]) { // +y
+            rangeMins.y -= input.Size.y;
+        } if(input.LODSides[4]) { // -z
+            rangeMins.z += input.Size.z;
+        } if(input.LODSides[5]) { // +z
+            rangeMins.z -= input.Size.z;
+        }
 
         List<Vector3> vertices = new List<Vector3>();
 
@@ -26,9 +43,9 @@ public static class SurfaceExtractor {
             new Vector3(0f,0f,1f), new Vector3(1f,0f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,1f) 
         };	
 
-        for(int x = 0; x < (input.Resolution.x * input.Size.x) - input.Size.x; x += input.Size.x) {
-            for(int y = 0; y < input.Resolution.y * input.Size.y; y += input.Size.y) {
-                for(int z = 0; z < input.Resolution.z * input.Size.z; z += input.Size.z) {										
+        for(int x = rangeMins.x; x < rangeMaxs.x; x += input.Size.x) {
+            for(int y = rangeMins.y; y < rangeMaxs.y; y += input.Size.y) {
+                for(int z = rangeMins.z; z < rangeMaxs.z; z += input.Size.z) {										
                     for(int i = 0; i < 8; i++) {
                         cell.points[i].position = new Vector3(x, y, z) + new Vector3(input.Size.x * OFFSETS[i].x, input.Size.y * OFFSETS[i].y, input.Size.z * OFFSETS[i].z);
                         cell.points[i].density = input.Sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
@@ -132,17 +149,19 @@ public static class SurfaceExtractor {
 
 public class ExtractionResult {
      public UnityEngine.Mesh m;
-     public List<Util.GridCell> cells;
+     public List<GridCell> cells;
      public List<Vector3> sampledPoints;
      public Vector3 offset;
 }
 
 public class ExtractionInput {
-    public Util.Sampler Sample;
+    public UtilFuncs.Sampler Sample;
     public float Isovalue;
     
-    public Util.Vector3i Resolution;
-    public Util.Vector3i Size;
+    public Vector3i Resolution;
+    public Vector3i Size;
+    // -x, +x, -y, +y, -z, +z
+    public bool[] LODSides;
 }
 
 /*
