@@ -16,26 +16,7 @@ public static class SurfaceExtractor {
             cell.points[i].position = new Vector3();
         }
 
-        Vector3i rangeMins = new Vector3i(0, 0, 0);
-        Vector3i rangeMaxs = new Vector3i(input.Size.x * input.Resolution.x,
-                                        input.Size.y * input.Resolution.y,
-                                        input.Size.z * input.Resolution.z);
-          if(input.LODSides[0]) { // -x
-            rangeMins.x += input.Size.x;
-        } if(input.LODSides[1]) { // +x
-            rangeMaxs.x -= input.Size.x;
-        } if(input.LODSides[2]) { // -y
-            rangeMins.y += input.Size.y;
-        } if(input.LODSides[3]) { // +y
-            rangeMins.y -= input.Size.y;
-        } if(input.LODSides[4]) { // -z
-            rangeMins.z += input.Size.z;
-        } if(input.LODSides[5]) { // +z
-            rangeMins.z -= input.Size.z;
-        }
-
         List<Vector3> vertices = new List<Vector3>();
-
         List<Vector3> sampledPoints = new List<Vector3>();
 
         Vector3[] OFFSETS = {
@@ -43,33 +24,53 @@ public static class SurfaceExtractor {
             new Vector3(0f,0f,1f), new Vector3(1f,0f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,1f) 
         };	
 
-        for(int x = rangeMins.x; x < rangeMaxs.x; x += input.Size.x) {
-            for(int y = rangeMins.y; y < rangeMaxs.y; y += input.Size.y) {
-                for(int z = rangeMins.z; z < rangeMaxs.z; z += input.Size.z) {										
-                    for(int i = 0; i < 8; i++) {
-                        cell.points[i].position = new Vector3(x, y, z) + new Vector3(input.Size.x * OFFSETS[i].x, input.Size.y * OFFSETS[i].y, input.Size.z * OFFSETS[i].z);
-                        cell.points[i].density = input.Sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
-                        sampledPoints.Add(cell.points[i].position);
-                    }
-                    cells.Add(cell.Clone());
-                    SE.Polyganiser.Polyganise(cell, vertices, input.Isovalue);
-                }
-            }
-        }
+        // Generate Cells
+        for(int x = 0; x < input.Resolution.x; x++) {
+            for(int y = 0; y < input.Resolution.y; y++) {
+                for(int z = 0; z < input.Resolution.z; z++) {
+                    byte edgeSides = 0;
+                    if(x == 0) edgeSides |= 1;
+                    if(x == input.Resolution.x - 1) edgeSides |= 2;
+                    if(y == 0) edgeSides |= 4;
+                    if(y == input.Resolution.y - 1) edgeSides |= 8;
+                    if(z == 0) edgeSides |= 16;
+                    if(z == input.Resolution.z - 1) edgeSides |= 32;
 
-        int x_ = input.Size.x * (input.Resolution.x - 1);
-        for(int y = 0; y < input.Size.y * (input.Resolution.y); y += input.Size.y * 2) {
-            for(int z = input.Size.z; z < input.Resolution.z * input.Size.z; z += input.Size.z * 2) {
-                for(int j = 0; j < LOD2Offsets.GetLength(0); j++) {
-                    for(int i = 0; i < 8; i++) {
-                        cell.points[i].position = new Vector3(x_, y, z) + new Vector3(input.Size.x * LOD2Offsets[j,i].x, 
-                                                                                    input.Size.y * LOD2Offsets[j,i].y, 
-                                                                                    input.Size.z * LOD2Offsets[j,i].z);
-                        cell.points[i].density = input.Sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
-                        sampledPoints.Add(cell.points[i].position);
+                    byte lod = (byte)(input.LODSides & edgeSides);
+
+                    // cell is regular
+                    if(lod == 0) {
+                        for(int i = 0; i < 8; i++) {
+                            cell.points[i].position = new Vector3(input.Size.x * (x + OFFSETS[i].x), 
+                                                                input.Size.y * (y + OFFSETS[i].y), 
+                                                                input.Size.z * (z + OFFSETS[i].z));
+                            cell.points[i].density = input.Sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
+                            sampledPoints.Add(cell.points[i].position);
+                        }
+                        cells.Add(cell.Clone());
+                        SE.Polyganiser.Polyganise(cell, vertices, input.Isovalue);
                     }
-                    cells.Add(cell.Clone());
-                    SE.Polyganiser.Polyganise(cell, vertices, input.Isovalue);
+                    // cell is (part) of a transition cell
+                    else {
+                        bool checkXaxis = true;
+                        bool checkYaxis = true;
+                        bool checkZaxis = true;
+
+                        // x-axis face
+                        if( (lod & 1) == 1 || (lod & 2) == 2 ) {
+                            
+                        }
+
+                        Vector3 min = new Vector3(input.Size.x * x, 
+                                                  input.Size.y * y, 
+                                                  input.Size.z * z);
+
+                        GridCell[] cellsToProcess = ProcessTransitionCell(lod, min, input.Size, input.Sample);
+
+                        for(int i = 0; i < cells.Count; i++) {
+                            SE.Polyganiser.Polyganise(cellsToProcess[i], vertices, input.Isovalue);
+                        }
+                    }
                 }
             }
         }
@@ -87,6 +88,12 @@ public static class SurfaceExtractor {
         r.cells = cells;
 
         return r;
+    }
+
+    public static GridCell[] ProcessTransitionCell(byte lod, Vector3 min, Vector3 size, UtilFuncs.Sampler Sample) {
+
+
+        return null;
     }
 
     // [triNum][offsetNum]
@@ -145,25 +152,30 @@ public static class SurfaceExtractor {
             new Vector3(0f,1f,0f), new Vector3(1f,0f,1f), new Vector3(1f,2f,1f), new Vector3(0f,1f,0f) 
         }
     };
-}
 
+
+    // -x, +x, -y, y, -z, z
+    public readonly static Quaternion[] VectorAxisModifications = {
+        Quaternion.Euler(180, 0, 0), Quaternion.Euler(0, 0, 0),
+        Quaternion.Euler(0, -90, 0), Quaternion.Euler(0, 90, 0),
+        Quaternion.Euler(0, 0, -90), Quaternion.Euler(0, 0, 90)
+    };
+}
 public class ExtractionResult {
      public UnityEngine.Mesh m;
      public List<GridCell> cells;
      public List<Vector3> sampledPoints;
      public Vector3 offset;
 }
-
 public class ExtractionInput {
     public UtilFuncs.Sampler Sample;
     public float Isovalue;
     
     public Vector3i Resolution;
-    public Vector3i Size;
-    // -x, +x, -y, +y, -z, +z
-    public bool[] LODSides;
+    public Vector3 Size;
+    // first six bits represent the sides of the chunk that are LOD transition sides -x, +x, -y, +y, -z, +z
+    public byte LODSides;
 }
-
 /*
 Vertex and Edge Index Map
 		

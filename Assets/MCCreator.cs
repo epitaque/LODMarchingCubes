@@ -6,7 +6,6 @@ public class MCCreator : MonoBehaviour {
 	public GameObject MeshPrefab;
 
 	private List<GameObject> Meshes;
-
 	private List<ExtractionResult> results;
 
 	// Use this for initialization
@@ -29,7 +28,7 @@ public class MCCreator : MonoBehaviour {
 			input.Size = new Util.Vector3i(size, size, size);
 			runningOffset += size * res;
 			Vector3 off = new Vector3(runningOffset, 0, 0);
-			input.Sample = (float x, float y, float z) => Util.Sample(x + off.x, y + off.y, z + off.z);;
+			input.Sample = (float x, float y, float z) => UtilFuncs.Sample(x + off.x, y + off.y, z + off.z);;
 
 			results.Add(SurfaceExtractor.ExtractSurface(input));
 			results[results.Count - 1].offset = off;
