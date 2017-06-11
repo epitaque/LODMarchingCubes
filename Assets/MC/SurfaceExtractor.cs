@@ -24,7 +24,7 @@ public static class SurfaceExtractor {
             new Vector3(0f,0f,1f), new Vector3(1f,0f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,1f) 
         };	
 
-        // Generate Cells
+        // Generate Regular Cells
         for(int x = 0; x < input.Resolution.x; x++) {
             for(int y = 0; y < input.Resolution.y; y++) {
                 for(int z = 0; z < input.Resolution.z; z++) {
@@ -50,25 +50,33 @@ public static class SurfaceExtractor {
                         cells.Add(cell.Clone());
                         SE.Polyganiser.Polyganise(cell, vertices, input.Isovalue);
                     }
-                    // cell is (part) of a transition cell
-                    else {
-                        bool checkXaxis = true;
-                        bool checkYaxis = true;
-                        bool checkZaxis = true;
+                }
+            }
+        }
 
-                        // x-axis face
-                        if( (lod & 1) == 1 || (lod & 2) == 2 ) {
-                            
-                        }
+        // Generate Transition Cells
+        for(int x = 0; x < input.Resolution.x/2; x++) {
+            for(int y = 0; y < input.Resolution.y/2; y++) {
+                for(int z = 0; z < input.Resolution.z/2; z++) {
+                    byte edgeSides = 0;
+                    if(x == 0) edgeSides |= 1;
+                    if(x == (input.Resolution.x/2) - 1) edgeSides |= 2;
+                    if(y == 0) edgeSides |= 4;
+                    if(y == (input.Resolution.y/2) - 1) edgeSides |= 8;
+                    if(z == 0) edgeSides |= 16;
+                    if(z == (input.Resolution.z/2) - 1) edgeSides |= 32;
 
-                        Vector3 min = new Vector3(input.Size.x * x, 
-                                                  input.Size.y * y, 
-                                                  input.Size.z * z);
+                    byte lod = (byte)(input.LODSides & edgeSides);
 
-                        GridCell[] cellsToProcess = ProcessTransitionCell(lod, min, input.Size, input.Sample);
+                    // Is transition cell
+                    if(lod != 0) {
+                        Vector3 min =  new Vector3(input.Size.x * x * 2, 
+                                                   input.Size.y * y * 2, 
+                                                   input.Size.z * z * 2);
 
-                        for(int i = 0; i < cells.Count; i++) {
-                            SE.Polyganiser.Polyganise(cellsToProcess[i], vertices, input.Isovalue);
+                        GridCell[] tCells = ProcessTransitionCell(lod, min, input.Size * 2, input.Sample);
+                        for(int i = 0; i < tCells.Length; i++) {
+                            SE.Polyganiser.Polyganise(tCells[i], vertices, input.Isovalue);
                         }
                     }
                 }
@@ -91,7 +99,14 @@ public static class SurfaceExtractor {
     }
 
     public static GridCell[] ProcessTransitionCell(byte lod, Vector3 min, Vector3 size, UtilFuncs.Sampler Sample) {
+        // only one face is a LOD face
+        // -x, +x, -y, +y, -z, +z
+        if(lod == 1 || lod == 2 || lod == 4 
+            || lod == 8 || lod == 16 || lod == 32) {
+            // Step 1: Computer how the offsets need to be rotated
 
+
+        }
 
         return null;
     }
@@ -173,7 +188,8 @@ public class ExtractionInput {
     
     public Vector3i Resolution;
     public Vector3 Size;
-    // first six bits represent the sides of the chunk that are LOD transition sides -x, +x, -y, +y, -z, +z
+    // first six bits represent the sides of the chunk that are LOD transition sides 
+    // -x, +x, -y, +y, -z, +z
     public byte LODSides;
 }
 /*
