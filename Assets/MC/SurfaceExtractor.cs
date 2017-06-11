@@ -7,6 +7,7 @@ public static class SurfaceExtractor {
         ExtractionResult r = new ExtractionResult();
 
         List<GridCell> cells = new List<GridCell>();
+        List<GridCell> debugTransitionCells = new List<GridCell>();
 
         Mesh mesh = new Mesh();
         GridCell cell = new GridCell();
@@ -17,7 +18,6 @@ public static class SurfaceExtractor {
         }
 
         List<Vector3> vertices = new List<Vector3>();
-        List<Vector3> sampledPoints = new List<Vector3>();
 
         Vector3[] OFFSETS = {
             new Vector3(0f,0f,0f), new Vector3(1f,0f,0f), new Vector3(1f,1f,0f), new Vector3(0f,1f,0f), 
@@ -45,7 +45,6 @@ public static class SurfaceExtractor {
                                                                 input.Size.y * (y + OFFSETS[i].y), 
                                                                 input.Size.z * (z + OFFSETS[i].z));
                             cell.points[i].density = input.Sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
-                            sampledPoints.Add(cell.points[i].position);
                         }
                         cells.Add(cell.Clone());
                         SE.Polyganiser.Polyganise(cell, vertices, input.Isovalue);
@@ -74,9 +73,17 @@ public static class SurfaceExtractor {
                                                    input.Size.y * y * 2, 
                                                    input.Size.z * z * 2);
 
-                        GridCell[] tCells = ProcessTransitionCell(lod, min, input.Size * 2, input.Sample);
-                        for(int i = 0; i < tCells.Length; i++) {
-                            SE.Polyganiser.Polyganise(tCells[i], vertices, input.Isovalue);
+                        GridCell debugTransitionCell = new GridCell();
+                        debugTransitionCell.points = new Point[8];
+                        for(int i = 0; i < 8; i++) {
+                            debugTransitionCell.points[i].position = min + OFFSETS[i] * input.Size.x * 2f;
+                        }
+                        debugTransitionCells.Add(debugTransitionCell);
+
+                        GridCell[] transitionCells = ProcessTransitionCell(lod, min, input.Size, input.Sample);
+                        for(int i = 0; i < transitionCells.Length; i++) {
+                            cells.Add(transitionCells[i]);
+                            SE.Polyganiser.Polyganise(transitionCells[i], vertices, input.Isovalue);
                         }
                     }
                 }
@@ -89,11 +96,11 @@ public static class SurfaceExtractor {
             triangles[i] = i;
         }
 
-        r.sampledPoints = sampledPoints;
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles;
-        r.m = mesh;
-        r.cells = cells;
+        r.Mesh = mesh;
+        r.Cells = cells;
+        r.DebugTransitionCells = debugTransitionCells;
 
         return r;
     }
@@ -103,12 +110,42 @@ public static class SurfaceExtractor {
         // -x, +x, -y, +y, -z, +z
         if(lod == 1 || lod == 2 || lod == 4 
             || lod == 8 || lod == 16 || lod == 32) {
+            int shiftNumber = 0;
+
+            for(int i = 0; i <= 6; i++) {
+                if(lod >> i == 1) {
+                    shiftNumber = i;
+                    break;        
+                }
+            }
+
+
             // Step 1: Computer how the offsets need to be rotated
+            Quaternion rotation = VectorAxisModifications[shiftNumber];
+            GridCell[] cells = new GridCell[LOD2Offsets.GetLength(0)];
+            //Debug.Log("Rotation: " + rotation);
 
+            // Step 2: Generate GridCells based on rotated offsets
+            for(int i = 0; i < LOD2Offsets.GetLength(0); i++) {
+                cells[i] = new GridCell();
+                cells[i].points = new Point[8];
+                for(int j = 0; j < 8; j++) {
+                    //Debug.Log("Offset: " + (LOD2Offsets[i, j] + new Vector3(1f, 1f, 1f)));
+                    Vector3 rotatedOffset = (rotation * LOD2Offsets[i, j]) + new Vector3(1f, 1f, 1f);
+                   // Debug.Log("Rotated Offset: " + rotatedOffset);
 
+                    cells[i].points[j].position = new Vector3(min.x + size.x * rotatedOffset.x, 
+                                                              min.y + size.y * rotatedOffset.y, 
+                                                              min.z + size.z * rotatedOffset.z);
+                    cells[i].points[j].density = Sample(cells[i].points[j].position.x, 
+                                                        cells[i].points[j].position.y, 
+                                                        cells[i].points[j].position.z);
+                }
+            }
+            return cells;
         }
 
-        return null;
+        return new GridCell[0];
     }
 
     // [triNum][offsetNum]
@@ -127,60 +164,60 @@ public static class SurfaceExtractor {
         }	
     };
 
-    // total of 5 gridcells
+    // total of 9 gridcells
 
     public readonly static Vector3[,] LOD2Offsets = {
-        { // top left corner cell ISSUE CELL
-            new Vector3(0f,1f,0f), new Vector3(1f,2f,1f), new Vector3(1f,2f,1f), new Vector3(0f,2f,0f), 
-            new Vector3(0f,1f,1f), new Vector3(1f,2f,1f), new Vector3(1f,2f,1f), new Vector3(0f,2f,1f) 
+        { // top left corner cell
+            new Vector3(0f,0f,0f), new Vector3(1f,1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,0f), 
+            new Vector3(0f,0f,1f), new Vector3(1f,1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,1f) 
         }, 
         { // bottom left corner cell
-            new Vector3(0f,0f,0f), new Vector3(1f,0f,1f), new Vector3(1f,0f,1f), new Vector3(0f,1f,0f), 
-            new Vector3(0f,0f,1f), new Vector3(1f,0f,1f), new Vector3(1f,0f,1f), new Vector3(0f,1f,1f) 
+            new Vector3(0f,-1f,0f), new Vector3(1f,-1f,1f), new Vector3(1f,-1f,1f), new Vector3(0f,0f,0f), 
+            new Vector3(0f,-1f,1f), new Vector3(1f,-1f,1f), new Vector3(1f,-1f,1f), new Vector3(0f,0f,1f) 
         }, 
         { // top right corner cell
-            new Vector3(0f,1f,-1f), new Vector3(1f,2f,-1f), new Vector3(1f,2f,-1f), new Vector3(0f,2f,-1f), 
-            new Vector3(0f,1f,0f), new Vector3(1f,2f,-1f), new Vector3(1f,2f,-1f), new Vector3(0f,2f,0f) 
+            new Vector3(0f,0f,-1f), new Vector3(1f,1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,-1f), 
+            new Vector3(0f,0f,0f), new Vector3(1f,1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,0f) 
         },
         { // bottom right corner cell
-            new Vector3(0f,0f,-1f), new Vector3(1f,0f,-1f), new Vector3(1f,0f,-1f), new Vector3(0f,1f,-1f), 
-            new Vector3(0f,0f,0f), new Vector3(1f,0f,-1f), new Vector3(1f,0f,-1f), new Vector3(0f,1f,0f) 
+            new Vector3(0f,-1f,-1f), new Vector3(1f,-1f,-1f), new Vector3(1f,-1f,-1f), new Vector3(0f,0f,-1f), 
+            new Vector3(0f,-1f,0f), new Vector3(1f,-1f,-1f), new Vector3(1f,-1f,-1f), new Vector3(0f,0f,0f) 
         },
         { // left edge cell
-            new Vector3(0f,1f,1f), new Vector3(1f,0f,1f), new Vector3(0f,1f,0f), new Vector3(0f,1f,0f), 
-            new Vector3(0f,1f,1f), new Vector3(1f,0f,1f), new Vector3(1f,2f,1f), new Vector3(0f,1f,1f) 
+            new Vector3(0f,0f,1f), new Vector3(1f,-1f,1f), new Vector3(0f,0f,0f), new Vector3(0f,0f,0f), 
+            new Vector3(0f,0f,1f), new Vector3(1f,-1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,0f,1f) 
         },
         { // right edge cell
-            new Vector3(0f,1f,0f), new Vector3(1f,0f,-1f), new Vector3(0f,1f,-1f), new Vector3(0f,1f,-1f), 
-            new Vector3(0f,1f,0f), new Vector3(1f,0f,-1f), new Vector3(1f,2f,-1f), new Vector3(0f,1f,0f) 
+            new Vector3(0f,0f,0f), new Vector3(1f,-1f,-1f), new Vector3(0f,0f,-1f), new Vector3(0f,0f,-1f), 
+            new Vector3(0f,0f,0f), new Vector3(1f,-1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,0f,0f) 
         },
         { // bottom edge cell
-            new Vector3(0f,0f,0f), new Vector3(1f,0f,-1f), new Vector3(1f,0f,-1f), new Vector3(0f,1f,0f), 
-            new Vector3(0f,0f,0f), new Vector3(1f,0f,1f), new Vector3(1f,0f,1f), new Vector3(0f,1f,0f)	
+            new Vector3(0f,-1f,0f), new Vector3(1f,-1f,-1f), new Vector3(1f,-1f,-1f), new Vector3(0f,0f,0f), 
+            new Vector3(0f,-1f,0f), new Vector3(1f,-1f,1f), new Vector3(1f,-1f,1f), new Vector3(0f,0f,0f)	
         },
         { // top edge cell
-            new Vector3(0f,1f,0f), new Vector3(1f,2f,-1f), new Vector3(1f,2f,-1f), new Vector3(0f,2f,0f), 
-            new Vector3(0f,1f,0f), new Vector3(1f,2f,1f), new Vector3(1f,2f,1f), new Vector3(0f,2f,0f)	
+            new Vector3(0f,0f,0f), new Vector3(1f,1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,0f), 
+            new Vector3(0f,0f,0f), new Vector3(1f,1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,0f)	
         },
         { // middle cell
-            new Vector3(0f,1f,0f), new Vector3(1f,0f,-1f), new Vector3(1f,2f,-1f), new Vector3(0f,1f,0f), 
-            new Vector3(0f,1f,0f), new Vector3(1f,0f,1f), new Vector3(1f,2f,1f), new Vector3(0f,1f,0f) 
+            new Vector3(0f,0f,0f), new Vector3(1f,-1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,0f,0f), 
+            new Vector3(0f,0f,0f), new Vector3(1f,-1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,0f,0f) 
         }
     };
 
 
     // -x, +x, -y, y, -z, z
     public readonly static Quaternion[] VectorAxisModifications = {
-        Quaternion.Euler(180, 0, 0), Quaternion.Euler(0, 0, 0),
-        Quaternion.Euler(0, -90, 0), Quaternion.Euler(0, 90, 0),
-        Quaternion.Euler(0, 0, -90), Quaternion.Euler(0, 0, 90)
+        Quaternion.AngleAxis(180, Vector3.up), Quaternion.Euler(0, 0, 0),
+        Quaternion.AngleAxis(-90, new Vector3(0, 0, 1)), Quaternion.AngleAxis(90, new Vector3(0, 0, 1)),
+        Quaternion.AngleAxis(90, Vector3.up), Quaternion.AngleAxis(-90, Vector3.up),
     };
 }
 public class ExtractionResult {
-     public UnityEngine.Mesh m;
-     public List<GridCell> cells;
-     public List<Vector3> sampledPoints;
-     public Vector3 offset;
+     public UnityEngine.Mesh Mesh;
+     public List<GridCell> Cells;
+     public List<GridCell> DebugTransitionCells;
+     public Vector3 Offset;
 }
 public class ExtractionInput {
     public UtilFuncs.Sampler Sample;

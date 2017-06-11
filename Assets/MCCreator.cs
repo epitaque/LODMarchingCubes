@@ -13,7 +13,7 @@ public class MCCreator : MonoBehaviour {
 		Meshes = new List<GameObject>();
 		results = new List<ExtractionResult>();
 
-		int lods = 4;
+		int lods = 3;
 		int startingSize = 16;
 		int runningOffset = 0;
 	
@@ -25,14 +25,15 @@ public class MCCreator : MonoBehaviour {
 			input.Resolution = new Util.Vector3i(res, res, res);
 			print("resolution" + input.Resolution.z);
 			int size = (int)Mathf.Pow(2, i);
-			input.Size = new Util.Vector3i(size, size, size);
+			input.LODSides = 4;
+			input.Size = new Vector3(size, size, size);
 			runningOffset += size * res;
-			Vector3 off = new Vector3(runningOffset, 0, 0);
+			Vector3 off = new Vector3(0, -runningOffset, 0);
 			input.Sample = (float x, float y, float z) => UtilFuncs.Sample(x + off.x, y + off.y, z + off.z);;
 
 			results.Add(SurfaceExtractor.ExtractSurface(input));
-			results[results.Count - 1].offset = off;
-		}
+			results[results.Count - 1].Offset = off;
+		} // 1 2	4 8		16 32
 
 		foreach(ExtractionResult r in results) {
 			CreateMesh(r);
@@ -40,15 +41,15 @@ public class MCCreator : MonoBehaviour {
 	}
 	
 	void CreateMesh(ExtractionResult r) {
-		GameObject isosurfaceMesh = Instantiate(MeshPrefab, r.offset, Quaternion.identity);
+		GameObject isosurfaceMesh = Instantiate(MeshPrefab, r.Offset, Quaternion.identity);
 		Meshes.Add(isosurfaceMesh);
 
 		Material mat = isosurfaceMesh.GetComponent<Renderer>().materials[0];
 		MeshFilter mf = isosurfaceMesh.GetComponent<MeshFilter>();
 		MeshCollider mc = isosurfaceMesh.GetComponent<MeshCollider>();
 
-		mf.mesh.vertices = r.m.vertices;
-		mf.mesh.triangles = r.m.triangles;
+		mf.mesh.vertices = r.Mesh.vertices;
+		mf.mesh.triangles = r.Mesh.triangles;
 		mc.sharedMesh = mf.mesh;
 		//if(m.normals != null) mf.mesh.normals = m.normals;
 		mf.mesh.RecalculateNormals();
@@ -62,14 +63,18 @@ public class MCCreator : MonoBehaviour {
 
 	void DrawGridCells() {
 		foreach(ExtractionResult r in results) {
-			foreach(Util.GridCell c in r.cells) {
-				DrawGridCell(c, r.offset);
+			Gizmos.color = Color.gray;
+			foreach(Util.GridCell c in r.Cells) {
+				DrawGridCell(c, r.Offset);
+			}
+			Gizmos.color = Color.yellow;
+			foreach(Util.GridCell c in r.DebugTransitionCells) {
+				DrawGridCell(c, r.Offset);
 			}
 		}
 	}
 
 	void DrawGridCell(Util.GridCell c, Vector3 offset) {
-		Gizmos.color = Color.gray;
 		for(int i = 0; i < c.points.Length; i++) {
 			Gizmos.DrawCube(c.points[i].position + offset, 0.1f * Vector3.one);
 		}
