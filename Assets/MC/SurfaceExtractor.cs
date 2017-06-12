@@ -251,7 +251,7 @@ public static class SurfaceExtractor {
     // +z+x, -z+x, -z-x, +z-x
 
     public readonly static Quaternion[] DoubleSidedLODRotations = {
-        Quaternion.identity, 
+        Quaternion.identity, Quaternion.AngleAxis(180, Vector3.up), 
     }
 
     public readonly static Quaternion[] TripleSidedLODRotations = {
