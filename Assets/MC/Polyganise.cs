@@ -28,29 +28,29 @@ namespace SE {
 
 			/* Find the vertices where the surface intersects the cube */
 			if ((edgeTable[cubeindex] & 1) == 1)
-				vertlist[0] = UtilFuncs.Lerp(isovalue,cell.points[0],cell.points[1]);
+				vertlist[0] = UtilFuncs.UtilFuncs.Lerp(isovalue,cell.points[0],cell.points[1]);
 			if ((edgeTable[cubeindex] & 2) == 2)
-				vertlist[1] = UtilFuncs.Lerp(isovalue,cell.points[1],cell.points[2]);
+				vertlist[1] = UtilFuncs.UtilFuncs.Lerp(isovalue,cell.points[1],cell.points[2]);
 			if ((edgeTable[cubeindex] & 4) == 4)
-				vertlist[2] = UtilFuncs.Lerp(isovalue,cell.points[2],cell.points[3]);
+				vertlist[2] = UtilFuncs.UtilFuncs.Lerp(isovalue,cell.points[2],cell.points[3]);
 			if ((edgeTable[cubeindex] & 8) == 8)
-				vertlist[3] = UtilFuncs.Lerp(isovalue,cell.points[3],cell.points[0]);
+				vertlist[3] = UtilFuncs.UtilFuncs.Lerp(isovalue,cell.points[3],cell.points[0]);
 			if ((edgeTable[cubeindex] & 16) == 16)
-				vertlist[4] = UtilFuncs.Lerp(isovalue,cell.points[4],cell.points[5]);
+				vertlist[4] = UtilFuncs.UtilFuncs.Lerp(isovalue,cell.points[4],cell.points[5]);
 			if ((edgeTable[cubeindex] & 32) == 32)
-				vertlist[5] = UtilFuncs.Lerp(isovalue,cell.points[5],cell.points[6]);
+				vertlist[5] = UtilFuncs.UtilFuncs.Lerp(isovalue,cell.points[5],cell.points[6]);
 			if ((edgeTable[cubeindex] & 64) == 64)
-				vertlist[6] = UtilFuncs.Lerp(isovalue,cell.points[6],cell.points[7]);
+				vertlist[6] = UtilFuncs.UtilFuncs.Lerp(isovalue,cell.points[6],cell.points[7]);
 			if ((edgeTable[cubeindex] & 128) == 128)
-				vertlist[7] = UtilFuncs.Lerp(isovalue,cell.points[7],cell.points[4]);
+				vertlist[7] = UtilFuncs.UtilFuncs.Lerp(isovalue,cell.points[7],cell.points[4]);
 			if ((edgeTable[cubeindex] & 256) == 256)
-				vertlist[8] = UtilFuncs.Lerp(isovalue,cell.points[0],cell.points[4]);
+				vertlist[8] = UtilFuncs.UtilFuncs.Lerp(isovalue,cell.points[0],cell.points[4]);
 			if ((edgeTable[cubeindex] & 512) == 512)
-				vertlist[9] = UtilFuncs.Lerp(isovalue,cell.points[1],cell.points[5]);
+				vertlist[9] = UtilFuncs.UtilFuncs.Lerp(isovalue,cell.points[1],cell.points[5]);
 			if ((edgeTable[cubeindex] & 1024) == 1024)
-				vertlist[10] = UtilFuncs.Lerp(isovalue,cell.points[2],cell.points[6]);
+				vertlist[10] = UtilFuncs.UtilFuncs.Lerp(isovalue,cell.points[2],cell.points[6]);
 			if ((edgeTable[cubeindex] & 2048) == 2048)
-				vertlist[11] = UtilFuncs.Lerp(isovalue,cell.points[3],cell.points[7]);
+				vertlist[11] = UtilFuncs.UtilFuncs.Lerp(isovalue,cell.points[3],cell.points[7]);
 
 			/* Create the triangle */
 			ntriang = 0;
@@ -61,6 +61,113 @@ namespace SE {
 				vertices.Add(vertlist[triTable[cubeindex][i]]);
 			}
 		}
+
+		public static void PolyganiseTetrahedron(Util.GridCell cell, List<Vector3> vertices, float isovalue) {
+			int triangleIndex = 0;
+
+			if(cell.points[0].density < isovalue) triangleIndex |= 1;
+			if(cell.points[1].density < isovalue) triangleIndex |= 2;
+			if(cell.points[2].density < isovalue) triangleIndex |= 4;
+			if(cell.points[3].density < isovalue) triangleIndex |= 8;
+
+			// these cases were taken from https://github.com/Calvin-L/MarchingTetrahedrons/blob/master/Decimate.cpp
+			switch(triangleIndex) {
+				case 0:
+				case 15:
+					break;
+				case 0x01:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[0], cell.points[1]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[0], cell.points[3]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[0], cell.points[2]));
+					break;
+				case 0x02:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[2]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[3]));
+					break;
+				case 0x04:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[3]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[1]));
+					break;
+				case 0x08:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[1]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[2]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[0]));
+					break;
+				
+				case 0x03:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[3]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[1]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[3]));
+					break;
+				case 0x05:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[2]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[2]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[3]));
+					break;
+				case 0x09:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[0], cell.points[1]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[3]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[0], cell.points[2]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[3]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[2]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[0], cell.points[2]));
+					break;
+				case 0x06:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[0], cell.points[1]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[0], cell.points[2]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[3]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[3]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[0], cell.points[2]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[2]));
+					break;
+				case 0x0C:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[3]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[3]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[1]));
+					break;
+				case 0x0A:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[2]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[2]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[3]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[0]));
+					break;
+				case 0x07:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[2]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[3], cell.points[1]));
+					break;
+				case 0x0B:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[1]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[3]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[2], cell.points[0]));
+					break;
+				case 0x0D:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[0]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[3]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[1], cell.points[2]));
+					break;
+				case 0x0E:
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[0], cell.points[1]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[0], cell.points[2]));
+					vertices.Add(UtilFuncs.Lerp(isovalue, cell.points[0], cell.points[3]));
+					break;
+			}
+		}
+
+
 		readonly static int[][] triTable = new int[][] {
 			new int[] {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			new int[] {0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},

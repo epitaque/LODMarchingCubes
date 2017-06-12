@@ -106,10 +106,14 @@ public static class SurfaceExtractor {
     }
 
     public static GridCell[] ProcessTransitionCell(byte lod, Vector3 min, Vector3 size, UtilFuncs.Sampler Sample) {
+        int numLODFaces = 0;
+        for(int i = 0; i < 6; i++) {
+            if(((lod >> i) & 1) == 1) numLODFaces++;
+        }
+
         // only one face is a LOD face
         // -x, +x, -y, +y, -z, +z
-        if(lod == 1 || lod == 2 || lod == 4 
-            || lod == 8 || lod == 16 || lod == 32) {
+        if(numLODFaces == 1) {
             int shiftNumber = 0;
 
             for(int i = 0; i <= 6; i++) {
@@ -145,27 +149,15 @@ public static class SurfaceExtractor {
             return cells;
         }
 
+        // two faces are LOD faces
+        if(numLODFaces == 2) {
+
+        }
+
         return new GridCell[0];
     }
 
-    // [triNum][offsetNum]
-    public readonly static Vector3[,] LODOffsets = {
-        {           
-            new Vector3(0f,0f,0f), new Vector3(0f,0f,0f), new Vector3(0f,1f,0f), new Vector3(0f,1f,0f), 
-            new Vector3(0f,0f,1f), new Vector3(1f,0f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,1f)	
-        },
-        {
-            new Vector3(0f,0f,0f), new Vector3(1f,0f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,0f), 
-            new Vector3(0f,0f,0f), new Vector3(1f,0f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,0f)	
-        },
-        {
-            new Vector3(0f,0f,-1f), new Vector3(1f,0f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,-1f), 
-            new Vector3(0f,0f,0f), new Vector3(1f,0f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,0f)
-        }	
-    };
-
-    // total of 9 gridcells
-
+    // total of 9 gridcells - can be reduced
     public readonly static Vector3[,] LOD2Offsets = {
         { // top left corner cell
             new Vector3(0f,0f,0f), new Vector3(1f,1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,0f), 
@@ -205,13 +197,66 @@ public static class SurfaceExtractor {
         }
     };
 
+    // represents offsets for transition cells on +x +y corner
+    public readonly static Vector3[,] LODCornerOffsets = {
+        //front top left ramp
+        {
+            new Vector3(-1f, 0, 0), new Vector3(0, 0, 0), new Vector3(0, 0, 1f), new Vector3(-1f, 0f, 1f),
+            new Vector3(-1f, 0, 0), new Vector3(0, 0, 0), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 1f)
+        },
+        { //back top left ramp
+            new Vector3(-1f, 0f, -1f), new Vector3(0f, 0f, -1f), new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f),
+            new Vector3(-1f, 1f, -1f), new Vector3(1f, 1f, -1f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 0f, 0f)
+        },
+        { //middle top left tetrahedron
+            new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 0f, 0f),
+            new Vector3(-1f, 1f, -1f), new Vector3(-1f, 1f, -1f), new Vector3(-1f, 1f, 1f), new Vector3(-1f, 1f, 1f)
+        },
+        { //middle top right tetrahedron
+            new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f),
+            new Vector3(-1f, 1f, 0f), new Vector3(1f, 1f, -1f), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 0f)
+        },
+
+        // the following is just the previous code but with the x and ys switched
+        //front top left ramp
+        {
+            new Vector3(0, -1f, 0), new Vector3(0, 0, 0), new Vector3(0, 0, 1f), new Vector3(-1f, -1f, 1f),
+            new Vector3(0, -1f, 0), new Vector3(0, 0, 0), new Vector3(1f, 1f, 1f), new Vector3(1f, -1f, 1f)
+        },
+        { //back top left ramp
+            new Vector3(0f, -1f, -1f), new Vector3(0f, 0f, -1f), new Vector3(0f, -1f, 0f), new Vector3(0f, 0f, 0f),
+            new Vector3(1f, -1f, -1f), new Vector3(1f, 1f, -1f), new Vector3(0f, 0f, 0f), new Vector3(0f, -1f, 0f)
+        },
+        { //middle top left tetrahedron
+            new Vector3(0f, -1f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(1f, -1f, 0f),
+            new Vector3(1f, -1f, -1f), new Vector3(1f, -1f, -1f), new Vector3(1f, -1f, 1f), new Vector3(1f, -1f, 1f)
+        },
+        { //middle top right tetrahedron
+            new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f),
+            new Vector3(1f, -1f, 0f), new Vector3(1f, 1f, -1f), new Vector3(1f, 1f, 1f), new Vector3(1f, -1f, 0f)
+        }
+
+
+    };
 
     // -x, +x, -y, y, -z, z
-    public readonly static Quaternion[] VectorAxisModifications = {
-        Quaternion.AngleAxis(180, Vector3.up), Quaternion.Euler(0, 0, 0),
+    public readonly static Quaternion[] SingleSidedLODRotations = {
+        Quaternion.AngleAxis(180, Vector3.up), Quaternion.identity,
         Quaternion.AngleAxis(-90, new Vector3(0, 0, 1)), Quaternion.AngleAxis(90, new Vector3(0, 0, 1)),
         Quaternion.AngleAxis(90, Vector3.up), Quaternion.AngleAxis(-90, Vector3.up),
     };
+
+    // +x+y, -x+y, -x-y, +x-y
+    // +z+y, -z+y, -z-y, +z-y
+    // +z+x, -z+x, -z-x, +z-x
+
+    public readonly static Quaternion[] DoubleSidedLODRotations = {
+        Quaternion.identity, 
+    }
+
+    public readonly static Quaternion[] TripleSidedLODRotations = {
+
+    }
 }
 public class ExtractionResult {
      public UnityEngine.Mesh Mesh;
@@ -229,6 +274,24 @@ public class ExtractionInput {
     // -x, +x, -y, +y, -z, +z
     public byte LODSides;
 }
+/*
+Vertex and Edge Index Map
+		
+        4-------6------5
+       /.             /|
+      10.           11 |
+     /  0           /  2
+    /   .          /   |     ^ Y
+   7-------7------6    |     |
+   |    0 . . 4 . |. . 1     --> X
+   |   .          |   /		 \/ +Z
+   1  8           3  9
+   | .            | /
+   |.             |/
+   3-------5------2
+*/
+
+
 /*
 Vertex and Edge Index Map
 		
