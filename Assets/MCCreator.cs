@@ -25,7 +25,7 @@ public class MCCreator : MonoBehaviour {
 			input.Resolution = new Util.Vector3i(res, res, res);
 			print("resolution" + input.Resolution.z);
 			int size = (int)Mathf.Pow(2, i);
-			input.LODSides = 2;
+			input.LODSides = 10;
 			input.Size = new Vector3(size, size, size);
 			runningOffset += size * res;
 			Vector3 off = new Vector3(runningOffset, 0, 0);

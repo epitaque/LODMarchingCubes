@@ -111,32 +111,17 @@ public static class SurfaceExtractor {
             if(((lod >> i) & 1) == 1) numLODFaces++;
         }
 
-        // only one face is a LOD face
-        // -x, +x, -y, +y, -z, +z
-        if(numLODFaces == 1) {
-            int shiftNumber = 0;
+        if(numLODFaces > 0 && numLODFaces < 3) {
+            int numGridCells = LODOffsets[numLODFaces - 1].Length;
 
-            for(int i = 0; i <= 6; i++) {
-                if(lod >> i == 1) {
-                    shiftNumber = i;
-                    break;        
-                }
-            }
+            GridCell[] cells = new GridCell[numGridCells];
+            Quaternion rotation = LODRotations[lod];
 
-
-            // Step 1: Computer how the offsets need to be rotated
-            Quaternion rotation = VectorAxisModifications[shiftNumber];
-            GridCell[] cells = new GridCell[LOD2Offsets.GetLength(0)];
-            //Debug.Log("Rotation: " + rotation);
-
-            // Step 2: Generate GridCells based on rotated offsets
-            for(int i = 0; i < LOD2Offsets.GetLength(0); i++) {
+            for(int i = 0; i < numGridCells; i++) {
                 cells[i] = new GridCell();
                 cells[i].points = new Point[8];
                 for(int j = 0; j < 8; j++) {
-                    //Debug.Log("Offset: " + (LOD2Offsets[i, j] + new Vector3(1f, 1f, 1f)));
-                    Vector3 rotatedOffset = (rotation * LOD2Offsets[i, j]) + new Vector3(1f, 1f, 1f);
-                   // Debug.Log("Rotated Offset: " + rotatedOffset);
+                    Vector3 rotatedOffset = (rotation * LODOffsets[numLODFaces - 1][i][j]) + new Vector3(1f, 1f, 1f);
 
                     cells[i].points[j].position = new Vector3(min.x + size.x * rotatedOffset.x, 
                                                               min.y + size.y * rotatedOffset.y, 
@@ -146,117 +131,102 @@ public static class SurfaceExtractor {
                                                         cells[i].points[j].position.z);
                 }
             }
+
             return cells;
-        }
-
-        // two faces are LOD faces
-        if(numLODFaces == 2) {
-
-        }
+        } 
 
         return new GridCell[0];
     }
 
     // total of 9 gridcells - can be reduced
-    public readonly static Vector3[,] LOD2Offsets = {
-        { // top left corner cell
-            new Vector3(0f,0f,0f), new Vector3(1f,1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,0f), 
-            new Vector3(0f,0f,1f), new Vector3(1f,1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,1f) 
-        }, 
-        { // bottom left corner cell
-            new Vector3(0f,-1f,0f), new Vector3(1f,-1f,1f), new Vector3(1f,-1f,1f), new Vector3(0f,0f,0f), 
-            new Vector3(0f,-1f,1f), new Vector3(1f,-1f,1f), new Vector3(1f,-1f,1f), new Vector3(0f,0f,1f) 
-        }, 
-        { // top right corner cell
-            new Vector3(0f,0f,-1f), new Vector3(1f,1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,-1f), 
-            new Vector3(0f,0f,0f), new Vector3(1f,1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,0f) 
+    // first dimension: number of sides with LOD transitions
+    // second dimension: number of gridcells
+    // third dimension: number of offsets
+    public readonly static Vector3[][][] LODOffsets = new Vector3[][][] {
+        new Vector3[][] {
+                new Vector3[] { // top left corner cell
+                    new Vector3(0f,0f,0f), new Vector3(1f,1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,0f), 
+                    new Vector3(0f,0f,1f), new Vector3(1f,1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,1f) 
+                }, 
+                new Vector3[] { // bottom left corner cell
+                    new Vector3(0f,-1f,0f), new Vector3(1f,-1f,1f), new Vector3(1f,-1f,1f), new Vector3(0f,0f,0f), 
+                    new Vector3(0f,-1f,1f), new Vector3(1f,-1f,1f), new Vector3(1f,-1f,1f), new Vector3(0f,0f,1f) 
+                }, 
+                new Vector3[] { // top right corner cell
+                    new Vector3(0f,0f,-1f), new Vector3(1f,1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,-1f), 
+                    new Vector3(0f,0f,0f), new Vector3(1f,1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,0f) 
+                },
+                new Vector3[] { // bottom right corner cell
+                    new Vector3(0f,-1f,-1f), new Vector3(1f,-1f,-1f), new Vector3(1f,-1f,-1f), new Vector3(0f,0f,-1f), 
+                    new Vector3(0f,-1f,0f), new Vector3(1f,-1f,-1f), new Vector3(1f,-1f,-1f), new Vector3(0f,0f,0f) 
+                },
+                new Vector3[] { // left edge cell
+                    new Vector3(0f,0f,1f), new Vector3(1f,-1f,1f), new Vector3(0f,0f,0f), new Vector3(0f,0f,0f), 
+                    new Vector3(0f,0f,1f), new Vector3(1f,-1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,0f,1f) 
+                },
+                new Vector3[] { // right edge cell
+                    new Vector3(0f,0f,0f), new Vector3(1f,-1f,-1f), new Vector3(0f,0f,-1f), new Vector3(0f,0f,-1f), 
+                    new Vector3(0f,0f,0f), new Vector3(1f,-1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,0f,0f) 
+                },
+                new Vector3[] { // bottom edge cell
+                    new Vector3(0f,-1f,0f), new Vector3(1f,-1f,-1f), new Vector3(1f,-1f,-1f), new Vector3(0f,0f,0f), 
+                    new Vector3(0f,-1f,0f), new Vector3(1f,-1f,1f), new Vector3(1f,-1f,1f), new Vector3(0f,0f,0f)	
+                },
+                new Vector3[] { // top edge cell
+                    new Vector3(0f,0f,0f), new Vector3(1f,1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,0f), 
+                    new Vector3(0f,0f,0f), new Vector3(1f,1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,0f)	
+                },
+                new Vector3[] { // middle cell
+                    new Vector3(0f,0f,0f), new Vector3(1f,-1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,0f,0f), 
+                    new Vector3(0f,0f,0f), new Vector3(1f,-1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,0f,0f)
+                }
         },
-        { // bottom right corner cell
-            new Vector3(0f,-1f,-1f), new Vector3(1f,-1f,-1f), new Vector3(1f,-1f,-1f), new Vector3(0f,0f,-1f), 
-            new Vector3(0f,-1f,0f), new Vector3(1f,-1f,-1f), new Vector3(1f,-1f,-1f), new Vector3(0f,0f,0f) 
-        },
-        { // left edge cell
-            new Vector3(0f,0f,1f), new Vector3(1f,-1f,1f), new Vector3(0f,0f,0f), new Vector3(0f,0f,0f), 
-            new Vector3(0f,0f,1f), new Vector3(1f,-1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,0f,1f) 
-        },
-        { // right edge cell
-            new Vector3(0f,0f,0f), new Vector3(1f,-1f,-1f), new Vector3(0f,0f,-1f), new Vector3(0f,0f,-1f), 
-            new Vector3(0f,0f,0f), new Vector3(1f,-1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,0f,0f) 
-        },
-        { // bottom edge cell
-            new Vector3(0f,-1f,0f), new Vector3(1f,-1f,-1f), new Vector3(1f,-1f,-1f), new Vector3(0f,0f,0f), 
-            new Vector3(0f,-1f,0f), new Vector3(1f,-1f,1f), new Vector3(1f,-1f,1f), new Vector3(0f,0f,0f)	
-        },
-        { // top edge cell
-            new Vector3(0f,0f,0f), new Vector3(1f,1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,1f,0f), 
-            new Vector3(0f,0f,0f), new Vector3(1f,1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,1f,0f)	
-        },
-        { // middle cell
-            new Vector3(0f,0f,0f), new Vector3(1f,-1f,-1f), new Vector3(1f,1f,-1f), new Vector3(0f,0f,0f), 
-            new Vector3(0f,0f,0f), new Vector3(1f,-1f,1f), new Vector3(1f,1f,1f), new Vector3(0f,0f,0f) 
+
+        new Vector3[][] {
+            new Vector3[] {
+                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 1f, -1f), new Vector3(1f, 1f, -1f),
+                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 1f)
+            },
+            new Vector3[] {
+                new Vector3(-1f, 0f, -1f), new Vector3(0f, 0f, -1f), new Vector3(-1f, 1f, -1f), new Vector3(1f, 1f, -1f),
+                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 0f, 0f)
+            },
+            new Vector3[] {
+                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f),
+                new Vector3(-1f, 0f, 1f), new Vector3(0f, 0f, 1f), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 1f)
+            },
+
         }
     };
 
-    // represents offsets for transition cells on +x +y corner
-    public readonly static Vector3[,] LODCornerOffsets = {
-        //front top left ramp
-        {
-            new Vector3(-1f, 0, 0), new Vector3(0, 0, 0), new Vector3(0, 0, 1f), new Vector3(-1f, 0f, 1f),
-            new Vector3(-1f, 0, 0), new Vector3(0, 0, 0), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 1f)
-        },
-        { //back top left ramp
-            new Vector3(-1f, 0f, -1f), new Vector3(0f, 0f, -1f), new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f),
-            new Vector3(-1f, 1f, -1f), new Vector3(1f, 1f, -1f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 0f, 0f)
-        },
-        { //middle top left tetrahedron
-            new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 0f, 0f),
-            new Vector3(-1f, 1f, -1f), new Vector3(-1f, 1f, -1f), new Vector3(-1f, 1f, 1f), new Vector3(-1f, 1f, 1f)
-        },
-        { //middle top right tetrahedron
-            new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f),
-            new Vector3(-1f, 1f, 0f), new Vector3(1f, 1f, -1f), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 0f)
-        },
-
-        // the following is just the previous code but with the x and ys switched
-        //front top left ramp
-        {
-            new Vector3(0, -1f, 0), new Vector3(0, 0, 0), new Vector3(0, 0, 1f), new Vector3(-1f, -1f, 1f),
-            new Vector3(0, -1f, 0), new Vector3(0, 0, 0), new Vector3(1f, 1f, 1f), new Vector3(1f, -1f, 1f)
-        },
-        { //back top left ramp
-            new Vector3(0f, -1f, -1f), new Vector3(0f, 0f, -1f), new Vector3(0f, -1f, 0f), new Vector3(0f, 0f, 0f),
-            new Vector3(1f, -1f, -1f), new Vector3(1f, 1f, -1f), new Vector3(0f, 0f, 0f), new Vector3(0f, -1f, 0f)
-        },
-        { //middle top left tetrahedron
-            new Vector3(0f, -1f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(1f, -1f, 0f),
-            new Vector3(1f, -1f, -1f), new Vector3(1f, -1f, -1f), new Vector3(1f, -1f, 1f), new Vector3(1f, -1f, 1f)
-        },
-        { //middle top right tetrahedron
-            new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f),
-            new Vector3(1f, -1f, 0f), new Vector3(1f, 1f, -1f), new Vector3(1f, 1f, 1f), new Vector3(1f, -1f, 0f)
-        }
-
-
+    public readonly static Dictionary<byte, Quaternion> LODRotations =
+        new Dictionary<byte, Quaternion>() { 
+            // Single sided LOD
+            // -x, +x, -y, y, -z, z
+            {1, Quaternion.AngleAxis(180, Vector3.up)}, 
+            {2, Quaternion.identity},
+            {4, Quaternion.AngleAxis(-90, new Vector3(0, 0, 1))}, 
+            {8, Quaternion.AngleAxis(90, new Vector3(0, 0, 1))},
+            {16, Quaternion.AngleAxis(90, Vector3.up)},
+            {32, Quaternion.AngleAxis(-90, Vector3.up)},
+        
+            // Double sided LOD
+            // +x+y, -x+y, -x-y, +x-y
+            {2 + 8, Quaternion.identity}, 
+            {1 + 8, Quaternion.AngleAxis(180, Vector3.up)}, 
+            {1 + 4, Quaternion.AngleAxis(90, new Vector3(0, 0, 1))}, 
+            {2 + 4, Quaternion.AngleAxis(90, new Vector3(0, 0, 1))},
+            // +z+y, -z+y, -z-y, +z-y
+            {32 + 8, Quaternion.AngleAxis(-90, Vector3.up)}, 
+            {16 + 8, Quaternion.AngleAxis(90, Vector3.up)}, 
+            {16 + 4, Quaternion.AngleAxis(90, Vector3.up) * Quaternion.AngleAxis(90, new Vector3(1, 0, 0))}, 
+            {32 + 4, Quaternion.AngleAxis(-90, Vector3.up) * Quaternion.AngleAxis(90, new Vector3(1, 0, 0))},
+            // +z+x, -z+x, -z-x, +z-x
+            {32 + 2, Quaternion.identity},
+            {16 + 2, Quaternion.identity},
+            {16 + 1, Quaternion.identity},
+            {32 + 1, Quaternion.identity}
     };
-
-    // -x, +x, -y, y, -z, z
-    public readonly static Quaternion[] SingleSidedLODRotations = {
-        Quaternion.AngleAxis(180, Vector3.up), Quaternion.identity,
-        Quaternion.AngleAxis(-90, new Vector3(0, 0, 1)), Quaternion.AngleAxis(90, new Vector3(0, 0, 1)),
-        Quaternion.AngleAxis(90, Vector3.up), Quaternion.AngleAxis(-90, Vector3.up),
-    };
-
-    // +x+y, -x+y, -x-y, +x-y
-    // +z+y, -z+y, -z-y, +z-y
-    // +z+x, -z+x, -z-x, +z-x
-
-    public readonly static Quaternion[] DoubleSidedLODRotations = {
-        Quaternion.identity, Quaternion.AngleAxis(180, Vector3.up), 
-    }
-
-    public readonly static Quaternion[] TripleSidedLODRotations = {
-
-    }
 }
 public class ExtractionResult {
      public UnityEngine.Mesh Mesh;
@@ -274,23 +244,6 @@ public class ExtractionInput {
     // -x, +x, -y, +y, -z, +z
     public byte LODSides;
 }
-/*
-Vertex and Edge Index Map
-		
-        4-------6------5
-       /.             /|
-      10.           11 |
-     /  0           /  2
-    /   .          /   |     ^ Y
-   7-------7------6    |     |
-   |    0 . . 4 . |. . 1     --> X
-   |   .          |   /		 \/ +Z
-   1  8           3  9
-   | .            | /
-   |.             |/
-   3-------5------2
-*/
-
 
 /*
 Vertex and Edge Index Map
