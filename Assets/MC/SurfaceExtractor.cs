@@ -184,15 +184,19 @@ public static class SurfaceExtractor {
 
         new Vector3[][] {
             new Vector3[] {
-                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 1f, -1f), new Vector3(1f, 1f, -1f),
+                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(1f, 1f, -1f), new Vector3(-1f, 1f, -1f),
                 new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 1f)
             },
             new Vector3[] {
-                new Vector3(-1f, 0f, -1f), new Vector3(0f, 0f, -1f), new Vector3(-1f, 1f, -1f), new Vector3(1f, 1f, -1f),
+                new Vector3(-1f, 0f, -1f), new Vector3(0f, 0f, -1f), new Vector3(1f, 1f, -1f), new Vector3(-1f, 1f, -1f),
                 new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 0f, 0f)
             },
             new Vector3[] {
-                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f),
+                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 0f, 0f),
+                new Vector3(-1f, 0f, 1f), new Vector3(0f, 0f, 1f), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 1f)
+            },
+            new Vector3[] {
+                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 0f, 0f),
                 new Vector3(-1f, 0f, 1f), new Vector3(0f, 0f, 1f), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 1f)
             },
 
@@ -244,6 +248,22 @@ public class ExtractionInput {
     // -x, +x, -y, +y, -z, +z
     public byte LODSides;
 }
+/*
+Vertex and Edge Index Map
+		
+        3-------6------2
+       /.             /|
+      10.           11 |
+     /  0           /  2
+    /   .          /   |     ^ Y
+   7-------7------6    |     |
+   |    0 . . 4 . |. . 1     --> X
+   |   .          |   /		 \/ +Z
+   1  8           3  9
+   | .            | /
+   |.             |/
+   4-------5------5
+*/
 
 /*
 Vertex and Edge Index Map
