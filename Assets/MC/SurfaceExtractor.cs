@@ -9,6 +9,7 @@ public static class SurfaceExtractor {
         List<GridCell> cells = new List<GridCell>();
         List<GridCell> debugTransitionCells1S = new List<GridCell>();
         List<GridCell> debugTransitionCells2S = new List<GridCell>();
+        List<GridCell> debugTransitionCells3S = new List<GridCell>();
 
         Mesh mesh = new Mesh();
         GridCell cell = new GridCell();
@@ -92,6 +93,9 @@ public static class SurfaceExtractor {
                         else if(tCellRes.numLODFaces == 2) {
                             debugTransitionCells2S.Add(debugTransitionCell);
                         }
+                        else if(tCellRes.numLODFaces == 3) {
+                            debugTransitionCells3S.Add(debugTransitionCell);
+                        }
                     }
                 }
             }
@@ -109,7 +113,7 @@ public static class SurfaceExtractor {
         r.Cells = cells;
         r.DebugTransitionCells1S = debugTransitionCells1S;
         r.DebugTransitionCells2S = debugTransitionCells2S;
-        r.DebugTransitionCells3S = new List<GridCell>();
+        r.DebugTransitionCells3S = debugTransitionCells3S;
 
         return r;
     }
@@ -124,7 +128,7 @@ public static class SurfaceExtractor {
 
         result.numLODFaces = numLODFaces;
 
-        if(numLODFaces > 0 && numLODFaces < 3) {
+        if(numLODFaces > 0 && numLODFaces < 4) {
             int numGridCells = LODOffsets[numLODFaces - 1].Length;
 
             GridCell[] cells = new GridCell[numGridCells];
@@ -228,14 +232,14 @@ public static class SurfaceExtractor {
                 new Vector3(-1f, -1f, -1f), new Vector3(1f, -1f, -1f), new Vector3(1f, 1f, -1f), new Vector3(-1f, 1f, -1f),
                 new Vector3(-1f, -1f, 0f), new Vector3(0f, -1f, 0f), new Vector3(1f, 1f, 1f), new Vector3(0f, 0f, 0f)
             },
-            new Vector3[] {
-                new Vector3(0f, -1f, -1f), new Vector3(1f, -1f, -1f), new Vector3(1f, 1f, -1f), new Vector3(0f, 0f, -1f),
-                new Vector3(0f, -1f, 0f), new Vector3(0f, -1f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f)
+            /*new Vector3[] {
+                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(1f, 1f, -1f), new Vector3(-1f, 1f, -1f),
+                new Vector3(-1f, 0f, 1f), new Vector3(0f, 0f, 1f), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 1f)
             },
             new Vector3[] {
-                new Vector3(0f, -1f, 0f), new Vector3(0f, -1f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f),
-                new Vector3(0f, -1f, 1f), new Vector3(1f, -1f, 1f), new Vector3(1f, 1f, 1f), new Vector3(0f, 0f, 1f)
-            }
+                new Vector3(0f, -1f, 0f), new Vector3(1f, -1f, -1f), new Vector3(1f, 1f, -1f), new Vector3(0f, 0f, 0f),
+                new Vector3(0f, -1f, 1f), new Vector3(1f, -1f, 1f), new Vector3(0f, 0f, 1f), new Vector3(1f, 1f, 1f)
+            }*/
         }
     };
 
@@ -254,18 +258,30 @@ public static class SurfaceExtractor {
             // +x+y, -x+y, -x-y, +x-y
             {2 + 8, Quaternion.identity}, 
             {1 + 8, Quaternion.AngleAxis(180, Vector3.up)}, 
-            {1 + 4, Quaternion.AngleAxis(90, new Vector3(0, 0, 1))}, 
-            {2 + 4, Quaternion.AngleAxis(90, new Vector3(0, 0, 1))},
+            {1 + 4, Quaternion.AngleAxis(180, new Vector3(0, 0, 1))}, 
+            {2 + 4, Quaternion.AngleAxis(-90, new Vector3(0, 0, 1))},
             // +z+y, -z+y, -z-y, +z-y
             {32 + 8, Quaternion.AngleAxis(-90, Vector3.up)}, 
             {16 + 8, Quaternion.AngleAxis(90, Vector3.up)}, 
-            {16 + 4, Quaternion.AngleAxis(90, Vector3.up) * Quaternion.AngleAxis(90, new Vector3(1, 0, 0))}, 
-            {32 + 4, Quaternion.AngleAxis(-90, Vector3.up) * Quaternion.AngleAxis(90, new Vector3(1, 0, 0))},
+            {16 + 4, Quaternion.AngleAxis(90, Vector3.up) * Quaternion.AngleAxis(-90, new Vector3(0, 0, 1))}, 
+            {32 + 4, Quaternion.AngleAxis(-90, Vector3.up) * Quaternion.AngleAxis(-90, new Vector3(0, 0, 1))},
             // +z+x, -z+x, -z-x, +z-x
-            {32 + 2, Quaternion.identity},
-            {16 + 2, Quaternion.identity},
-            {16 + 1, Quaternion.identity},
-            {32 + 1, Quaternion.identity}
+            {32 + 2, Quaternion.AngleAxis(90, new Vector3(1, 0, 0))},
+            {16 + 2, Quaternion.AngleAxis(90, new Vector3(1, 0, 0)) * Quaternion.AngleAxis(-90, new Vector3(0, 0, 1))},
+            {16 + 1, Quaternion.AngleAxis(90, new Vector3(1, 0, 0)) * Quaternion.AngleAxis(-180, new Vector3(0, 0, 1))},
+            {32 + 1, Quaternion.AngleAxis(90, new Vector3(1, 0, 0)) * Quaternion.AngleAxis(90, new Vector3(0, 0, 1))},
+
+            // Triple Sided LOD
+            // +x+y+z -x+y+z +x-y+z -x-y+z 
+            {2 + 8 + 32, Quaternion.identity},
+            {1 + 8 + 32, Quaternion.identity},
+            {2 + 4 + 32, Quaternion.identity},
+            {1 + 4 + 32, Quaternion.identity},
+            // +x+y-z -x+y-z +x-y-z -x-y-z
+            {2 + 8 + 16, Quaternion.identity},
+            {1 + 8 + 16, Quaternion.identity},
+            {2 + 4 + 16, Quaternion.identity},
+            {1 + 4 + 16, Quaternion.identity},
     };
 }
 public class TransitionCellResult {

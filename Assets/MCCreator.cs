@@ -13,19 +13,23 @@ public class MCCreator : MonoBehaviour {
 		Meshes = new List<GameObject>();
 		results = new List<ExtractionResult>();
 
-		int lods = 2;
-		int startingSize = 8;
-		int runningOffset = 0;
-	
+		int lods = 1;
+		int startingSize = 2;
+		int runningOffset = 0; 
+
+		int mx = 0; int px = 1;
+		int my = 0; int py = 1;
+		int mz = 0; int pz = 1;
+		byte lod = (byte)(mx + 2*px + 4*my + 8*py + 16*mz + 32*pz);
 
 		for(int i = 0; i < lods; i++) {
 			ExtractionInput input = new ExtractionInput();
 			input.Isovalue = 0;
-			int res = 8; //(int)((float)startingSize / Mathf.Pow(2f, i));
+			int res = (int)((float)startingSize / Mathf.Pow(2f, i));
 			input.Resolution = new Util.Vector3i(res, res, res);
 			print("resolution" + input.Resolution.z);
 			int size = (int)Mathf.Pow(2, i);
-			input.LODSides = 10;
+			input.LODSides = lod;
 			input.Size = new Vector3(size, size, size);
 			runningOffset += size * 4;
 			Vector3 off = new Vector3(runningOffset, 0, 0);
