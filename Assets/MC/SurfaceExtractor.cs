@@ -7,7 +7,8 @@ public static class SurfaceExtractor {
         ExtractionResult r = new ExtractionResult();
 
         List<GridCell> cells = new List<GridCell>();
-        List<GridCell> debugTransitionCells = new List<GridCell>();
+        List<GridCell> debugTransitionCells1S = new List<GridCell>();
+        List<GridCell> debugTransitionCells2S = new List<GridCell>();
 
         Mesh mesh = new Mesh();
         GridCell cell = new GridCell();
@@ -78,12 +79,18 @@ public static class SurfaceExtractor {
                         for(int i = 0; i < 8; i++) {
                             debugTransitionCell.points[i].position = min + OFFSETS[i] * input.Size.x * 2f;
                         }
-                        debugTransitionCells.Add(debugTransitionCell);
 
-                        GridCell[] transitionCells = ProcessTransitionCell(lod, min, input.Size, input.Sample);
-                        for(int i = 0; i < transitionCells.Length; i++) {
-                            cells.Add(transitionCells[i]);
-                            SE.Polyganiser.Polyganise(transitionCells[i], vertices, input.Isovalue);
+                        TransitionCellResult tCellRes = ProcessTransitionCell(lod, min, input.Size, input.Sample);
+                        for(int i = 0; i < tCellRes.cells.Length; i++) {
+                            cells.Add(tCellRes.cells[i]);
+                            SE.Polyganiser.Polyganise(tCellRes.cells[i], vertices, input.Isovalue);
+                        }
+
+                        if(tCellRes.numLODFaces == 1) {
+                            debugTransitionCells1S.Add(debugTransitionCell);
+                        }
+                        else if(tCellRes.numLODFaces == 2) {
+                            debugTransitionCells2S.Add(debugTransitionCell);
                         }
                     }
                 }
@@ -100,16 +107,22 @@ public static class SurfaceExtractor {
         mesh.triangles = triangles;
         r.Mesh = mesh;
         r.Cells = cells;
-        r.DebugTransitionCells = debugTransitionCells;
+        r.DebugTransitionCells1S = debugTransitionCells1S;
+        r.DebugTransitionCells2S = debugTransitionCells2S;
+        r.DebugTransitionCells3S = new List<GridCell>();
 
         return r;
     }
 
-    public static GridCell[] ProcessTransitionCell(byte lod, Vector3 min, Vector3 size, UtilFuncs.Sampler Sample) {
+    public static TransitionCellResult ProcessTransitionCell(byte lod, Vector3 min, Vector3 size, UtilFuncs.Sampler Sample) {
+        TransitionCellResult result = new TransitionCellResult();
+
         int numLODFaces = 0;
         for(int i = 0; i < 6; i++) {
             if(((lod >> i) & 1) == 1) numLODFaces++;
         }
+
+        result.numLODFaces = numLODFaces;
 
         if(numLODFaces > 0 && numLODFaces < 3) {
             int numGridCells = LODOffsets[numLODFaces - 1].Length;
@@ -132,10 +145,11 @@ public static class SurfaceExtractor {
                 }
             }
 
-            return cells;
+            result.cells = cells;
+            return result;
         } 
 
-        return new GridCell[0];
+        return null;
     }
 
     // total of 9 gridcells - can be reduced
@@ -196,10 +210,17 @@ public static class SurfaceExtractor {
                 new Vector3(-1f, 0f, 1f), new Vector3(0f, 0f, 1f), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 1f)
             },
             new Vector3[] {
-                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 0f, 0f),
-                new Vector3(-1f, 0f, 1f), new Vector3(0f, 0f, 1f), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 1f)
+                new Vector3(0f, -1f, 0f), new Vector3(1f, -1f, -1f), new Vector3(1f, 1f, -1f), new Vector3(0f, 0f, 0f),
+                new Vector3(0f, -1f, 0f), new Vector3(1f, -1f, 1f), new Vector3(1f, 1f, 1f), new Vector3(0f, 0f, 0f)
             },
-
+            new Vector3[] {
+                new Vector3(0f, -1f, -1f), new Vector3(1f, -1f, -1f), new Vector3(1f, 1f, -1f), new Vector3(0f, 0f, -1f),
+                new Vector3(0f, -1f, 0f), new Vector3(0f, -1f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f)
+            },
+            new Vector3[] {
+                new Vector3(0f, -1f, 0f), new Vector3(0f, -1f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 0f),
+                new Vector3(0f, -1f, 1f), new Vector3(1f, -1f, 1f), new Vector3(1f, 1f, 1f), new Vector3(0f, 0f, 1f)
+            },
         }
     };
 
@@ -232,10 +253,17 @@ public static class SurfaceExtractor {
             {32 + 1, Quaternion.identity}
     };
 }
+public class TransitionCellResult {
+    public int numLODFaces;
+    public GridCell[] cells;
+}
+
 public class ExtractionResult {
      public UnityEngine.Mesh Mesh;
      public List<GridCell> Cells;
-     public List<GridCell> DebugTransitionCells;
+     public List<GridCell> DebugTransitionCells1S;
+     public List<GridCell> DebugTransitionCells2S;
+     public List<GridCell> DebugTransitionCells3S;
      public Vector3 Offset;
 }
 public class ExtractionInput {

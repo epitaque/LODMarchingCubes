@@ -14,20 +14,20 @@ public class MCCreator : MonoBehaviour {
 		results = new List<ExtractionResult>();
 
 		int lods = 2;
-		int startingSize = 2;
+		int startingSize = 8;
 		int runningOffset = 0;
 	
 
 		for(int i = 0; i < lods; i++) {
 			ExtractionInput input = new ExtractionInput();
 			input.Isovalue = 0;
-			int res = (int)((float)startingSize / Mathf.Pow(2f, i));
+			int res = 8; //(int)((float)startingSize / Mathf.Pow(2f, i));
 			input.Resolution = new Util.Vector3i(res, res, res);
 			print("resolution" + input.Resolution.z);
 			int size = (int)Mathf.Pow(2, i);
 			input.LODSides = 10;
 			input.Size = new Vector3(size, size, size);
-			runningOffset += size * res;
+			runningOffset += size * 4;
 			Vector3 off = new Vector3(runningOffset, 0, 0);
 			input.Sample = (float x, float y, float z) => UtilFuncs.Sample(x + off.x, y + off.y, z + off.z);;
 
@@ -68,7 +68,15 @@ public class MCCreator : MonoBehaviour {
 				DrawGridCell(c, r.Offset);
 			}
 			Gizmos.color = Color.yellow;
-			foreach(Util.GridCell c in r.DebugTransitionCells) {
+			foreach(Util.GridCell c in r.DebugTransitionCells1S) {
+				DrawGridCell(c, r.Offset);
+			}
+			Gizmos.color = Color.red;
+			foreach(Util.GridCell c in r.DebugTransitionCells2S) {
+				DrawGridCell(c, r.Offset);
+			}
+			Gizmos.color = Color.magenta;
+			foreach(Util.GridCell c in r.DebugTransitionCells3S) {
 				DrawGridCell(c, r.Offset);
 			}
 		}
