@@ -11,7 +11,6 @@ public static class SurfaceExtractor {
         List<GridCell> debugTransitionCells2S = new List<GridCell>();
         List<GridCell> debugTransitionCells3S = new List<GridCell>();
 
-        Mesh mesh = new Mesh();
         GridCell cell = new GridCell();
         cell.points = new Point[8];
         for(int i = 0; i < 8; i++) {
@@ -102,14 +101,9 @@ public static class SurfaceExtractor {
         }
 
 
-        int[] triangles = new int[vertices.Count];
-        for(int i = 0; i < vertices.Count; i ++) {
-            triangles[i] = i;
-        }
-
-        mesh.vertices = vertices.ToArray();
-        mesh.triangles = triangles;
-        r.Mesh = mesh;
+        r.Triangles = new int[vertices.Count];
+        for(int i = 0; i < vertices.Count; i ++) { r.Triangles[i] = i; }
+        r.Vertices = vertices.ToArray();
         r.Cells = cells;
         r.DebugTransitionCells1S = debugTransitionCells1S;
         r.DebugTransitionCells2S = debugTransitionCells2S;
@@ -229,17 +223,17 @@ public static class SurfaceExtractor {
 
         new Vector3[][] { // 3 sides
             new Vector3[] {
-                new Vector3(-1f, -1f, -1f), new Vector3(1f, -1f, -1f), new Vector3(1f, 1f, -1f), new Vector3(-1f, 1f, -1f),
-                new Vector3(-1f, -1f, 0f), new Vector3(0f, -1f, 0f), new Vector3(1f, 1f, 1f), new Vector3(0f, 0f, 0f)
+                new Vector3(-1f, -1f, 1f), new Vector3(1f, -1f, 1f), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 1f),
+                new Vector3(-1f, -1f, 0f), new Vector3(0f, -1f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-1f, 0f, 0f)
             },
-            /*new Vector3[] {
-                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(1f, 1f, -1f), new Vector3(-1f, 1f, -1f),
-                new Vector3(-1f, 0f, 1f), new Vector3(0f, 0f, 1f), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 1f)
+           new Vector3[] {
+                new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(1f, 1f, 1f), new Vector3(-1f, 1f, 1f),
+                new Vector3(-1f, 0f, -1f), new Vector3(0f, 0f, -1f), new Vector3(1f, 1f, -1f), new Vector3(-1f, 1f, -1f)
             },
             new Vector3[] {
-                new Vector3(0f, -1f, 0f), new Vector3(1f, -1f, -1f), new Vector3(1f, 1f, -1f), new Vector3(0f, 0f, 0f),
-                new Vector3(0f, -1f, 1f), new Vector3(1f, -1f, 1f), new Vector3(0f, 0f, 1f), new Vector3(1f, 1f, 1f)
-            }*/
+                new Vector3(0f, -1f, 0f), new Vector3(1f, -1f, 1f), new Vector3(1f, 1f, 1f), new Vector3(0f, 0f, 0f),
+                new Vector3(0f, -1f, -1f), new Vector3(1f, -1f, -1f), new Vector3(1f, 1f, -1f), new Vector3(0f, 0f, -1f)
+            }
         }
     };
 
@@ -274,14 +268,14 @@ public static class SurfaceExtractor {
             // Triple Sided LOD
             // +x+y+z -x+y+z +x-y+z -x-y+z 
             {2 + 8 + 32, Quaternion.identity},
-            {1 + 8 + 32, Quaternion.identity},
-            {2 + 4 + 32, Quaternion.identity},
-            {1 + 4 + 32, Quaternion.identity},
+            {1 + 8 + 32, Quaternion.AngleAxis(-90, new Vector3(0, 1, 0))},
+            {2 + 4 + 32, Quaternion.AngleAxis(90, new Vector3(1, 0, 0))},
+            {1 + 4 + 32, Quaternion.AngleAxis(-90, new Vector3(0, 1, 0)) * Quaternion.AngleAxis(90, new Vector3(1, 0, 0))},
             // +x+y-z -x+y-z +x-y-z -x-y-z
-            {2 + 8 + 16, Quaternion.identity},
-            {1 + 8 + 16, Quaternion.identity},
-            {2 + 4 + 16, Quaternion.identity},
-            {1 + 4 + 16, Quaternion.identity},
+            {2 + 8 + 16, Quaternion.AngleAxis(90, new Vector3(0, 1, 0))},
+            {1 + 8 + 16, Quaternion.AngleAxis(180, new Vector3(0, 1, 0))},
+            {2 + 4 + 16, Quaternion.AngleAxis(90, new Vector3(0, 1, 0)) * Quaternion.AngleAxis(90, new Vector3(1, 0, 0))},
+            {1 + 4 + 16, Quaternion.AngleAxis(180, new Vector3(0, 1, 0)) * Quaternion.AngleAxis(90, new Vector3(1, 0, 0))},
     };
 }
 public class TransitionCellResult {
@@ -290,7 +284,8 @@ public class TransitionCellResult {
 }
 
 public class ExtractionResult {
-     public UnityEngine.Mesh Mesh;
+    public int[] Triangles;
+     public Vector3[] Vertices;
      public List<GridCell> Cells;
      public List<GridCell> DebugTransitionCells1S;
      public List<GridCell> DebugTransitionCells2S;
