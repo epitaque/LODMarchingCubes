@@ -5,7 +5,7 @@ using Util;
 public static class SurfaceExtractor {
     public static ExtractionResult ExtractSurface(ExtractionInput input) {
         ExtractionResult r = new ExtractionResult();
-
+        
         List<GridCell> cells = new List<GridCell>();
         List<GridCell> debugTransitionCells1S = new List<GridCell>();
         List<GridCell> debugTransitionCells2S = new List<GridCell>();
@@ -43,8 +43,9 @@ public static class SurfaceExtractor {
                     if(lod == 0) {
                         for(int i = 0; i < 8; i++) {
                             cell.points[i].position = new Vector3(input.Size.x * (x + OFFSETS[i].x), 
-                                                                input.Size.y * (y + OFFSETS[i].y), 
-                                                                input.Size.z * (z + OFFSETS[i].z));
+                                                                  input.Size.y * (y + OFFSETS[i].y), 
+                                                                  input.Size.z * (z + OFFSETS[i].z));
+
                             cell.points[i].density = input.Sample(cell.points[i].position.x, cell.points[i].position.y, cell.points[i].position.z);
                         }
                         cells.Add(cell.Clone());
@@ -99,7 +100,6 @@ public static class SurfaceExtractor {
                 }
             }
         }
-
 
         r.Triangles = new int[vertices.Count];
         for(int i = 0; i < vertices.Count; i ++) { r.Triangles[i] = i; }
@@ -290,7 +290,6 @@ public class ExtractionResult {
      public List<GridCell> DebugTransitionCells1S;
      public List<GridCell> DebugTransitionCells2S;
      public List<GridCell> DebugTransitionCells3S;
-     public Vector3 Offset;
 }
 public class ExtractionInput {
     public UtilFuncs.Sampler Sample;

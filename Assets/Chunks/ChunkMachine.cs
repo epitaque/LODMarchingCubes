@@ -6,7 +6,7 @@ namespace Chunks {
 	public class ChunkMachine {
 		int LODs;
 		int Threads;
-		int MinCellSize;
+		float MinCellSize;
 		int Resolution;
 
 		Hashtable LoadedChunks;
@@ -23,7 +23,7 @@ namespace Chunks {
 
 		GameObject MeshPrefab;
 
-		public ChunkMachine(int LODs, int Threads, int MinCellSize, int Resolution, GameObject MeshPrefab) {
+		public ChunkMachine(int LODs, int Threads, float MinCellSize, int Resolution, GameObject MeshPrefab) {
 			this.LODs = LODs;
 			this.Threads = Threads;
 			this.MinCellSize = MinCellSize;
@@ -34,9 +34,10 @@ namespace Chunks {
 			JobQueuer = new ChunkJobQueuer(Threads);
 
 			UsedInput = new ChunkManageInput();
-			UsedInput.LastUnrenderedChunkCenter = new Vector3(float.MinValue, float.MinValue, float.MinValue);
-			UsedInput.LastRenderedChunkCenter = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+			LoadedChunksCenter = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+			UnloadedChunksCenter = new Vector3(float.MinValue, float.MinValue, float.MinValue);
 			UsedInput.LoadedChunks = LoadedChunks;
+			UsedInput.LODs = LODs;
 
 			UsedInput.MinSizeOfCell = MinCellSize;
 			UsedInput.Resolution = Resolution;
@@ -44,6 +45,9 @@ namespace Chunks {
 
 		public void Update(Vector3 PlayerLocation) {
 			UsedInput.PlayerLocation = PlayerLocation;
+			UsedInput.LastUnrenderedChunkCenter = UnloadedChunksCenter;
+			UsedInput.LastRenderedChunkCenter = LoadedChunksCenter;
+
 			ChunkManageResult mResult = ChunkManager.ManageChunks(UsedInput);
 
 			if(mResult.NewState == ChunkWorkState.CancelLastJob || mResult.NewState == ChunkWorkState.DoNewJobAndCancelLastJob) {
@@ -52,6 +56,8 @@ namespace Chunks {
 				NumUnrenderedChunks = 0;
 			}
 			if(mResult.NewState == ChunkWorkState.DoNewJobAndCancelLastJob) {
+				UnityEngine.Debug.Log("State: DoNewJobAndCancelLastJob");
+
 				UnloadedChunksCenter = mResult.NewCenter;
 				NumUnrenderedChunks = mResult.Jobs.Count;
 				MostRecentChunkJobList = mResult.AllChunkJobs;
@@ -60,21 +66,25 @@ namespace Chunks {
 				}
 			}
 
+			UnityEngine.Debug.Log("LC Count: " + JobQueuer.LoadedChunks.Count + ", NumUnrenderedChunks: " + NumUnrenderedChunks);
+
 			if(JobQueuer.LoadedChunks.Count == NumUnrenderedChunks && NumUnrenderedChunks != 0) {
+				NumUnrenderedChunks = 0;
+
 				Hashtable NewChunks = new Hashtable();
 
-				foreach(Chunk c in LoadedChunks) {
+				foreach(DictionaryEntry c1 in LoadedChunks) {
 					bool shouldDestroy = true;
 					foreach(ChunkJob c2 in MostRecentChunkJobList) {
-						if(c.Key == c2.Key) {
+						if((string)c1.Key == c2.Key) {
 							shouldDestroy = false;
-							NewChunks.Add(c.Key, c);
+							NewChunks.Add(c1.Key, c1.Value);
 							break;
 						}
 					}
 
 					if(shouldDestroy) {
-						UnityEngine.Object.Destroy(c.Object);
+						UnityEngine.Object.Destroy(((Chunk)(c1.Value)).Object);
 					}
 				}
 
@@ -84,7 +94,10 @@ namespace Chunks {
 				}
 
 				LoadedChunks = NewChunks;
+				LoadedChunksCenter = UnloadedChunksCenter;
 			}
+
+			JobQueuer.Update();
 		}
 
 	}

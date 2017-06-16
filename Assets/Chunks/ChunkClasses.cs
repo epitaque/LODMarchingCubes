@@ -31,6 +31,7 @@ namespace Chunks {
 		public ChunkJob OriginalJob;
 		public ExtractionResult Result;
 		public long ProcessingTime;
+		public string DebugPrint;
 	}
 	public class Chunk {
 		public Vector3 Min;

@@ -24,6 +24,7 @@ namespace SE {
 			/* Cube is entirely in/out of the surface */
 			if (edgeTable[cubeindex] == 0) {
 				return;
+
 			}
 
 			/* Find the vertices where the surface intersects the cube */
@@ -60,6 +61,7 @@ namespace SE {
 			for (i = 0; triTable[cubeindex][i] !=-1; i++) {
 				vertices.Add(vertlist[triTable[cubeindex][i]]);
 			}
+			
 		}
 
 		public static void PolyganiseTetrahedron(Util.GridCell cell, List<Vector3> vertices, float isovalue) {

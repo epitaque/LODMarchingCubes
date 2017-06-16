@@ -9,7 +9,7 @@ public class MCCreator : MonoBehaviour {
 
 	public int LevelsOfDetail = 3;
 	public int NumberOfThreads = 2;
-	public int MinimumCellSize = 1;
+	public float MinimumCellSize = 1;
 	public int Resolution = 16;
 	private ChunkMachine Machine;
 

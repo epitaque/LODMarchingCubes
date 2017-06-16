@@ -12,6 +12,11 @@ namespace Chunks {
 			Vector3 PlayerGridLocationNormalized = GetNormalizedGridLocation(Input.PlayerLocation, Input);
 			Vector3 PlayerGridLocationRounded = GetRoundedGridLocation(PlayerGridLocationNormalized);
 
+			/*UnityEngine.Debug.Log("PlayerGridLocationRounded: " + PlayerGridLocationRounded);
+			UnityEngine.Debug.Log("Input.LastRenderedChunkCenter: " + Input.LastRenderedChunkCenter);
+			UnityEngine.Debug.Log("Input.LastUnrenderedChunkCenter: " + Input.LastUnrenderedChunkCenter);*/
+
+
 			if(PlayerGridLocationRounded != Input.LastRenderedChunkCenter && PlayerGridLocationRounded != Input.LastUnrenderedChunkCenter) {
 				Result.NewState = ChunkWorkState.DoNewJobAndCancelLastJob;
 
@@ -19,6 +24,7 @@ namespace Chunks {
 				Hashtable OldChunks = Input.LoadedChunks;
 				List<ChunkJob> NewChunks = GetChunksAroundPoint(PlayerGridLocationRounded, Input);
 				Result.AllChunkJobs = NewChunks;
+				Result.NewCenter = PlayerGridLocationRounded;
 
 				foreach(ChunkJob c in NewChunks) {
 					if(!OldChunks.Contains(c.Key)) {
@@ -44,12 +50,15 @@ namespace Chunks {
 			chunk.Key = JobResult.OriginalJob.Key;
 
 			UnityEngine.Mesh Mesh = new UnityEngine.Mesh();
-			Mesh.triangles = JobResult.Result.Triangles;
 			Mesh.vertices = JobResult.Result.Vertices;
+			Mesh.triangles = JobResult.Result.Triangles;
+
+			//UnityEngine.Debug.Log("Vertex Count: " + JobResult.Result.Vertices.Length);
+			//UnityEngine.Debug.Log("Chunk job debug print: " + JobResult.DebugPrint);
 
 			chunk.Mesh = Mesh;
 
-			GameObject isosurfaceMesh = UnityEngine.Object.Instantiate(MeshPrefab, JobResult.Result.Offset, Quaternion.identity);
+			GameObject isosurfaceMesh = UnityEngine.Object.Instantiate(MeshPrefab, JobResult.OriginalJob.Min, Quaternion.identity);
 
 			Material mat = isosurfaceMesh.GetComponent<Renderer>().materials[0];
 			MeshFilter mf = isosurfaceMesh.GetComponent<MeshFilter>();
@@ -65,6 +74,8 @@ namespace Chunks {
 			return chunk;
 		}
 		private static List<ChunkJob> GetChunksAroundPoint(Vector3 Point, ChunkManageInput Input) { // inspired by https://github.com/felixpalmer/lod-terrain/blob/master/js/app/terrain.js
+			UnityEngine.Debug.Log("GetChunksAroundPoint called");
+			
 			List<ChunkJob> ChunkJobs = new List<ChunkJob>();
 			float ChunkSize = Input.MinSizeOfCell * Input.Resolution;
 
@@ -78,7 +89,7 @@ namespace Chunks {
 			for(int x = -1; x < 1; x++) {
 				for(int y = -1; y < 1; y++) {
 					for(int z = -1; z < 1; z++) {
-						ChunkJob c = MakeChunkJob(new Vector3(x, y, z), 1, 0, Input);
+						ChunkJob c = MakeChunkJob(new Vector3(x, y, z), Input.MinSizeOfCell, 0, Input);
 						ChunkJobs.Add(c);
 					}
 				}
@@ -100,8 +111,8 @@ namespace Chunks {
 							if(y == dSize - size) LOD |= 8;  // +y
 							if(z == -dSize) 	  LOD |= 16; // -z
 							if(z == dSize - size) LOD |= 32; // +z
-							if(LOD != 0) { 
-								ChunkJob c = MakeChunkJob(new Vector3(x, y, z), size, LOD, Input);
+							if(LOD != 0) {
+								ChunkJob c = MakeChunkJob(new Vector3(x, y, z), size * Input.MinSizeOfCell, LOD, Input);
 								ChunkJobs.Add(c);
 							}
 						}
