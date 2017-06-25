@@ -27,6 +27,11 @@ public static class UtilFuncs {
 }
 
 namespace Util {
+    public struct NoiseInfo {
+        public Vector3 offset;
+        public float frequency;
+    }
+
     public struct Vector3i {
         public int x;
         public int y;

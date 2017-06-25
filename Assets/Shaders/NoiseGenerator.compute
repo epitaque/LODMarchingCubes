@@ -1,0 +1,23 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#include "simplex4.cginc"
+
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture3D<half> Result;
+
+struct VecFloatPair
+{
+	float3 offset;
+	float frequency;
+};
+StructuredBuffer<VecFloatPair> dataBuffer;
+
+[numthreads(4,4,4)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	// TODO: insert actual code here!
+
+	Result[id.xyz] = cnoise( ((float3)id.xyz + dataBuffer[0].offset) * dataBuffer[0].frequency);
+}

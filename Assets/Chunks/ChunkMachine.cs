@@ -1,37 +1,61 @@
 using System.Collections.Generic;
 using System.Collections;
+
+using System.Threading;
+using System.Threading.Tasks;
+
 using UnityEngine;
 
 namespace Chunks {
 	public class ChunkMachine {
 		int LODs;
-		int Threads;
 		float MinCellSize;
 		int Resolution;
 
 		Hashtable LoadedChunks;
 
-		int NumUnrenderedChunks;
+		int NumChunkJobs;
 
 		Vector3 LoadedChunksCenter;
 		Vector3 UnloadedChunksCenter;
 
+		ChunkManageResult LastResult;
 		ChunkManageInput UsedInput;
-		ChunkJobQueuer JobQueuer;
 
-		List<ChunkJob> MostRecentChunkJobList;
+		List<ChunkJob> MostRecentAllChunkJobList;
 
 		GameObject MeshPrefab;
+		GameObject MeshParent;
 
-		public ChunkMachine(int LODs, int Threads, float MinCellSize, int Resolution, GameObject MeshPrefab) {
+		bool ActiveJob;
+
+		List<Chunk> DestroyList;
+		Queue<ChunkJobResult> RealizeList;
+		List<Chunk> SavedChunks;
+		Hashtable RealizedChunks;
+		bool PreparingChunksMode;
+
+		bool CurrentlyManagingChunks;
+
+		int MaxNumToPrepare = 1;
+
+		float LastUpdateTime = -1f;
+
+		public ChunkMachine(int LODs, float MinCellSize, int MaxNumChunksToPrepare, int Resolution, ComputeShader NoiseComputeShader, GameObject MeshPrefab, GameObject MeshParent) {
 			this.LODs = LODs;
-			this.Threads = Threads;
 			this.MinCellSize = MinCellSize;
 			this.Resolution = Resolution;
 			this.MeshPrefab = MeshPrefab;
+			this.MeshParent = MeshParent;
+			this.MaxNumToPrepare = MaxNumChunksToPrepare;
 
+			this.ActiveJob = false;
+			PreparingChunksMode = false;
+			CurrentlyManagingChunks = false;
+
+			ChunkJobQueuer.Initialize();
 			LoadedChunks = new Hashtable();
-			JobQueuer = new ChunkJobQueuer(Threads);
+
 
 			UsedInput = new ChunkManageInput();
 			LoadedChunksCenter = new Vector3(float.MinValue, float.MinValue, float.MinValue);
@@ -44,60 +68,141 @@ namespace Chunks {
 		}
 
 		public void Update(Vector3 PlayerLocation) {
-			UsedInput.PlayerLocation = PlayerLocation;
-			UsedInput.LastUnrenderedChunkCenter = UnloadedChunksCenter;
-			UsedInput.LastRenderedChunkCenter = LoadedChunksCenter;
-
-			ChunkManageResult mResult = ChunkManager.ManageChunks(UsedInput);
-
-			if(mResult.NewState == ChunkWorkState.CancelLastJob || mResult.NewState == ChunkWorkState.DoNewJobAndCancelLastJob) {
-				JobQueuer.CancelAllJobs();
-				UnloadedChunksCenter = LoadedChunksCenter;
-				NumUnrenderedChunks = 0;
+			if(PreparingChunksMode) {
+				PrepareChunks(MaxNumToPrepare);
+				return;
 			}
-			if(mResult.NewState == ChunkWorkState.DoNewJobAndCancelLastJob) {
-				UnityEngine.Debug.Log("State: DoNewJobAndCancelLastJob");
+			else if(CurrentlyManagingChunks) {
+				ChunkManageResult ManageResult = ChunkManager.CheckManageChunks();
 
-				UnloadedChunksCenter = mResult.NewCenter;
-				NumUnrenderedChunks = mResult.Jobs.Count;
-				MostRecentChunkJobList = mResult.AllChunkJobs;
-				for(int i = 0; i < mResult.Jobs.Count; i++) {
-					JobQueuer.QueueChunk(mResult.Jobs[i]);
+				if(ManageResult != null) {
+					UnityEngine.Debug.Log("Made it here");
+
+					CurrentlyManagingChunks = false;
+					if(ManageResult.NewState == ChunkWorkState.DoNewJob) {
+						this.ActiveJob = true;
+						
+
+						LastResult = ManageResult;
+						UnloadedChunksCenter = ManageResult.NewCenter;
+
+						MostRecentAllChunkJobList = ManageResult.AllChunkJobs;
+
+						ChunkJobQueuer.QueueTasks(ManageResult.Jobs.ToArray());
+					}
 				}
 			}
+			else if(UnityEngine.Time.time - LastUpdateTime > 3.0f) {
+				LastUpdateTime = UnityEngine.Time.time;
 
-			UnityEngine.Debug.Log("LC Count: " + JobQueuer.LoadedChunks.Count + ", NumUnrenderedChunks: " + NumUnrenderedChunks);
+				if(this.ActiveJob) {
+					CheckForAndProcessLoadedChunks();
+					return;
+				}
 
-			if(JobQueuer.LoadedChunks.Count == NumUnrenderedChunks && NumUnrenderedChunks != 0) {
-				NumUnrenderedChunks = 0;
+				UsedInput.LoadedChunks = LoadedChunks;
+				UsedInput.PlayerLocation = PlayerLocation;
+				UsedInput.CurrentChunksCenter = LoadedChunksCenter;
+
+				Task.Run(() => ChunkManager.ManageChunks(UsedInput));
+				CurrentlyManagingChunks = true;
+
+				return;
+			}
+		}
+
+		private void PrepareChunks(int MaxNumToPrepare) {
+			for(int i = 0; i < MaxNumToPrepare; i++) {
+				if(RealizeList.Count == 0) {
+					FinishPreparing();
+					return;
+				}
+
+				Chunk c = ChunkManager.RealizeChunk(RealizeList.Dequeue(), MeshPrefab, MeshParent);
+				RealizedChunks.Add(c.Key, c);
+			}
+		}
+
+		private void FinishPreparing() {
+			PreparingChunksMode = false;
+			foreach(Chunk c in DestroyList) {
+				UnityEngine.Object.Destroy(c.Object);
+			}
+			foreach(DictionaryEntry ent in RealizedChunks) {
+				Chunk c = (Chunk)ent.Value;
+				//c.Object.SetActive(true);
+				//c.Object.GetComponent<MeshCollider>().enabled = true;
+				c.Object.GetComponent<MeshRenderer>().enabled = true;
+			}
+			foreach(Chunk c in SavedChunks) {
+				RealizedChunks.Add(c.Key, c);
+			}
+			LoadedChunks = RealizedChunks;
+		}
+
+		private void ResetPrepareCollections() {
+			DestroyList = new List<Chunk>();
+			RealizeList = new Queue<ChunkJobResult>();
+			RealizedChunks = new Hashtable();
+			SavedChunks = new List<Chunk>();
+		}
+
+		private void CheckForAndProcessLoadedChunks() {
+			ChunkJobResult[] Results = ChunkJobQueuer.CheckStatus();
+
+			if(Results != null) {
+				UnityEngine.Debug.Log("All " + Results.Length + " jobs finished.");
+
+				PreparingChunksMode = true;
+				ActiveJob = false;
+				LoadedChunksCenter = UnloadedChunksCenter;
+				ResetPrepareCollections();
 
 				Hashtable NewChunks = new Hashtable();
 
+				// For each currently loaded chunk...
 				foreach(DictionaryEntry c1 in LoadedChunks) {
 					bool shouldDestroy = true;
-					foreach(ChunkJob c2 in MostRecentChunkJobList) {
+
+					// Check if it's in the most recent chunk job list
+					foreach(ChunkJob c2 in MostRecentAllChunkJobList) {
+
+						// If it is, don't destroy it and add it to the new chunks list
 						if((string)c1.Key == c2.Key) {
 							shouldDestroy = false;
-							NewChunks.Add(c1.Key, c1.Value);
+							SavedChunks.Add((Chunk)c1.Value);
 							break;
 						}
 					}
 
+					// Otherwise, destroy it
 					if(shouldDestroy) {
-						UnityEngine.Object.Destroy(((Chunk)(c1.Value)).Object);
+						//UnityEngine.Debug.Log("Destroying chunk");
+						//UnityEngine.Debug.Log("((Chunk)(c1.Value)).Object.name" + ((Chunk)(c1.Value)).Object.name);
+						//UnityEngine.Object.Destroy(((Chunk)(c1.Value)).Object);
+						DestroyList.Add((Chunk)c1.Value);
 					}
 				}
 
-				foreach(ChunkJobResult JobRes in JobQueuer.LoadedChunks) {
-					Chunk c = ChunkManager.RealizeChunk(JobRes, MeshPrefab);
-					NewChunks.Add(c.Key, c);
+				long totalProcessingTime = 0;
+
+				// For each chunk job...
+				foreach(ChunkJobResult JobRes in Results) {
+					if(JobRes == null) {
+						UnityEngine.Debug.Log("JobResult is null.");
+					}
+					totalProcessingTime += JobRes.ProcessingTime;
+
+					// Load its chunk
+					RealizeList.Enqueue(JobRes);
+					//Chunk c = ChunkManager.RealizeChunk(JobRes, MeshPrefab, MeshParent);
+					//NewChunks.Add(c.Key, c);
 				}
 
-				LoadedChunks = NewChunks;
-				LoadedChunksCenter = UnloadedChunksCenter;
-			}
+				UnityEngine.Debug.Log("Average processing time: " + (totalProcessingTime / Results.Length) + "ms.");
 
-			JobQueuer.Update();
+				//LoadedChunks = NewChunks;
+			}
 		}
 
 	}

@@ -7,9 +7,7 @@ namespace Chunks {
 		public Vector3 PlayerLocation;
 		public int LODs;
 		public Hashtable LoadedChunks;
-		public Hashtable UnrenderedChunks;
-		public Vector3 LastUnrenderedChunkCenter;
-		public Vector3 LastRenderedChunkCenter;
+		public Vector3 CurrentChunksCenter;
 		public float MinSizeOfCell;
 		public int Resolution;
 	}
@@ -26,12 +24,14 @@ namespace Chunks {
 		public int Resolution;
 		public string Key;
 		public int ThreadID;
+		public float JobStartTime;
 	}
 	public class ChunkJobResult {
 		public ChunkJob OriginalJob;
 		public ExtractionResult Result;
 		public long ProcessingTime;
 		public string DebugPrint;
+		public string Error;
 	}
 	public class Chunk {
 		public Vector3 Min;
@@ -44,7 +44,6 @@ namespace Chunks {
 	}
 	public enum ChunkWorkState {
 		DoNothing,
-		CancelLastJob, 
-		DoNewJobAndCancelLastJob
+		DoNewJob
 	}
 }

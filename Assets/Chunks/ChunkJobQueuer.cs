@@ -1,118 +1,83 @@
 // Multithreaded Chunk Generator
-using System.Collections;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 using System.Threading;
 using UnityEngine;
 
 namespace Chunks {
-public class ChunkJobQueuer {
-	public Queue LoadedChunks; // ChunkJobResult
-	public Queue UnloadedChunks; // ChunkJob
-	
-	private int Threads = 4;
-	private System.ComponentModel.BackgroundWorker[] BackgroundWorkers;  
+public static class ChunkJobQueuer {
+	public static void Initialize() {
+		Tasks = null;
+		WorkState = 0;
+		Error = "";
+		Results = null;
+		NumDoneTasks = 0;
+	}
 
-	private bool[] BusyThreads;
+	public static bool QueueTasks(ChunkJob[] tasks) {
+		UnityEngine.Debug.Log("QueueTasks called");
 
-	public ChunkJobQueuer (int NumberOfThreads) {
-		LoadedChunks = new Queue();
-		UnloadedChunks = new Queue();
-
-		Threads = NumberOfThreads;
-		BusyThreads = new bool[Threads];
-		for(int i = 0; i < Threads; i++) {
-			BusyThreads[i] = false;
+		if(WorkState != 0) {
+			return false;
 		}
-
-		InitializeBackgroundWorkers();
-	}
-
-	public void Update() {
-		if(UnloadedChunks.Count > 0) {
-			for(int i = 0; i < Threads; i++) {
-				if(!BusyThreads[i] && !BackgroundWorkers[i].IsBusy) {
-					//UnityEngine.Debug.Log("Queueing Chunk Job.");
-
-					BusyThreads[i] = true;
-					ChunkJob chunkJob = (ChunkJob)UnloadedChunks.Dequeue();
-					chunkJob.ThreadID = i;
-
-					try {
-						BackgroundWorkers[i].RunWorkerAsync(chunkJob);
-					}
-					catch(System.InvalidOperationException exc) {
-						//UnloadedChunks.Enqueue(chunkJob);
-					}
-				}
-			}
-		}
-	}
-
-	void InitializeBackgroundWorkers() {
-		BackgroundWorkers = new System.ComponentModel.BackgroundWorker[Threads];
-		for(int i = 0; i < Threads; i++) {
-			BackgroundWorkers[i] = new System.ComponentModel.BackgroundWorker();
-			BackgroundWorkers[i].WorkerSupportsCancellation = true;
-			BackgroundWorkers[i].DoWork += 
-				new System.ComponentModel.DoWorkEventHandler(BackgroundWorkers_DoWork_ThreadedGenerateChunk);  
-			BackgroundWorkers[i].RunWorkerCompleted +=  
-				new System.ComponentModel.RunWorkerCompletedEventHandler(BackgroundWorkers_RunWorkerCompleted_ThreadedGenerateChunk);  
-		}
-	}
-
-	public void QueueChunk(ChunkJob Job) {
-		UnityEngine.Debug.Log("Job Queued");
-		UnloadedChunks.Enqueue(Job);
-	}
-
-	void BackgroundWorkers_DoWork_ThreadedGenerateChunk (System.Object sender,
-		System.ComponentModel.DoWorkEventArgs e) {
-
-		System.ComponentModel.BackgroundWorker worker = (sender as System.ComponentModel.BackgroundWorker);
-
-		ChunkJob Job = (ChunkJob)e.Argument;
-		ChunkJobResult res = ChunkGenerator.CreateChunk(Job);
-
-		if(worker.CancellationPending == true) {
-			e.Cancel = true;
-			return;
-		}
-
-		e.Result = res;
-	}
-
-	public void CancelAllJobs() {
-		UnityEngine.Debug.Log("All jobs canceled.");
-
-		for(int i = 0; i < Threads; i++) {
-			if(BusyThreads[i] && BackgroundWorkers[i].IsBusy) {
-				UnityEngine.Debug.Log("Worker " + i + " canceled.");
-
-				BackgroundWorkers[i].CancelAsync();
-				LoadedChunks.Clear();
-				UnloadedChunks.Clear();
-				BusyThreads[i] = false;
-			}
-		}
-	}
-
-	private void BackgroundWorkers_RunWorkerCompleted_ThreadedGenerateChunk (System.Object sender,  
-		System.ComponentModel.RunWorkerCompletedEventArgs e) { 
-		UnityEngine.Debug.Log("Worker completed.");
-        if(e.Error != null)
-        {
-            UnityEngine.Debug.LogError("There was an error! " + e.Error.ToString());
-        }
 		else {
-			ChunkJobResult result = (ChunkJobResult)e.Result;  
-			LoadedChunks.Enqueue(result);
+			NumDoneTasks = 0;
+			Results = new ConcurrentBag<ChunkJobResult>();
+			Error = "";
+			Tasks = tasks;
+			// 1. Create a new thread
+			Thread thread = new Thread(new ThreadStart(WorkThreadFunction));
+			thread.Start();
 
-			BusyThreads[result.OriginalJob.ThreadID] = false;
-
-			if(UnloadedChunks.Count > 0) {
-				Update();
-			}
+			return true;
 		}
-	}  
+
+	}
+	
+	public static ChunkJobResult[] CheckStatus() {
+		UnityEngine.Debug.Log("Num done tasks: " + NumDoneTasks + " / " + Tasks.Length);
+
+		if(WorkState == 3) {
+			UnityEngine.Debug.Log("Error processing chunkJobs: " + Error);
+
+			WorkState = 0;
+			return null;
+		}
+		else if(WorkState == 2) {
+			WorkState = 0;
+			return Results.ToArray();
+		}
+		else {
+			WorkState = 0;
+			return null;
+		}
+	}
+
+	// 0 = Doing nothing
+	// 1 = Work in progress
+	// 2 = Done work, need processing
+	// 3 = Done with errors
+
+	private static int WorkState;
+	private static ChunkJob[] Tasks;
+	private static ConcurrentBag<ChunkJobResult> Results;
+	private static string Error;
+	private static int NumDoneTasks;
+
+	private static void WorkThreadFunction() {
+		try
+		{
+			Parallel.ForEach(Tasks, (ChunkJob job) => {
+				Results.Add(ChunkGenerator.CreateChunk(job));
+				NumDoneTasks++;
+			});
+			WorkState = 2;
+		}
+		catch (System.Exception ex)
+		{
+			Error = ex.Message;
+			WorkState = 3;
+		}
+	}	
 }
 }

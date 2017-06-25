@@ -7,38 +7,49 @@ using UnityEngine;
 namespace Chunks {
 public static class ChunkGenerator {
 	public static ChunkJobResult CreateChunk(ChunkJob Job) {
-		Stopwatch s = new Stopwatch();
-		s.Start();
-		SE.OpenSimplexNoise noise = new SE.OpenSimplexNoise(1);
 		ChunkJobResult result = new ChunkJobResult();
 
-		result.OriginalJob = Job;
-		result.DebugPrint = "";
+		try {
+			Stopwatch s = new Stopwatch();
+			s.Start();
+			SE.OpenSimplexNoise noise = new SE.OpenSimplexNoise(1);
 
-		ExtractionInput input = new ExtractionInput();
-		input.Isovalue = 0;
-		input.LODSides = Job.LOD;
-		input.Resolution = new Util.Vector3i(Job.Resolution, Job.Resolution, Job.Resolution);
-		input.Size = new Vector3(Job.CellSize, Job.CellSize, Job.CellSize);
+			result.Error = null;
+			result.OriginalJob = Job;
+			result.DebugPrint = "";
 
-		int numTimesSampled = 0;
 
-		input.Sample = (float x, float y, float z) => {
-			numTimesSampled++;
-			float res = sample(noise, x + Job.Min.x, y + Job.Min.y, z + Job.Min.z);
-			return res;
-		};
+			ExtractionInput input = new ExtractionInput();
+			input.Isovalue = 0;
+			input.LODSides = Job.LOD;
+			input.Resolution = new Util.Vector3i(Job.Resolution, Job.Resolution, Job.Resolution);
+			input.Size = new Vector3(Job.CellSize, Job.CellSize, Job.CellSize);
 
-		ExtractionResult ExResult = SurfaceExtractor.ExtractSurface(input);
-		result.Result = ExResult;
+			int numTimesSampled = 0;
 
-		s.Stop();	
-		result.ProcessingTime = s.ElapsedMilliseconds;
+			input.Sample = (float x, float y, float z) => {
+				numTimesSampled++;
+				float res = sample(noise, x + Job.Min.x, y + Job.Min.y, z + Job.Min.z);
+				return res;
+			};
+
+			ExtractionResult ExResult = SurfaceExtractor.ExtractSurface(input);
+			result.Result = ExResult;
+
+
+
+			s.Stop();	
+			result.ProcessingTime = s.ElapsedMilliseconds;
+
+		}
+		catch (System.Exception exc) {
+			result.Error = "Error in thread " + Job.ThreadID + ": " + exc.Message + ", Stacktrace: " + exc.StackTrace;
+		}
 		return result;
 	}
 
 
-	private static float sample(SE.OpenSimplexNoise noise, float x, float y, float z) {
+	private static float sample(SE.OpenSimplexNoise noise, float x, float y, float z) {	
 		float r = 0.2f;
 		float f = 0.03f;
 		float ms = 0.009f;

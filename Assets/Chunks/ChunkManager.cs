@@ -5,20 +5,22 @@ using UnityEngine;
 
 namespace Chunks {
 	public static class ChunkManager {
-		public static ChunkManageResult ManageChunks(ChunkManageInput Input) {
+
+		public static ChunkManageResult result;
+
+		public static void ManageChunks(ChunkManageInput Input) {
 			ChunkManageResult Result = new ChunkManageResult();
 			Result.NewState = ChunkWorkState.DoNothing;
 
 			Vector3 PlayerGridLocationNormalized = GetNormalizedGridLocation(Input.PlayerLocation, Input);
 			Vector3 PlayerGridLocationRounded = GetRoundedGridLocation(PlayerGridLocationNormalized);
 
-			/*UnityEngine.Debug.Log("PlayerGridLocationRounded: " + PlayerGridLocationRounded);
-			UnityEngine.Debug.Log("Input.LastRenderedChunkCenter: " + Input.LastRenderedChunkCenter);
-			UnityEngine.Debug.Log("Input.LastUnrenderedChunkCenter: " + Input.LastUnrenderedChunkCenter);*/
+			UnityEngine.Debug.Log("PlayerGridLocationRounded: " + PlayerGridLocationRounded);
+			UnityEngine.Debug.Log("Input.CurrentChunksCenter: " + Input.CurrentChunksCenter);
 
 
-			if(PlayerGridLocationRounded != Input.LastRenderedChunkCenter && PlayerGridLocationRounded != Input.LastUnrenderedChunkCenter) {
-				Result.NewState = ChunkWorkState.DoNewJobAndCancelLastJob;
+			if(PlayerGridLocationRounded != Input.CurrentChunksCenter) {
+				Result.NewState = ChunkWorkState.DoNewJob;
 
 				List<ChunkJob> NeededChunks = new List<ChunkJob>();
 				Hashtable OldChunks = Input.LoadedChunks;
@@ -35,13 +37,21 @@ namespace Chunks {
 				Result.Jobs = NeededChunks;
 
 			}
-			else if(PlayerGridLocationRounded == Input.LastRenderedChunkCenter && PlayerGridLocationRounded != Input.LastUnrenderedChunkCenter) {
-				Result.NewState = ChunkWorkState.CancelLastJob;
-			}
 
-			return Result;
+			result = Result;
 		}
-		public static Chunk RealizeChunk(ChunkJobResult JobResult, GameObject MeshPrefab) {
+		public static ChunkManageResult CheckManageChunks() {
+			if(result == null) {
+				return null;
+			}
+			else {
+				ChunkManageResult res = result;
+				result = null;
+				return res;
+			}
+		} 
+
+		public static Chunk RealizeChunk(ChunkJobResult JobResult, GameObject MeshPrefab, GameObject Parent) {
 			Chunk chunk = new Chunk();
 			chunk.Min = JobResult.OriginalJob.Min;
 			chunk.LOD = JobResult.OriginalJob.LOD;
@@ -59,16 +69,25 @@ namespace Chunks {
 			chunk.Mesh = Mesh;
 
 			GameObject isosurfaceMesh = UnityEngine.Object.Instantiate(MeshPrefab, JobResult.OriginalJob.Min, Quaternion.identity);
+			isosurfaceMesh.GetComponent<Transform>().SetParent(Parent.GetComponent<Transform>());
+			isosurfaceMesh.name = "Chunk [" + JobResult.OriginalJob.Key  + "]";
 
 			Material mat = isosurfaceMesh.GetComponent<Renderer>().materials[0];
 			MeshFilter mf = isosurfaceMesh.GetComponent<MeshFilter>();
 			MeshCollider mc = isosurfaceMesh.GetComponent<MeshCollider>();
 
+			isosurfaceMesh.GetComponent<MeshRenderer>().enabled = false;
+			mc.enabled = false;
+			chunk.Object = isosurfaceMesh;
+
 			mf.mesh = Mesh;
 			mc.sharedMesh = mf.mesh;
 			//if(m.normals != null) mf.mesh.normals = m.normals;
 			mf.mesh.RecalculateNormals();
-			mf.mesh.RecalculateBounds();
+
+			if(JobResult.OriginalJob.CellSize <= 4) {
+				//mf.mesh.RecalculateBounds();
+			}
 
 
 			return chunk;
@@ -89,7 +108,7 @@ namespace Chunks {
 			for(int x = -1; x < 1; x++) {
 				for(int y = -1; y < 1; y++) {
 					for(int z = -1; z < 1; z++) {
-						ChunkJob c = MakeChunkJob(new Vector3(x, y, z), Input.MinSizeOfCell, 0, Input);
+						ChunkJob c = MakeChunkJob( (new Vector3(x, y, z) + Point) * ChunkSize, Input.MinSizeOfCell, 0, Input);
 						ChunkJobs.Add(c);
 					}
 				}
@@ -112,7 +131,7 @@ namespace Chunks {
 							if(z == -dSize) 	  LOD |= 16; // -z
 							if(z == dSize - size) LOD |= 32; // +z
 							if(LOD != 0) {
-								ChunkJob c = MakeChunkJob(new Vector3(x, y, z), size * Input.MinSizeOfCell, LOD, Input);
+								ChunkJob c = MakeChunkJob((new Vector3(x, y, z) + Point) * ChunkSize, size * Input.MinSizeOfCell, LOD, Input);
 								ChunkJobs.Add(c);
 							}
 						}
@@ -120,10 +139,6 @@ namespace Chunks {
 				}
 			}
 
-			foreach(ChunkJob job in ChunkJobs) {
-				job.Min *= ChunkSize;
-				job.Min += Point;
-			}
 			return ChunkJobs;
 		}
 		private static ChunkJob MakeChunkJob(Vector3 Min, float Size, byte LOD, ChunkManageInput Input) {
