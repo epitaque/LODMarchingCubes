@@ -4,6 +4,8 @@ using Util;
 public static class UtilFuncs {
     public static SE.OpenSimplexNoise s = new SE.OpenSimplexNoise(2);
 
+    public delegate void GameObjectModifier(GameObject obj);
+
     public delegate float Sampler(float x, float y, float z);
 
     public static float Sample(float x, float y, float z) {
@@ -23,7 +25,13 @@ public static class UtilFuncs {
         float mu = (isolevel - point1.density) / (point2.density - point1.density); 
         return point1.position + mu * (point2.position - point1.position); 
     }
-
+    public static Color SinColor(float value) {
+        float frequency = 0.3f;
+        float red   = Mathf.Sin(frequency*value + 0) * 0.5f + 0.5f;
+        float green = Mathf.Sin(frequency*value + 2) * 0.5f + 0.5f;
+        float blue  = Mathf.Sin(frequency*value + 4) * 0.5f + 0.5f;
+        return new Color(red, green, blue);
+    }
 }
 
 namespace Util {

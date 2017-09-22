@@ -1,13 +1,12 @@
 using System.Collections.Generic;
 using System.Collections;
-
-using System.Threading;
 using System.Threading.Tasks;
 
 using UnityEngine;
 
-namespace Chunks {
-	public class ChunkMachine {
+namespace Chunks
+{
+    public class ChunkMachine {
 		int LODs;
 		float MinCellSize;
 		int Resolution;
@@ -24,8 +23,8 @@ namespace Chunks {
 
 		List<ChunkJob> MostRecentAllChunkJobList;
 
-		GameObject MeshPrefab;
-		GameObject MeshParent;
+		Transform ChunkParent;
+		GameObject ChunkPrefab;
 
 		bool ActiveJob;
 
@@ -41,20 +40,25 @@ namespace Chunks {
 
 		float LastUpdateTime = -1f;
 
-		public ChunkMachine(int LODs, float MinCellSize, int MaxNumChunksToPrepare, int Resolution, ComputeShader NoiseComputeShader, GameObject MeshPrefab, GameObject MeshParent) {
+		ComputeShader NoiseComputeShader;
+
+		CObjectPool<ChunkManageResult> ResultPool;
+
+		public ChunkMachine(int LODs, float MinCellSize, int MaxNumChunksToPrepare, int Resolution, ComputeShader NoiseComputeShader, GameObject ChunkPrefab, Transform ChunkParent) {
 			this.LODs = LODs;
 			this.MinCellSize = MinCellSize;
 			this.Resolution = Resolution;
-			this.MeshPrefab = MeshPrefab;
-			this.MeshParent = MeshParent;
+			this.ChunkPrefab = ChunkPrefab;
 			this.MaxNumToPrepare = MaxNumChunksToPrepare;
-
+			this.NoiseComputeShader = NoiseComputeShader;
+			this.ChunkParent = ChunkParent;
 			this.ActiveJob = false;
 			PreparingChunksMode = false;
 			CurrentlyManagingChunks = false;
 
 			ChunkJobQueuer.Initialize();
-			LoadedChunks = new Hashtable();
+			this.LoadedChunks = new Hashtable();
+			this.ResultPool = new CObjectPool<ChunkManageResult>(() => new ChunkManageResult());
 
 
 			UsedInput = new ChunkManageInput();
@@ -76,12 +80,9 @@ namespace Chunks {
 				ChunkManageResult ManageResult = ChunkManager.CheckManageChunks();
 
 				if(ManageResult != null) {
-					UnityEngine.Debug.Log("Made it here");
-
 					CurrentlyManagingChunks = false;
 					if(ManageResult.NewState == ChunkWorkState.DoNewJob) {
 						this.ActiveJob = true;
-						
 
 						LastResult = ManageResult;
 						UnloadedChunksCenter = ManageResult.NewCenter;
@@ -112,13 +113,15 @@ namespace Chunks {
 		}
 
 		private void PrepareChunks(int MaxNumToPrepare) {
+			UnityEngine.Debug.Log("Preparing Chunks");
+
 			for(int i = 0; i < MaxNumToPrepare; i++) {
 				if(RealizeList.Count == 0) {
 					FinishPreparing();
 					return;
 				}
 
-				Chunk c = ChunkManager.RealizeChunk(RealizeList.Dequeue(), MeshPrefab, MeshParent);
+				Chunk c = ChunkGenerator.RealizeChunk(RealizeList.Dequeue(), ChunkPrefab, ChunkParent);
 				RealizedChunks.Add(c.Key, c);
 			}
 		}
@@ -126,7 +129,8 @@ namespace Chunks {
 		private void FinishPreparing() {
 			PreparingChunksMode = false;
 			foreach(Chunk c in DestroyList) {
-				UnityEngine.Object.Destroy(c.Object);
+				ObjectPool.Instance.PushToPool(ref c.Object);
+				//UnityEngine.Object.Destroy(c.Object);
 			}
 			foreach(DictionaryEntry ent in RealizedChunks) {
 				Chunk c = (Chunk)ent.Value;

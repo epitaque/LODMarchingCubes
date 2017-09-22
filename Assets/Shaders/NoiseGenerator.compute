@@ -5,7 +5,7 @@
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
-RWTexture3D<half> Result;
+RWTexture3D<float> Result;
 
 struct VecFloatPair
 {
@@ -17,7 +17,36 @@ StructuredBuffer<VecFloatPair> dataBuffer;
 [numthreads(4,4,4)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-	// TODO: insert actual code here!
+	if(id.x == 63 || id.y == 63 || id.z == 63) {
+		if(id.x == 63) {
+			float3 pos = float3(id.x + 1, id.y, id.z);
+			Result[(uint3)pos] = cnoise( (pos + dataBuffer[0].offset) * dataBuffer[0].frequency);
+		}
+		if(id.y == 63) {
+			float3 pos = float3(id.x, id.y + 1, id.z);
+			Result[(uint3)pos] = cnoise( (pos + dataBuffer[0].offset) * dataBuffer[0].frequency);
+		}
+		if(id.z == 63) {
+			float3 pos = float3(id.x, id.y, id.z + 1);
+			Result[(uint3)pos] = cnoise( (pos + dataBuffer[0].offset) * dataBuffer[0].frequency);
+		}
+		if(id.x == 63 && id.y == 63) {
+			float3 pos = float3(id.x + 1, id.y + 1, id.z);
+			Result[(uint3)pos] = cnoise( (pos + dataBuffer[0].offset) * dataBuffer[0].frequency);
+		}
+		if(id.x == 63 && id.z == 63) {
+			float3 pos = float3(id.x + 1, id.y, id.z + 1);
+			Result[(uint3)pos] = cnoise( (pos + dataBuffer[0].offset) * dataBuffer[0].frequency);
+		}
+		if(id.y == 63 && id.z == 63) {
+			float3 pos = float3(id.x, id.y + 1, id.z + 1);
+			Result[(uint3)pos] = cnoise( (pos + dataBuffer[0].offset) * dataBuffer[0].frequency);
+		}
+		if(id.x == 63 && id.y == 63 && id.z == 63) {
+			float3 pos = float3(id.x + 1, id.y + 1, id.z + 1);
+			Result[(uint3)pos] = cnoise( (pos + dataBuffer[0].offset) * dataBuffer[0].frequency);
+		}
+	}
 
-	Result[id.xyz] = cnoise( ((float3)id.xyz + dataBuffer[0].offset) * dataBuffer[0].frequency);
+	Result[id] = cnoise( ((float3)id.xyz + dataBuffer[0].offset) * dataBuffer[0].frequency);
 }

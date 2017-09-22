@@ -48,7 +48,6 @@ public static class ChunkGenerator {
 		return result;
 	}
 
-
 	private static float sample(SE.OpenSimplexNoise noise, float x, float y, float z) {	
 		float r = 0.2f;
 		float f = 0.03f;
@@ -59,6 +58,50 @@ public static class ChunkGenerator {
 		result += (float)noise.Evaluate(x*f, y*f, z*ms) * 50f;
 
 		return result;
-	} 
+	}
+	public static Chunk RealizeChunk(ChunkJobResult JobResult, GameObject ChunkPrefab, Transform ChunkParent) {
+		//UnityEngine.Debug.Log("RealizeChunk called");
+
+		Chunk chunk = new Chunk();
+		chunk.Min = JobResult.OriginalJob.Min;
+		chunk.LOD = JobResult.OriginalJob.LOD;
+		chunk.Resolution = JobResult.OriginalJob.Resolution;
+		chunk.CellSize = JobResult.OriginalJob.CellSize;
+		chunk.Key = JobResult.OriginalJob.Key;
+
+		UnityEngine.Mesh Mesh = new UnityEngine.Mesh();
+		Mesh.vertices = JobResult.Result.Vertices;
+		Mesh.triangles = JobResult.Result.Triangles;
+
+		//UnityEngine.Debug.Log("Vertex Count: " + JobResult.Result.Vertices.Length);
+		//UnityEngine.Debug.Log("Chunk job debug print: " + JobResult.DebugPrint);
+
+		chunk.Mesh = Mesh;
+
+		GameObject ChunkObject = ObjectPool.Instance.PopFromPool(ChunkPrefab, false, true, ChunkParent);
+
+		ChunkObject.GetComponent<Transform>().SetPositionAndRotation(JobResult.OriginalJob.Min, Quaternion.identity);
+
+		Material mat = ChunkObject.GetComponent<Renderer>().materials[0];
+		MeshFilter mf = ChunkObject.GetComponent<MeshFilter>();
+		MeshCollider mc = ChunkObject.GetComponent<MeshCollider>();
+
+		ChunkObject.GetComponent<MeshRenderer>().enabled = false;
+		mc.enabled = false;
+		chunk.Object = ChunkObject;
+
+		mf.mesh = Mesh;
+		mc.sharedMesh = mf.mesh;
+		//if(m.normals != null) mf.mesh.normals = m.normals;
+		mf.mesh.RecalculateNormals();
+
+		if(JobResult.OriginalJob.CellSize <= 4) {
+			//mf.mesh.RecalculateBounds();
+		}
+
+
+		return chunk;
+	}
+
 }
 }

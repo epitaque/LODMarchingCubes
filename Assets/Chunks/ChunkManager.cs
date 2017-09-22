@@ -51,47 +51,6 @@ namespace Chunks {
 			}
 		} 
 
-		public static Chunk RealizeChunk(ChunkJobResult JobResult, GameObject MeshPrefab, GameObject Parent) {
-			Chunk chunk = new Chunk();
-			chunk.Min = JobResult.OriginalJob.Min;
-			chunk.LOD = JobResult.OriginalJob.LOD;
-			chunk.Resolution = JobResult.OriginalJob.Resolution;
-			chunk.CellSize = JobResult.OriginalJob.CellSize;
-			chunk.Key = JobResult.OriginalJob.Key;
-
-			UnityEngine.Mesh Mesh = new UnityEngine.Mesh();
-			Mesh.vertices = JobResult.Result.Vertices;
-			Mesh.triangles = JobResult.Result.Triangles;
-
-			//UnityEngine.Debug.Log("Vertex Count: " + JobResult.Result.Vertices.Length);
-			//UnityEngine.Debug.Log("Chunk job debug print: " + JobResult.DebugPrint);
-
-			chunk.Mesh = Mesh;
-
-			GameObject isosurfaceMesh = UnityEngine.Object.Instantiate(MeshPrefab, JobResult.OriginalJob.Min, Quaternion.identity);
-			isosurfaceMesh.GetComponent<Transform>().SetParent(Parent.GetComponent<Transform>());
-			isosurfaceMesh.name = "Chunk [" + JobResult.OriginalJob.Key  + "]";
-
-			Material mat = isosurfaceMesh.GetComponent<Renderer>().materials[0];
-			MeshFilter mf = isosurfaceMesh.GetComponent<MeshFilter>();
-			MeshCollider mc = isosurfaceMesh.GetComponent<MeshCollider>();
-
-			isosurfaceMesh.GetComponent<MeshRenderer>().enabled = false;
-			mc.enabled = false;
-			chunk.Object = isosurfaceMesh;
-
-			mf.mesh = Mesh;
-			mc.sharedMesh = mf.mesh;
-			//if(m.normals != null) mf.mesh.normals = m.normals;
-			mf.mesh.RecalculateNormals();
-
-			if(JobResult.OriginalJob.CellSize <= 4) {
-				//mf.mesh.RecalculateBounds();
-			}
-
-
-			return chunk;
-		}
 		private static List<ChunkJob> GetChunksAroundPoint(Vector3 Point, ChunkManageInput Input) { // inspired by https://github.com/felixpalmer/lod-terrain/blob/master/js/app/terrain.js
 			UnityEngine.Debug.Log("GetChunksAroundPoint called");
 			

@@ -17,6 +17,15 @@ namespace Chunks {
 		public List<ChunkJob> AllChunkJobs;
 		public Vector3 NewCenter;
 	}
+	public class NoiseGenerationRequest {
+		public int Lods;
+		public Vector3 Center;
+	}
+	public class NoiseGenerationResult {
+		float[][] Samples;
+		RenderTexture[] Textures;
+	}
+
 	public class ChunkJob {
 		public Vector3 Min;
 		public byte LOD;
@@ -25,6 +34,7 @@ namespace Chunks {
 		public string Key;
 		public int ThreadID;
 		public float JobStartTime;
+		public float[] Samples; // Size^3 array of sample values
 	}
 	public class ChunkJobResult {
 		public ChunkJob OriginalJob;
