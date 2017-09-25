@@ -29,7 +29,7 @@ public class MCCreator : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-		octreeNode = SE.Octree.Octree.Create();
+		//octreeNode = SE.Octree.Ops.Create();
 		Running = true;
 
 		/*int MaxChunkObjects = 8;
@@ -125,13 +125,13 @@ public class MCCreator : MonoBehaviour {
 				UnityEngine.Debug.Log("NumObjectsInstnatiated: " + ObjectPool.numObjectsInstantiated + ", destroyed: " + ObjectPool.numObjectsDestroyed); 
 			}*/
 
-			SE.Octree.Octree.Adapt(octreeNode, pPos / 64f, 15);
+			//SE.Octree.Ops.Adapt(octreeNode, pPos / 64f, 15);
 		}
 	}
 
 	void OnDrawGizmos() {
 		if(Running) {
-			SE.Octree.Octree.DrawGizmos(octreeNode);
+			SE.Octree.Ops.DrawGizmos(octreeNode);
 		}
 	}
 }

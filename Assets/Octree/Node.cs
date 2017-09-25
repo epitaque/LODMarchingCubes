@@ -11,6 +11,7 @@ public class Node {
     public float Size;
     public bool IsLeaf;
     public int Depth;
+    public Vector4 Key;
 }
     
 }
