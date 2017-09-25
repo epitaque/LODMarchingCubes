@@ -58,8 +58,8 @@ public static class Ops {
         }
         else {
             for(int i = 0; i < 8; i++) {
-                root.Nodes.Remove(node.Children[i].Key);
-                root.IDNodes.Remove(node.Children[i].ID);
+                Debug.Assert(root.Nodes.Remove(node.Children[i].Key));
+                Debug.Assert(root.IDNodes.Remove(node.Children[i].ID));
             }
             node.Children = null;
             node.IsLeaf = true;
@@ -69,7 +69,8 @@ public static class Ops {
     // make sure position is between [-1, -1, -1] and [1, 1, 1]
     public static void Adapt(Root root, Vector3 position, int maxDepth, int maxIterations) {
         LoopRefine(root, position, maxDepth, maxIterations);
-        //LoopCoarsen(root, position, maxIterations);
+        LoopCoarsen(root, position, maxIterations);
+        LoopMakeConforming(root, maxIterations);
     }
 
     public static void LoopRefine(Root root, Vector3 position, int maxDepth, int maxIterations) {
@@ -85,33 +86,53 @@ public static class Ops {
     }
 
     public static void LoopMakeConforming(Root root, int maxIterations) {
+        Debug.Log("LoopMakeConforming called");
+
+
         for(int i = 0; i < maxIterations; i++) {
-            if(RecursiveMakeConforming(root, root.RootNode)) {
-                //return;
+            Hashtable splitList = new Hashtable();
+            bool result = RecursiveMakeConforming(root, root.RootNode, splitList);
+            foreach(Node n in splitList.Values) {
+                if(n.IsLeaf) {
+                    SplitNode(root, n);
+                }
+            }
+
+            if(result) {
+                break;
+            }
+
+            if(i == maxIterations - 1) {
+                Debug.LogWarning("Maximum LoopMakeConforming iterations reached at " + maxIterations);
             }
         }
     }
 
-    public static bool RecursiveMakeConforming(Root root, Node node) {
+    public static bool RecursiveMakeConforming(Root root, Node node, Hashtable splitList) {
         bool returning = true;
         if(node.IsLeaf) {
             List<Node> neighbors = FindNeighbors(root, node);
-            Debug.Log("neighbors length: " + neighbors.Count);
+            //Debug.Log("neighbors length: " + neighbors.Count);
             foreach(Node neighbor in neighbors) {
                 if(node.ID == 28) {
                     Debug.Log("node #" + node.ID + " depth: " + node.Depth + ", neighbor (#" + neighbor.ID + ") depth: " + neighbor.Depth);
                 }
-                if(neighbor.Depth < node.Depth + 1 && neighbor.IsLeaf) {
+                if(node.Depth - 1 > neighbor.Depth && neighbor.IsLeaf) {
                     //Debug.Assert(neighbor.IsLeaf);
-                    Debug.LogWarning("Splitting node " + neighbor.ID + " to make octree conforming");
-                    SplitNode(root, neighbor);
+                    //Debug.LogWarning("Splitting node " + neighbor.ID + " to make octree conforming");
+                    if(!splitList.ContainsKey(neighbor.Key)) {
+                        splitList.Add(neighbor.Key, neighbor);
+                    }
+                    //SplitNode(root, neighbor);
                     returning = false;
                 }
             }
         }
         else {
             for(int i = 0; i < 8; i++) {
-                RecursiveMakeConforming(root, node.Children[i]);
+                if(!RecursiveMakeConforming(root, node.Children[i], splitList)) {
+                    returning = false;
+                }
             }
         }
         return returning;

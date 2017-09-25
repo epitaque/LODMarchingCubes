@@ -30,11 +30,13 @@ namespace SE.Octree {
         }
 
         public void Update(Vector3 position) {
-			SE.Octree.Ops.Adapt(Root, position / 64f, 15, 15);
+			SE.Octree.Ops.Adapt(Root, position / 64f, 8, 15);
+			Mesh();
         }
 
 		public void MakeConforming() {
-			Ops.LoopMakeConforming(Root, 1);
+			//Debug.Log("Make conforming");
+			Ops.LoopMakeConforming(Root, 2);
 		}
 
         public void DrawGizmos() {
