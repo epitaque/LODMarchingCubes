@@ -52,6 +52,7 @@ namespace SE {
                 Debug.Log("No neighbor #" + neighborNumber + " for node #" + nodeID);
             }
             else {
+                Debug.Log("Neigbhor #^ exists. Node #" + n.ID + ", IsLeaf: " + n.IsLeaf + ". Parent #" + n.Parent.ID + ", Parent.IsLeaf: " + n.Parent.IsLeaf + " Parent's parent ID: " + n.Parent.Parent.ID);
                 Cubes.Add(new Vector4(n.Position.x + n.Size/2f, n.Position.y + n.Size/2f, n.Position.z + n.Size/2f, n.Size * 0.9f) * WorldSize);
             }
         }

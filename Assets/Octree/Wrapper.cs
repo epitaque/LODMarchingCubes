@@ -14,13 +14,15 @@ namespace SE.Octree {
         List<Node> MeshedNodes; 
 		Hashtable UnityObjects;
         public float WorldSize;
+		public float MaxDepth;
 
-        public Wrapper(Transform parent, GameObject meshPrefab, float worldSize, Console console) {
+        public Wrapper(Transform parent, GameObject meshPrefab, float worldSize, float maxDepth, Console console) {
             Parent = parent;
             MeshPrefab = meshPrefab;
             MeshedNodes = new List<Node>();
 			UnityObjects = new Hashtable();
             WorldSize = worldSize;
+			MaxDepth = maxDepth;
 			Console = console;
 			Root = Ops.Create();
 			
@@ -30,7 +32,7 @@ namespace SE.Octree {
         }
 
         public void Update(Vector3 position) {
-			SE.Octree.Ops.Adapt(Root, position / 64f, 8, 15);
+			SE.Octree.Ops.Adapt(Root, position / WorldSize, 11, 15);
 			Mesh();
         }
 
@@ -78,7 +80,7 @@ namespace SE.Octree {
 			clone.name = "Node " + node.ID + ", Depth " + node.Depth;
 
 			MeshFilter mf = clone.GetComponent<MeshFilter>();
-			mf.mesh = SE.Octree.Ops.PolyganizeNode(node, WorldSize);
+			mf.mesh = SE.Octree.Ops.PolyganizeNode(Root, node, WorldSize);
 			clone.GetComponent<Transform>().SetParent(Parent);
 			clone.GetComponent<Transform>().SetPositionAndRotation(node.Position * WorldSize, Quaternion.identity);
 

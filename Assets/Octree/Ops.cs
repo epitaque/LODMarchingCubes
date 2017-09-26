@@ -50,20 +50,19 @@ public static class Ops {
 
     public static void CoarsenNode(Root root, Node node) {
         UnityEngine.Debug.Assert(node.ID != 0);
-        if(!node.Children[0].IsLeaf) {
-            Debug.LogWarning("Coarsening node whose children isn't a leaf. ID: " + node.ID);
-            for(int i = 0; i < 8; i++) {
+        
+        for(int i = 0; i < 8; i++) {
+            if(!node.Children[i].IsLeaf) {
+                Debug.LogWarning("Coarsening node whose children isn't a leaf. ID: " + node.ID);
                 CoarsenNode(root, node.Children[i]);
             }
         }
-        else {
-            for(int i = 0; i < 8; i++) {
-                Debug.Assert(root.Nodes.Remove(node.Children[i].Key));
-                Debug.Assert(root.IDNodes.Remove(node.Children[i].ID));
-            }
-            node.Children = null;
-            node.IsLeaf = true;
+        for(int i = 0; i < 8; i++) {
+            Debug.Assert(root.Nodes.Remove(node.Children[i].Key));
+            Debug.Assert(root.IDNodes.Remove(node.Children[i].ID));
         }
+        node.Children = null;
+        node.IsLeaf = true;
     }
 
     // make sure position is between [-1, -1, -1] and [1, 1, 1]
@@ -81,7 +80,12 @@ public static class Ops {
 
     public static void LoopCoarsen(Root root, Vector3 position, int maxIterations) {
         for(int i = 0; i < maxIterations; i++) {
-           RecursiveCoarsen(root, root.RootNode, position);
+           if(RecursiveCoarsen(root, root.RootNode, position)) {
+               break;
+           }
+           if(i == maxIterations - 1) {
+                Debug.LogWarning("Maximum LoopCoarsen iterations reached at " + maxIterations);
+           }
         }
     }
 
@@ -111,9 +115,10 @@ public static class Ops {
     public static bool RecursiveMakeConforming(Root root, Node node, Hashtable splitList) {
         bool returning = true;
         if(node.IsLeaf) {
-            List<Node> neighbors = FindNeighbors(root, node);
+            Node[] neighbors = FindNeighbors(root, node);
             //Debug.Log("neighbors length: " + neighbors.Count);
             foreach(Node neighbor in neighbors) {
+                if(neighbor == null) continue;
                 if(node.ID == 28) {
                     Debug.Log("node #" + node.ID + " depth: " + node.Depth + ", neighbor (#" + neighbor.ID + ") depth: " + neighbor.Depth);
                 }
@@ -139,16 +144,14 @@ public static class Ops {
     }
 
     public static readonly Vector3[] Directions = { 
-        new Vector3(1, 0, 0), new Vector3(-1, 0, 0), 
-        new Vector3(0, 1, 0), new Vector3(0, -1, 0), 
-        new Vector3(0, 0, 1), new Vector3(0, 0, -1) };
-    public static List<Node> FindNeighbors(Root root, Node node) {
-        List<Node> neighbors = new List<Node>();
-        foreach(Vector3 dir in Ops.Directions) {
-            Node neighbor = RecursiveGetNeighbor(root, node, dir);
-            if(neighbor != null) {
-                neighbors.Add(neighbor);
-            }
+        new Vector3(-1, 0, 0), new Vector3(1, 0, 0), 
+        new Vector3(0, -1, 0), new Vector3(0, 1, 0), 
+        new Vector3(0, 0, -1), new Vector3(0, 0, 1) };
+    public static Node[] FindNeighbors(Root root, Node node) {
+        Node[] neighbors = new Node[6];
+        for(int i = 0; i < 6; i++) {
+            Vector3 dir = Ops.Directions[i];
+            neighbors[i] = RecursiveGetNeighbor(root, node, dir);
         }
         return neighbors;
     }
@@ -188,17 +191,22 @@ public static class Ops {
         }
     }
 
-    public static void RecursiveCoarsen(Root root, Node node, Vector3 position) {
+    public static bool RecursiveCoarsen(Root root, Node node, Vector3 position) {
+        bool returning = true;
         if(node.IsLeaf) {
             if(!PointInNode(node.Parent, position) && node.Depth != 0) {
                 CoarsenNode(root, node.Parent);
+                returning = false;
             }
         }
         else {
             for(int i = 0; i < 8 && !node.IsLeaf; i++) {
-                RecursiveCoarsen(root, node.Children[i], position);
+                if(!RecursiveCoarsen(root, node.Children[i], position)) {
+                    returning = false;
+                }
             }  
         }
+        return returning;
     }
 
     public static bool PointInNode(Node node, Vector3 point) {
@@ -233,15 +241,26 @@ public static class Ops {
         UnityEngine.Gizmos.DrawWireCube( (node.Position + new Vector3(node.Size / 2f, node.Size / 2f, node.Size / 2f)) * scale, node.Size * Vector3.one * scale);
     }
 
-    public static Mesh PolyganizeNode(Node node, float WorldSize) {
+    public static Mesh PolyganizeNode(Root root, Node node, float WorldSize) {
         Mesh m = new Mesh();
         ExtractionInput input = new ExtractionInput();
         input.Isovalue = 0f;
         input.Resolution = new Util.Vector3i(16, 16, 16);
         float size = WorldSize / (Mathf.Pow(2, node.Depth));
         input.Size = new Vector3(node.Size/16f, node.Size/16f, node.Size/16f);
-        input.Sample = (float x, float y, float z) => UtilFuncs.Sample((x + node.Position.x) * 8f, (y + node.Position.y) * 8f, (z + node.Position.z) * 8f);
+        input.Sample = (float x, float y, float z) => UtilFuncs.Sample((x + node.Position.x)  * WorldSize, (y + node.Position.y) * WorldSize, (z + node.Position.z) * WorldSize);
         input.LODSides = new byte();
+
+        Node[] neighbors = FindNeighbors(root, node);
+
+        int currentSide = 1;
+
+        for(int i = 0; i < 6; i++) {
+            if(neighbors[i] != null && neighbors[i].Depth < node.Depth) {
+                input.LODSides |= (byte)currentSide;
+            }
+            currentSide = currentSide << (byte)1;
+        }
 
         ExtractionResult res = SurfaceExtractor.ExtractSurface(input);
 
