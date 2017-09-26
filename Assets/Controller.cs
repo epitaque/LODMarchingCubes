@@ -9,7 +9,7 @@ public class Controller : MonoBehaviour {
 	public GameObject Viewer;
 	public GameObject ConsoleObject;
 	public float WorldSize = 512f;
-	public float MaxDepth = 13;
+	public int MaxDepth = 13;
 
 	void Start () {
 		Wrapper = new SE.Octree.Wrapper(this.gameObject.GetComponent<Transform>(), MeshPrefab, WorldSize, MaxDepth, ConsoleObject.GetComponent<Console>());

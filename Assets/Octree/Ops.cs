@@ -67,9 +67,16 @@ public static class Ops {
 
     // make sure position is between [-1, -1, -1] and [1, 1, 1]
     public static void Adapt(Root root, Vector3 position, int maxDepth, int maxIterations) {
+        System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+        sw.Start();
         LoopRefine(root, position, maxDepth, maxIterations);
+        sw.Stop(); Debug.Log("BENCH-ADAPT: LoopRefine time: " + (float)sw.ElapsedMilliseconds/1000f + " seconds.");
+        sw.Reset(); sw.Start();
         LoopCoarsen(root, position, maxIterations);
+        sw.Stop(); Debug.Log("BENCH-ADAPT: LoopCoarsen time: " + (float)sw.ElapsedMilliseconds/1000f + " seconds.");
+        sw.Reset(); sw.Start();
         LoopMakeConforming(root, maxIterations);
+        sw.Stop(); Debug.Log("BENCH-ADAPT: LoopMakeConforming time: " + (float)sw.ElapsedMilliseconds/1000f + " seconds.");
     }
 
     public static void LoopRefine(Root root, Vector3 position, int maxDepth, int maxIterations) {
