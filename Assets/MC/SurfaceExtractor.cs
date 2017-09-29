@@ -285,6 +285,7 @@ public class TransitionCellResult {
 
 public class ExtractionResult {
     public int[] Triangles;
+    public Vector3[] Normals;
      public Vector3[] Vertices;
      public List<GridCell> Cells;
      public List<GridCell> DebugTransitionCells1S;
