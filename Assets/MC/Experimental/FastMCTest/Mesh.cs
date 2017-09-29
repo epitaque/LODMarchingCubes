@@ -4,7 +4,7 @@ using UnityEngine;
 namespace MarchingCubes {
     public class MCMesh {
         public List<Vector3> Vertices;
-        public List<int> Triangles;
+        public int[] Triangles;
         public List<Vector3> Normals;
     }
 }

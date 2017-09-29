@@ -11,7 +11,7 @@ public class ExpController : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		int res = 64;
+		int res = 32;
 
 		SE.OpenSimplexNoise noise = new SE.OpenSimplexNoise();
 
@@ -56,7 +56,7 @@ public class ExpController : MonoBehaviour {
 		MeshFilter mf = clone.GetComponent<MeshFilter>();
 		UnityEngine.Mesh m2 = new Mesh();
 		m2.SetVertices(m.Vertices);
-		m2.triangles = m.Triangles.ToArray();
+		m2.triangles = m.Triangles;
 		mf.mesh = m2;
 		m2.RecalculateNormals();
 	}
