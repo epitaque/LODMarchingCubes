@@ -192,11 +192,17 @@ namespace MarchingCubes {
         public static void CreateVertices(int[] edges, List<Vector3> vertices, int res1, sbyte[][][] data, List<Edge> debugEdges) {
             int edgeNum = 0;
             int vertNum = 0;
+            int iNum = 0;
             for(int x = 0; x < res1; x++) {
                 for(int y = 0; y < res1; y++) {
                     for(int z = 0; z < res1; z++) {
                         for(int w = 0; w < 3; w++) {
+                            iNum++;
                             edgeNum = GetEdge3D(x, y, z, res1, w);
+
+                            if(iNum != edgeNum) {
+                                Debug.LogWarning("Warning: iNum != edgeNum. xyzw: " + x + ", " + y + ", " + z + ", " + w + ", iNum: " + iNum + ", edgeNum: " + edgeNum);
+                            }
 
                             bool terminating = false;
 
@@ -368,9 +374,14 @@ namespace MarchingCubes {
 
             int edgeDiv3 = (edgeNum - w) / 3;
 
-            int x = edgeDiv3 / res3;
-            int y = (edgeDiv3 % res3) / res2;
-            int z = ((edgeDiv3 % res3) % res2) / res;
+            int z = edgeDiv3 % res;
+            int y = (edgeDiv3 - z) % res2;
+            int x = (edgeDiv3 - y - z) % res3;
+
+
+            //int x = edgeDiv3 / res3;
+            //int y = (edgeDiv3 - x) / res2;
+            //int z = (edgeDiv3 - y);
 
             return new Vector4(x, y, z, w);
         }
