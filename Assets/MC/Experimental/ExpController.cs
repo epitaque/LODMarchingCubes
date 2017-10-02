@@ -9,10 +9,12 @@ using Transvoxel.Math;
 public class ExpController : MonoBehaviour {
 	public GameObject MeshPrefab;
 
+	public bool IsRunning = false;
+
 	// Use this for initialization
 	void Start () {
-		int res = 32;
-
+		int res = 4;
+		IsRunning = true;
 		SE.OpenSimplexNoise noise = new SE.OpenSimplexNoise();
 
 		// fill an IVolumeData
@@ -35,10 +37,12 @@ public class ExpController : MonoBehaviour {
 
 		System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 		sw.Start();
-		MarchingCubes.MCMesh m = MarchingCubes.FastMC.PolygonizeArea(new Vector3(0, 0, 0), 16f, res, data);
+		MarchingCubes.MCMesh m = MarchingCubes.FastMC2.PolygonizeArea(new Vector3(0, 0, 0), 16f, res, data);
 		sw.Stop();
 
 		Debug.Log(res + "^3 terrain took " + sw.ElapsedMilliseconds + " ms.");
+
+
 
 		Mesh(m);
 	}
@@ -46,6 +50,12 @@ public class ExpController : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		
+	}
+
+	void OnDrawGizmos() {
+		if(IsRunning) {
+			MarchingCubes.FastMC2.DrawGizmos();
+		}
 	}
 
 	void Mesh(MarchingCubes.MCMesh m) {
