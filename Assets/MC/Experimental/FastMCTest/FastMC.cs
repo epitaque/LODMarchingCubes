@@ -53,8 +53,12 @@ namespace MarchingCubes {
                         if (densities[6] < 0) caseCode |= 64;
                         if (densities[7] < 0) caseCode |= 128;
 
+                        if(x == 0 && y == 0 && z == 0) {
+                            Debug.Log("case code for xyz 0: " + caseCode);
+                        }
 
                         if(caseCode == 0 || caseCode == 255) continue;
+
 
                         if ((Tables.edgeTable[caseCode] & 1) == 1)
                             VertList[0] = Lerp(densities[0], densities[1], x, y, z, x + 1, y, z);
@@ -136,7 +140,7 @@ namespace MarchingCubes {
         public static float mu;
 
         public static Vector3 Lerp(float density1, float density2, float x1, float y1, float z1, float x2, float y2, float z2) {
-            /*if(density1 < 0.00001f && density1 > -0.00001f) {
+            if(density1 < 0.00001f && density1 > -0.00001f) {
                 return new Vector3(x1, y1, z1);
             }
             if(density2 < 0.00001f && density2 > -0.00001f) {
@@ -144,7 +148,7 @@ namespace MarchingCubes {
             }
             if(Mathf.Abs(density1 - density2) < 0.00001f) {
                 return new Vector3(x2, y2, z2);
-            }*/
+            }
 
             mu = (density1) / (density1 - density2); 
 

@@ -15,7 +15,7 @@ public class ExpController : MonoBehaviour {
 	void Start () {
 		int res = 4;
 		IsRunning = true;
-		SE.OpenSimplexNoise noise = new SE.OpenSimplexNoise();
+		SE.OpenSimplexNoise noise = new SE.OpenSimplexNoise(5);
 
 		// fill an IVolumeData
 		int res1 = res + 1;

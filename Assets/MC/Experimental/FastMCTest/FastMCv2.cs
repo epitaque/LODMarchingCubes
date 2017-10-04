@@ -19,12 +19,19 @@ namespace MarchingCubes {
         public static IEnumerable<Vector3> mcOnlyVertices;
         public static IEnumerable<Vector3> onlyFastVertices;
 
+        public static List<Vector4>[] MCEdgeToEdgeXYZWOffset;
 
+        public static List<Vector3> EdgeGennedVerticesA;
 
         public static MCMesh PolygonizeArea(Vector3 min, float size, int resolution, sbyte[][][] data) {
             MCMesh m = new MCMesh();
 
             int res1 = resolution + 1;
+
+            MCEdgeToEdgeXYZWOffset = new List<Vector4>[12];
+            for(int i = 0; i < 12; i++) {
+                MCEdgeToEdgeXYZWOffset[i] = new List<Vector4>();
+            }
 
             List<Vector3> vertices = new List<Vector3>();
             List<int> triangles = new List<int>();
@@ -33,6 +40,8 @@ namespace MarchingCubes {
             int[] edges = new int[res1 * res1 * res1 * 3];
 
             CreateVertices(edges, vertices, res1, data, debugEdges);
+
+            EdgeGennedVerticesA = vertices;
 
             Debug.Log("vertex count: " + vertices.Count);
             Debug.Log("distinct vertex count: " + vertices.Distinct().Count());
@@ -53,10 +62,12 @@ namespace MarchingCubes {
             Debug.Log("regular MC vertex count: " + regMCGeneratedVertices.Count);
             Debug.Log("distinct MC vertex count: " + regMCGeneratedVertices.Distinct().Count());
 
+            PrintMCEdgeToEdgeXYZWOffsetTable();
 
             Triangulate(edges, triangles, resolution, data);
 
             Debug.Log("index count: " + triangles.Count);
+
 
             m.Vertices = vertices;
             m.Triangles = triangles.ToArray();
@@ -70,7 +81,7 @@ namespace MarchingCubes {
             for(int i = 0; i < listA.Count; i++) {
                 bool unique = true;
                 for(int j = 0; j < itemsToExclude.Count; j++) {
-                    if(Vector3.Distance(itemsToExclude[j], listA[i]) == 0.0f) {
+                    if(Vector3.Distance(itemsToExclude[j], listA[i]) < 0.01f) {
                         unique = false;
                         break;
                     }
@@ -80,6 +91,15 @@ namespace MarchingCubes {
                 }
             }
             return uniques;
+        }
+
+        public static int MCGennedVertexToEdgeNum(Vector3 MCGennedVertex, List<Vector3> EdgeGennedVertices) {
+            for(int i = 0; i < EdgeGennedVertices.Count; i++) {
+                if(EdgeGennedVertices[i] == MCGennedVertex) {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         public static void GenVerticesViaRegularMC(List<Vector3> Vertices, int resolution, sbyte[][][] data) {
@@ -122,6 +142,9 @@ namespace MarchingCubes {
                         if (densities[6] < 0) caseCode |= 64;
                         if (densities[7] < 0) caseCode |= 128;
 
+                        if(x == 0 && y == 0 && z == 0) {
+                            Debug.Log("case code for xyz 0: " + caseCode + ", densities[0]: " + densities[0]);
+                        }
 
                         if(caseCode == 0 || caseCode == 255) continue;
 
@@ -171,9 +194,22 @@ namespace MarchingCubes {
                             ntriang++;
                         }*/
 
+
                         for (i = 0; Tables.triTable[caseCode][i] !=-1; i++) {
                             int tri = Tables.triTable[caseCode][i];
                             Vector3 vert = VertList[tri];
+
+                            int EdgeNum = MCGennedVertexToEdgeNum(vert, EdgeGennedVerticesA);
+                            Debug.Assert(EdgeNum != -1);
+                            int mcEdgeNum = tri;
+                            Vector4 code = ReverseGetEdge3D(EdgeNum, resolution + 1);
+                            Vector4 mcCoord = new Vector4(x, y, z, 0f);
+
+                            if(!MCEdgeToEdgeXYZWOffset[tri].Contains(mcCoord - code)) {
+                                MCEdgeToEdgeXYZWOffset[tri].Add(mcCoord - code);
+                            }
+
+
                             if(!ExistingVertices.Contains(vert)) {
                                 Vertices.Add(vert);
                                 ExistingVertices.Add(vert, trinum);
@@ -189,6 +225,19 @@ namespace MarchingCubes {
             }
         }
 
+        public static void PrintMCEdgeToEdgeXYZWOffsetTable() {
+            Debug.Log("|||MCEdgeToEdgeXYZWOffsetTable|||");
+            for(int i = 0; i < 12; i++) {
+                List<Vector4> offsets = MCEdgeToEdgeXYZWOffset[i];
+                string toPrint = "Edge " + i;
+                for(int j = 0; j < offsets.Count; j++) {
+                    toPrint += "[" + j + "]: " + offsets[j];
+                }
+                Debug.Log(toPrint);
+            }
+        }
+
+
         public static void CreateVertices(int[] edges, List<Vector3> vertices, int res1, sbyte[][][] data, List<Edge> debugEdges) {
             int edgeNum = 0;
             int vertNum = 0;
@@ -197,16 +246,18 @@ namespace MarchingCubes {
                 for(int y = 0; y < res1; y++) {
                     for(int z = 0; z < res1; z++) {
                         for(int w = 0; w < 3; w++) {
-                            iNum++;
                             edgeNum = GetEdge3D(x, y, z, res1, w);
 
                             if(iNum != edgeNum) {
                                 Debug.LogWarning("Warning: iNum != edgeNum. xyzw: " + x + ", " + y + ", " + z + ", " + w + ", iNum: " + iNum + ", edgeNum: " + edgeNum);
                             }
+                            iNum++;
 
                             bool terminating = false;
 
                             Vector4 reverseTest = ReverseGetEdge3D(edgeNum, res1);
+                            //Debug.Log("ReverseEdge3D on edge:" + edgeNum + "." + " Guessed xyzw: " + reverseTest + " Actual: " + x + ", " + y + ", " + z + ", " + w);
+
                             if(reverseTest.x != x) {
                                 Debug.Log("ReverseEdge3D x failed! real x : " + x + " guessed x " + reverseTest.x);
                                 terminating = true;
@@ -225,7 +276,7 @@ namespace MarchingCubes {
                             }
 
                             if(terminating) {
-                                Debug.LogError("ReverseEdge3D failed on edge:" + edgeNum + ", terminating early.");
+                                Debug.LogError("ReverseEdge3D failed on edge:" + edgeNum + ", terminating early." + " Guessed xyzw: " + reverseTest + " Actual: " + x + ", " + y + ", " + z + ", " + w);
                                 return;
                             }
 
@@ -260,8 +311,8 @@ namespace MarchingCubes {
                             // if there's a vertex at density2 and y != 0, then
 
 
-                            if(((density1 < 0.00001f && density1 > -0.00001f) && w != 1) || ((density2 < 0.00001f && density2 > -0.00001f) && !(w == 1 && y == 1))) {
-                                edges[edgeNum] = -1;
+                            if(((density1 < 0.00001f && density1 > -0.00001f) && w != 0) || ((density2 < 0.00001f && density2 > -0.00001f) && !(w == 0 && y == 1))) {
+                                edges[edgeNum] = edges[edgeNum] - w;
                                 edgeNum++;
                                 continue;
                             }
@@ -356,7 +407,7 @@ namespace MarchingCubes {
                 return new Vector3(x2, y2, z2);
             }*/
 
-            mu = (density1) / (density1 - density2); 
+            mu = Mathf.Round((density1) / (density1 - density2) * 256) / 256.0f; 
 
             return new Vector3(x1 + mu * (x2 - x1), y1 + mu * (y2 - y1), z1 + mu * (z2 - z1));
         }
@@ -374,14 +425,9 @@ namespace MarchingCubes {
 
             int edgeDiv3 = (edgeNum - w) / 3;
 
-            int z = edgeDiv3 % res;
-            int y = (edgeDiv3 - z) % res2;
-            int x = (edgeDiv3 - y - z) % res3;
-
-
-            //int x = edgeDiv3 / res3;
-            //int y = (edgeDiv3 - x) / res2;
-            //int z = (edgeDiv3 - y);
+            int x = edgeDiv3 / res2;
+            int y = (edgeDiv3 - x*res2) / res;
+            int z = (edgeDiv3 - ( (x*res2) + (y*res)));
 
             return new Vector4(x, y, z, w);
         }
@@ -433,7 +479,7 @@ namespace MarchingCubes {
         }
 
         public static readonly int[,] EdgeOffsets = {
-            {-1, 0, 0}, {0, -1, 0}, {0, 0, -1}
+            {0, -1, 0}, {-1, 0, 0}, {0, 0, -1}
         };
 
 
