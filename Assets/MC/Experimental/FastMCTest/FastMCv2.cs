@@ -200,13 +200,17 @@ namespace MarchingCubes {
                             Vector3 vert = VertList[tri];
 
                             int EdgeNum = MCGennedVertexToEdgeNum(vert, EdgeGennedVerticesA);
+
                             Debug.Assert(EdgeNum != -1);
                             int mcEdgeNum = tri;
                             Vector4 code = ReverseGetEdge3D(EdgeNum, resolution + 1);
                             Vector4 mcCoord = new Vector4(x, y, z, 0f);
 
+
+                            Debug.Log("Marching Cube at " + mcCoord + " on edge " + tri + " has edge with code " + code);
+
                             if(!MCEdgeToEdgeXYZWOffset[tri].Contains(mcCoord - code)) {
-                                MCEdgeToEdgeXYZWOffset[tri].Add(mcCoord - code);
+                                MCEdgeToEdgeXYZWOffset[tri].Add( - mcCoord + code);
                             }
 
 
