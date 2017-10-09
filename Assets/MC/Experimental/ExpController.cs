@@ -13,16 +13,17 @@ public class ExpController : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		int res = 4;
+		int res = 16;
 		IsRunning = true;
-		SE.OpenSimplexNoise noise = new SE.OpenSimplexNoise(5);
+		SE.OpenSimplexNoise noise = new SE.OpenSimplexNoise(324);
+		//System.Random random = new System.Random(5);
 
 		// fill an IVolumeData
 		int res1 = res + 1;
 
 		sbyte[][][] data = new sbyte[res1][][];
 
-		double r = 0.05;
+		double r = 0.2;
 
 
 		for(int x = 0; x < res1; x++) {
@@ -30,7 +31,8 @@ public class ExpController : MonoBehaviour {
 			for(int y = 0; y < res1; y++) {
 				data[x][y] = new sbyte[res1];
 				for(int z = 0; z < res1; z++) {
-					data[x][y][z] = (sbyte) (noise.Evaluate((double)x * r, (double)y * r, (double)z * r) * 127d);
+					//data[x][y][z] = (sbyte)((random.NextDouble() -0.5d) * 2d * 127d); 
+					data[x][y][z] = (sbyte)(noise.Evaluate(((double)x + 5.5d) * r, ((double)y + 5.5d) * r, ((double)z + 5.5d) * r) * 127d);
 				} 
 			}
 		}

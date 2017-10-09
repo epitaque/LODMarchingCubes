@@ -24,7 +24,6 @@ namespace SE {
 			/* Cube is entirely in/out of the surface */
 			if (edgeTable[cubeindex] == 0) {
 				return;
-
 			}
 
 			/* Find the vertices where the surface intersects the cube */

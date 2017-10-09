@@ -53,6 +53,7 @@ namespace MarchingCubes {
                         if (densities[6] < 0) caseCode |= 64;
                         if (densities[7] < 0) caseCode |= 128;
 
+
                         if(x == 0 && y == 0 && z == 0) {
                             Debug.Log("case code for xyz 0: " + caseCode);
                         }
