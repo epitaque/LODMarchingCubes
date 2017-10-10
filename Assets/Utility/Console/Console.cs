@@ -1,9 +1,8 @@
-    using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
 public class Console : MonoBehaviour {
-    public SE.Debugger Debugger;
     public InputField InputText;
     public Text ConsoleOutput;
 
@@ -31,6 +30,12 @@ public class Console : MonoBehaviour {
         ProcessCommand(CurrentText);
     }
 
+    public delegate void RegenerateMesh();
+    private RegenerateMesh regen;
+    public void SetRegenerateFn(RegenerateMesh a) {
+        regen = a;
+    }
+
     public void ProcessCommand(string commandStr) {
         string[] tokens = commandStr.Split(' ');
         string command = tokens[0];
@@ -40,7 +45,7 @@ public class Console : MonoBehaviour {
             }
             else {
                 UnityEngine.Debug.Log("TestNeighborFetching called with arguments " + tokens[1] + ", " + tokens[2] + ", " + tokens[3]);
-                Debugger.TestNeighborFetching(tokens[1], tokens[2], tokens[3]);
+                //Debugger.TestNeighborFetching(tokens[1], tokens[2], tokens[3]);
             }
         }
         else if(command == "agn") {
@@ -49,8 +54,11 @@ public class Console : MonoBehaviour {
             }
             else {
                 UnityEngine.Debug.Log("RecursiveGetNeighbor called with arguments " + tokens[1] + ", " + tokens[2]);
-                Debugger.RecursiveGetNeighbor(tokens[1], tokens[2]);
+                //Debugger.RecursiveGetNeighbor(tokens[1], tokens[2]);
             }
+        }
+        else if(command == "regenerate") {
+            regen();
         }
         else {
             PrintString("ERROR: Invalid command");

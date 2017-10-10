@@ -6,7 +6,7 @@ using UnityEngine;
 namespace SE.Octree {
     public class Wrapper {
 		Console Console;
-		Debugger Debugger;
+		//Debugger Debugger;
         Transform Parent;
         GameObject MeshPrefab;
 		Root Root;
@@ -26,8 +26,8 @@ namespace SE.Octree {
 			Console = console;
 			Root = Ops.Create();
 			
-			Debugger = new Debugger(Root, WorldSize);
-			Console.Debugger = Debugger;
+			//Debugger = new Debugger(Root, WorldSize);
+			//Console.Debugger = Debugger;
 
         }
 
@@ -48,7 +48,7 @@ namespace SE.Octree {
 
         public void DrawGizmos() {
 			SE.Octree.Ops.DrawGizmos(Root.RootNode);
-			Debugger.DrawGizmos();
+			//Debugger.DrawGizmos();
         }
 
         public void Mesh() {

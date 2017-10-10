@@ -27,19 +27,19 @@ namespace MarchingCubes {
 
             ushort[] edges = new ushort[res1 * res1 * res1 * 3];
 
-            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+            //System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
-            sw.Start();
+            //sw.Start();
             CreateVertices(edges, vertices, normals, res1, data);
-            sw.Stop();
-            Debug.Log("CreateVertices took " + sw.ElapsedMilliseconds + "ms");
+            //sw.Stop();
+            //Debug.Log("CreateVertices took " + sw.ElapsedMilliseconds + "ms");
 
-            sw.Reset(); sw.Start();
+            //sw.Reset(); sw.Start();
             Triangulate(edges, triangles, resolution, data);
-            Debug.Log("Triangulate took " + sw.ElapsedMilliseconds + "ms");
-            sw.Stop();
+            //Debug.Log("Triangulate took " + sw.ElapsedMilliseconds + "ms");
+            //sw.Stop();
 
-            Debug.Log(vertices.Count + " vertices, " + triangles.Count + " triangles.");
+            //Debug.Log(vertices.Count + " vertices, " + triangles.Count + " triangles.");
 
             m.Vertices = vertices;
             m.Triangles = triangles.ToArray();
@@ -51,31 +51,47 @@ namespace MarchingCubes {
         public static void CreateVertices(ushort[] edges, List<Vector3> vertices, List<Vector3> normals, int res1, sbyte[][][][] data) {
             int edgeNum = 0;
             ushort vertNum = 0;
+                        
+            ushort a = 0;
 
             sbyte density1, density2;
             for(int x = 0; x < res1; x++) {
                 for(int y = 0; y < res1; y++) {
                     for(int z = 0; z < res1; z++) {
-                        if(y - 1 < 0) {
-                            edges[edgeNum] = ushort.MaxValue;
+
+                        density1 = data[x][y][z][0];
+
+                        if(x < 0 || y - 1 < 0 || z < 0) {
+                            //edges[edgeNum] = ushort.MaxValue;
                         }
                         else {
-                            density1 = data[x][y][z][0];
                             density2 = data[x][y-1][z][0];
-                            if((density1 < 0 && density2 < 0) || (density1 > 0 && density2 > 0)) {
-                                edges[edgeNum] = ushort.MaxValue;
-                            }
-                            /*else if(density1 == 0) {
-                                edges[edgeNum] = vertNum;
+
+
+                            if(density1 == 0) {
+                                /*edges[edgeNum] = vertNum;
                                 vertNum++;
                                 normals.Add(new Vector3(data[x][y][z][1]/127f, data[x][y][z][2]/127f, data[x][y][z][3]/127f));
+                                vertices.Add(Lerp(density1, density2, x, y, z, x, y-1, z));*/
+                                edges[edgeNum] = vertNum;
+                                a = vertNum;
+                                vertNum++;
+                                normals.Add(LerpN(density1, density2, 
+                                    data[x][y][z][1], data[x][y][z][2], data[x][y][z][3], 
+                                    data[x][y-1][z][1], data[x][y-1][z][2], data[x][y-1][z][3]));
                                 vertices.Add(Lerp(density1, density2, x, y, z, x, y-1, z));
+
                             }
-                            else if(density2 == 0) {
+                            else if((density1 < 0 && density2 < 0) || (density1 > 0 && density2 > 0)) {
+                                //edges[edgeNum] = ushort.MaxValue;
+                            }
+                             
+                            /*else if(density2 == 0) {
                                 edges[edgeNum] = edges[GetEdge3D(x, y - 1, z, 0, res1)];
                             }*/
                             else {
                                 edges[edgeNum] = vertNum;
+                                a = vertNum;
                                 vertNum++;
                                 normals.Add(LerpN(density1, density2, 
                                     data[x][y][z][1], data[x][y][z][2], data[x][y][z][3], 
@@ -85,17 +101,16 @@ namespace MarchingCubes {
                         }
 
                         edgeNum++;
-                        if(x - 1 < 0) {
-                            edges[edgeNum] = ushort.MaxValue;
+                        if(x - 1 < 0 || y < 0 || z < 0) {
+                            //edges[edgeNum] = ushort.MaxValue;
                         }
                         else {
-                            density1 = data[x][y][z][0];
                             density2 = data[x-1][y][z][0];
                             if((density1 < 0 && density2 < 0) || (density1 > 0 && density2 > 0)) {
-                                edges[edgeNum] = ushort.MaxValue;
+                                //edges[edgeNum] = ushort.MaxValue;
                             }
                             /*else if(density1 == 0) {
-                                edges[edgeNum] = edges[edgeNum - 1];
+                                edges[edgeNum] = a;
                             }
                             else if(density2 == 0) {
                                 edges[edgeNum] = edges[GetEdge3D(x - 1, y, z, 0, res1)];
@@ -111,19 +126,19 @@ namespace MarchingCubes {
                         }
 
                         edgeNum++;
-                        if(z - 1 < 0) {
-                            edges[edgeNum] = ushort.MaxValue;
+                        if(x < 0 || y < 0 || z - 1 < 0) {
+                            //edges[edgeNum] = ushort.MaxValue;
                         }
                         else {
-                            density1 = data[x][y][z][0];
                             density2 = data[x][y][z-1][0];
                             if((density1 < 0 && density2 < 0) || (density1 > 0 && density2 > 0)) {
-                                edges[edgeNum] = ushort.MaxValue;
+                                //edges[edgeNum] = ushort.MaxValue;
                             }
-                            /*else if(density1 == 0) {
-                                edges[edgeNum] = edges[edgeNum - 2];
-                            }
-                            else if(density2 == 0) {
+                           /* else if(density1 == 0) {
+                                edges[edgeNum] = (ushort)((int)vertNum);
+                                //edges[edgeNum] = edges[edgeNum - 1];
+                            }*/
+                            /*else if(density2 == 0) {
                                 edges[edgeNum] = edges[GetEdge3D(x, y, z - 1, 0, res1)];
                             }*/
                             else {
@@ -217,6 +232,10 @@ namespace MarchingCubes {
                                    z + Tables.MCEdgeToEdgeOffset[mcEdge, 2]) + 
                                        Tables.MCEdgeToEdgeOffset[mcEdge, 3]];
 
+                            if(t1 == ushort.MaxValue) {
+                                Debug.Log("Edge max");
+                            }
+
                             if(t1 != t2 && t2 != t3 && t1 != t3) {
                                 triangles.Add(t1);
                                 triangles.Add(t2);
@@ -227,10 +246,6 @@ namespace MarchingCubes {
                     }
                 }
             }
-        }
-
-        public static Vector3 GetNormalAtPoint(Vector3 point) {
-            
         }
 
         public static void DrawGizmos() {

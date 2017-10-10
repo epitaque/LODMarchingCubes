@@ -11,6 +11,7 @@ public class ExpController : MonoBehaviour {
 
 	public bool IsRunning = false;
 	SE.OpenSimplexNoise noise = new SE.OpenSimplexNoise(324);
+	public GameObject ConsoleObject;
 
 	float SurfaceD_torus_z(float x, float y, float z, float worldSize) {
 		float r1 = worldSize / 4.0f;
@@ -25,16 +26,21 @@ public class ExpController : MonoBehaviour {
 
 	float Sample(float x, float y, float z, float worldSize) {
 
-		return (float)(noise.Evaluate(((double)x + 5.5d) * dsa, ((double)y + 5.5d) * dsa, ((double)z + 5.5d) * dsa) * 127d);
-		//return SurfaceD_torus_z(x, y, z, worldSize);
+		//return (float)(noise.Evaluate(((double)x + 5.5d) * dsa, ((double)y + 5.5d) * dsa, ((double)z + 5.5d) * dsa) * 127d);
+		return SurfaceD_torus_z(x, y, z, worldSize);
 	}
+
+	int res = 64;
 
 	// Use this for initialization
 	void Start () {
-		int res = 64;
 		IsRunning = true;
 		//System.Random random = new System.Random(5);
-
+		GenerateMesh();
+		ConsoleObject.GetComponent<Console>().SetRegenerateFn(GenerateMesh);
+	}
+	
+	void GenerateMesh() {
 		// fill an IVolumeData
 		int res1 = res + 1;
 
@@ -93,12 +99,13 @@ public class ExpController : MonoBehaviour {
 		sw.Stop();
 
 		Debug.Log(res + "^3 terrain took " + sw.ElapsedMilliseconds + " ms.");
-
+		ConsoleObject.GetComponent<Console>().PrintString(res + "^3 terrain took " + sw.ElapsedMilliseconds + " ms.");
 
 
 		Mesh(m);
+
 	}
-	
+
 	// Update is called once per frame
 	void Update () {
 		
