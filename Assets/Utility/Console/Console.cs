@@ -30,7 +30,7 @@ public class Console : MonoBehaviour {
         ProcessCommand(CurrentText);
     }
 
-    public delegate void RegenerateMesh();
+    public delegate void RegenerateMesh(int n);
     private RegenerateMesh regen;
     public void SetRegenerateFn(RegenerateMesh a) {
         regen = a;
@@ -39,26 +39,13 @@ public class Console : MonoBehaviour {
     public void ProcessCommand(string commandStr) {
         string[] tokens = commandStr.Split(' ');
         string command = tokens[0];
-        if(command == "tnf") {
-            if(tokens.Length != 4) {
-                PrintString("ERROR: Wrong number of arguments. Arguments are string NodeID, string NeighborNumber, string SnapLevel");
+        if(command == "gen") {
+            if(tokens.Length == 1) {
+                regen(0);
             }
             else {
-                UnityEngine.Debug.Log("TestNeighborFetching called with arguments " + tokens[1] + ", " + tokens[2] + ", " + tokens[3]);
-                //Debugger.TestNeighborFetching(tokens[1], tokens[2], tokens[3]);
+                regen(int.Parse(tokens[1]));
             }
-        }
-        else if(command == "agn") {
-            if(tokens.Length != 3) {
-                PrintString("ERROR: Wrong number of arguments. Arguments are string NodeID, string NeighborNumber");
-            }
-            else {
-                UnityEngine.Debug.Log("RecursiveGetNeighbor called with arguments " + tokens[1] + ", " + tokens[2]);
-                //Debugger.RecursiveGetNeighbor(tokens[1], tokens[2]);
-            }
-        }
-        else if(command == "regenerate") {
-            regen();
         }
         else {
             PrintString("ERROR: Invalid command");
