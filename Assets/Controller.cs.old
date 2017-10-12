@@ -83,11 +83,11 @@ public class Controller : MonoBehaviour {
 					ny = (float)y - ((float)res1)/2f;
 					nz = (float)z - ((float)res1)/2f;
 
-					data[x][y][z][0] = (sbyte)(Mathf.Clamp(-8f * SurfaceD_torus_z(nx, ny, nz, res1), -127, 127));
+					data[x][y][z][0] = (sbyte)(Mathf.Clamp(-8f * sampleFunctions[sampleFn](nx, ny, nz, res1), -127, 127));
 
-					float dx = SurfaceD_torus_z(nx+f, ny, nz, (float)res1) - SurfaceD_torus_z(nx-f, ny, nz, (float)res1);
-					float dy = SurfaceD_torus_z(nx, ny+f, nz, (float)res1) - SurfaceD_torus_z(nx, ny-f, nz, (float)res1);
-					float dz = SurfaceD_torus_z(nx, ny, nz+f, (float)res1) - SurfaceD_torus_z(nx, ny, nz-f, (float)res1);
+					float dx = sampleFunctions[sampleFn](nx+f, ny, nz, (float)res1) - sampleFunctions[sampleFn](nx-f, ny, nz, (float)res1);
+					float dy = sampleFunctions[sampleFn](nx, ny+f, nz, (float)res1) - sampleFunctions[sampleFn](nx, ny-f, nz, (float)res1);
+					float dz = sampleFunctions[sampleFn](nx, ny, nz+f, (float)res1) - sampleFunctions[sampleFn](nx, ny, nz-f, (float)res1);
 
 					float total = (dx*dx) + (dy*dy) + (dz*dz);
 					total = Mathf.Sqrt(total);
@@ -152,7 +152,6 @@ public class Controller : MonoBehaviour {
 	void OnDrawGizmos() {
 		if(IsRunning) {
 			SE.MarchingCubes.DrawGizmos();
-			SE.Transvoxel.Transvoxel.DrawGizmos();
 		}
 	}
 
@@ -169,7 +168,7 @@ public class Controller : MonoBehaviour {
 		m2.SetNormals(m.Normals);
 		m2.triangles = m.Triangles;
 		mf.mesh = m2;
-		m2.RecalculateNormals();
+		//m2.RecalculateNormals();
 
 		CurrentMesh = clone;
 	}

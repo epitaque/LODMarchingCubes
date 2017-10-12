@@ -26,8 +26,6 @@ namespace SE {
 
             ushort[] edges = new ushort[res1 * res1 * res1 * 3];
 
-            ushort[] LODEdges = new ushort[28]
-
             CreateVertices(edges, vertices, normals, res1, data);
             Triangulate(edges, triangles, resolution, data);
 
