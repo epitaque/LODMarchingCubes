@@ -17,7 +17,15 @@ public static class Transvoxel {
 
     public static List<Edge> Edges = new List<Edge>();
 
-    public static void GenerateTransitionCell(Vector3Int min, List<Vector3> Vertices, List<int> Triangles, byte lod, sbyte[] data) {
+    public static void GenerateTransitionCells(List<Vector3> vertices, List<int> triangles, sbyte[][][][] data, int res) {
+        for(int x = 0; x < res; x += 2) {
+            for(int y = 0; y < res; y += 2) {
+                GenerateTransitionCell(new Vector3Int(x, y, 0), vertices, triangles, 0, data);
+            }
+        }
+    }
+
+    public static void GenerateTransitionCell(Vector3Int min, List<Vector3> Vertices, List<int> Triangles, byte lod, sbyte[][][][] data) {
         //int caseCode = 0;
         int f = 1;
 
@@ -32,13 +40,20 @@ public static class Transvoxel {
         };
 
         sbyte[] fdata = new sbyte[13];
-        for(int i = 0; i < 9; i++) {
-            fdata[i] = data[i];
+
+        sbyte[] localDensities = new sbyte[13];
+
+        for(int i = 0; i < 13; i++) {
+            localDensities[i] = data[pos[i].x][pos[i].y][pos[i].z][0];
         }
-        fdata[0x9] = data[0];
-        fdata[0xA] = data[2];
-        fdata[0xB] = data[6];
-        fdata[0xC] = data[8];
+
+        for(int i = 0; i < 9; i++) {
+            fdata[i] = localDensities[i];
+        }
+        fdata[0x9] = localDensities[0];
+        fdata[0xA] = localDensities[2];
+        fdata[0xB] = localDensities[6];
+        fdata[0xC] = localDensities[8];
 
         /*int caseCode =  (data[pos[0].x][pos[0].y][pos[0].z][0] & 256) * 0x001 |
                         data[pos[1]] & 256 * 0x002 |
@@ -53,7 +68,7 @@ public static class Transvoxel {
         int caseCode = 0;
 
         for(int i = 0; i < 9; i++) {
-            if(data[i] > 0) caseCode |= f;
+            if(localDensities[i] > 0) caseCode |= f;
             f *= 2;
         }
 
@@ -92,8 +107,8 @@ public static class Transvoxel {
 
             Debug.Log("edges [" + i + "] vert [0]: " + edges[i][0] + ", vert [1]: " + edges[i][1]);
 
-            Vector3 A = coords[edges[i][0]];
-            Vector3 B = coords[edges[i][1]];
+            Vector3 A = pos[edges[i][0]];
+            Vector3 B = pos[edges[i][1]];
 
             Edge e = new Edge();
             e.A = A;
