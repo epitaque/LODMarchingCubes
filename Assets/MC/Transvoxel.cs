@@ -79,10 +79,15 @@ public static class Transvoxel {
 
         int caseCode = 0;
 
+        string densities = "";
         for(int i = 0; i < 9; i++) {
+            densities += localDensities[i] + ", ";
             if(localDensities[i] > 0) caseCode |= f;
             f *= 2;
         }
+
+        Debug.Log("Densities: " + densities);
+        Debug.Log("Case code: " + caseCode);
 
         if (caseCode == 0 || caseCode == 511) {
             return;
