@@ -15,7 +15,13 @@ public static class Transvoxel {
 
     //int[] order = {0, 1, 2, 5, 8, 7, 6, 3, 4};
 
+
+
     public static List<Edge> Edges = new List<Edge>();
+
+    public static List<Vector3> StartingPoints = new List<Vector3>();
+
+    public static List<Vector3> OffsetPoints = new List<Vector3>();
 
     public static void GenerateTransitionCells(List<Vector3> vertices, List<int> triangles, sbyte[][][][] data, int res) {
         for(int x = 0; x < res; x += 2) {
@@ -39,6 +45,10 @@ public static class Transvoxel {
                 min + coords[0x0B], min + coords[0x0C],
         };
 
+        foreach(Vector3Int pos_ in pos) {
+            OffsetPoints.Add(pos_);
+        }
+
         sbyte[] fdata = new sbyte[13];
 
         sbyte[] localDensities = new sbyte[13];
@@ -54,6 +64,8 @@ public static class Transvoxel {
         fdata[0xA] = localDensities[2];
         fdata[0xB] = localDensities[6];
         fdata[0xC] = localDensities[8];
+
+        StartingPoints.Add(min);
 
         /*int caseCode =  (data[pos[0].x][pos[0].y][pos[0].z][0] & 256) * 0x001 |
                         data[pos[1]] & 256 * 0x002 |
@@ -81,7 +93,6 @@ public static class Transvoxel {
         TVTables.RegularCell tCellData = TVTables.TransitionRegularCellData[classIndex & 0x7F];
         bool inverse = (classIndex & 128) != 0;
 
-        
 
         long vertCount = tCellData.GetVertexCount();
         long triCount = tCellData.GetTriangleCount();
@@ -173,6 +184,17 @@ public static class Transvoxel {
         foreach(Edge e in Edges) {
             UnityEngine.Gizmos.DrawSphere(e.IsoVertex, 0.2f);
         }
+
+        Gizmos.color = Color.red;
+        foreach(Vector3 point in StartingPoints) {
+            UnityEngine.Gizmos.DrawSphere(point, 0.3f);
+        }
+
+        Gizmos.color = Color.magenta;
+        foreach(Vector3 point in OffsetPoints) {
+            UnityEngine.Gizmos.DrawSphere(point, 0.15f);
+        }
+
     }
 
     public class Edge {

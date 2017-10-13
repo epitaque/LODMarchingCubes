@@ -27,6 +27,10 @@ public class Controller : MonoBehaviour {
 			return (float)(noise.Evaluate(((double)x + 5.5d) * 0.05, ((double)y + 5.5d) * 0.05, ((double)z + 5.5d) * 0.05) * 127d);
 		},
 		(float x, float y, float z, float worldSize) => {
+			return (float)(noise.Evaluate(((double)x + 5.5d) * 0.45, ((double)y + 5.5d) * 0.45, ((double)z + 5.5d) * 0.45) * 127d);
+		},
+
+		(float x, float y, float z, float worldSize) => {
 			float result = y - 10f;
 
 			result += (float)(noise.Evaluate(((double)x + 5.5d) * 0.1, ((double)y + 5.5d) * 0.1, ((double)z + 5.5d) * 0.1) * 127d) * 0.1f;
@@ -141,7 +145,7 @@ public class Controller : MonoBehaviour {
 		float f = 0.01f;
 		float nx, ny, nz;
 
-		int sF = 1;
+		int sF = 2;
 
 		for(int x = 0; x < res1; x++) {
 			data[x] = new sbyte[res1][][];
