@@ -11,7 +11,11 @@ using UnityEngine;
 
 namespace SE {
     public static class MarchingCubes {
-        public static MCMesh PolygonizeArea(Vector3 min, float size, int resolution, sbyte[][][][] data) {
+
+        // LOD byte
+        // -x +x -y +z -z +z
+
+        public static MCMesh PolygonizeArea(Vector3 min, float size, byte LOD, int resolution, sbyte[][][][] data) {
             MCMesh m = new MCMesh();
 
             int res1 = resolution + 1;

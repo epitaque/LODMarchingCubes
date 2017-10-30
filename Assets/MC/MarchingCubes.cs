@@ -11,14 +11,23 @@ using UnityEngine;
 
 namespace SE {
     public static class MarchingCubes {
+        public static List<Vector4> cubesGizmos = new List<Vector4>();
+
+        public static List<Util.GridCell> TVDebugGridCells = new List<Util.GridCell>();
+        public static List<Util.GridCell> TVDebugGridCellBounds = new List<Util.GridCell>();
+        public static List<Vector3> DebugPoints = new List<Vector3>();
+
 
         // LOD byte
         // -x +x -y +z -z +z
 
-        public static MCMesh PolygonizeArea(Vector3 min, float size, byte LOD, int resolution, sbyte[][][][] data) {
+        public static MCMesh PolygonizeArea(Vector3 min, float size, byte lod, int resolution, sbyte[][][][] data) {
             MCMesh m = new MCMesh();
 
             int res1 = resolution + 1;
+            int resm1 = resolution - 1;
+
+            cubesGizmos.Add(new Vector4(min.x + (resolution / 2), min.y + (resolution / 2), min.z + (resolution / 2), resolution));
 
             List<Vector3> vertices = new List<Vector3>();
             List<Vector3> normals = new List<Vector3>();
@@ -26,8 +35,21 @@ namespace SE {
 
             ushort[] edges = new ushort[res1 * res1 * res1 * 3];
 
-            CreateVertices(edges, vertices, normals, res1, data);
-            Triangulate(edges, triangles, resolution, data);
+            Vector3Int begin = new Vector3Int(0, 0, 0);
+            Vector3Int end = new Vector3Int(res1, res1, res1);
+
+            //CreateVertices(edges, begin, end, vertices, normals, res1, data);
+
+            begin = new Vector3Int(1, 1, 1);
+            end = new Vector3Int(resm1, resm1, resm1);
+
+            //Triangulate(edges, begin, end, triangles, resolution, data);
+
+            //GenerateTransitionCells(vertices, triangles, resolution, data, LOD);
+
+            MCVT(vertices, triangles, normals, resolution, lod, data);
+
+            Debug.Log("polycalls: " + polycalls);
 
             m.Vertices = vertices;
             m.Triangles = triangles.ToArray();
@@ -36,7 +58,73 @@ namespace SE {
             return m;
         }
 
-        public static void CreateVertices(ushort[] edges, List<Vector3> vertices, List<Vector3> normals, int res1, sbyte[][][][] data) {
+        public static void MCVT(List<Vector3> vertices, List<int> triangles, List<Vector3> normals, int resolution, byte lod, sbyte[][][][] data) {
+            for(int x = 0; x < resolution; x += 2) {
+                for(int y = 0; y < resolution; y += 2) {
+                    for(int z = 0; z < resolution; z += 2) {
+                                                byte cellLod = 0;
+
+                        if(x == 0) cellLod |= 1;
+                        if(x == resolution - 2) cellLod |= 2;
+                        if(y == 0) cellLod |= 4;
+                        if(y == resolution - 2) cellLod |= 8;
+                        if(z == 0) cellLod |= 16;
+                        if(z == resolution - 2) cellLod |= 32;
+
+                        cellLod = (byte)(lod & cellLod);
+
+                        Util.GridCell tvCellBounds = new Util.GridCell();
+                        tvCellBounds.points = new Util.Point[8];
+                        for(int i = 0; i < 8; i++) {
+                            tvCellBounds.points[i].position = new Vector3(x, y, z) + Tables.CellOffsets[i] * 2;
+                            DebugPoints.Add(tvCellBounds.points[i].position);
+                        }
+                        TVDebugGridCellBounds.Add(tvCellBounds);
+
+                        byte[][] offsets = Tables.MCLodTable[cellLod];
+
+                        Debug.Log("offset length: " + offsets.Length);
+
+                        if(offsets.Length > 0) {
+                            for(int i = 0; i < offsets.Length; i++) {
+                                Util.GridCell cell = new Util.GridCell();
+                                cell.points = new Util.Point[8];
+
+                                string strOffs = "Cell " + i + " offsets: ";
+
+                                for(int j = 0; j < 8; j++) {
+                                    cell.points[j] = new Util.Point();
+                                    Vector3 pos = new Vector3(x + 1, y + 1, z + 1);
+                                    byte offset = offsets[i][j];
+                                    if((offset & 1) == 1) pos.x -= 1;
+                                    if((offset & 2) == 2) pos.x += 1;
+                                    if((offset & 4) == 4) pos.y -= 1;
+                                    if((offset & 8) == 8) pos.y += 1;
+                                    if((offset & 16) == 16) pos.z -= 1;
+                                    if((offset & 32) == 32) pos.z += 1;
+                                    
+                                    strOffs += pos + " (" + offset + "), ";
+                                    
+                                    cell.points[j].position = pos;
+                                    cell.points[j].density = (float)data[((int)pos.x)][((int)pos.y)][((int)pos.z)][0];
+
+
+
+
+                                }
+
+                                Debug.Log(strOffs);
+                                Polyganise(cell, vertices, triangles, 0f);
+                                TVDebugGridCells.Add(cell);
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void CreateVertices(ushort[] edges, Vector3Int begin, Vector3Int end, List<Vector3> vertices, List<Vector3> normals, int res1, sbyte[][][][] data) {
             int edgeNum = 0;
             ushort vertNum = 0;
             sbyte density1, density2;
@@ -44,9 +132,10 @@ namespace SE {
             int res1_3 = res1 * 3;
             int res1_2_3 = res1 * res1 * 3;
 
-            for(int x = 0; x < res1; x++) {
-                for(int y = 0; y < res1; y++) {
-                    for(int z = 0; z < res1; z++, edgeNum += 3) {
+            for(int x = begin.x; x < end.x; x++) {
+                for(int y = begin.y; y < end.y; y++) {
+                    for(int z = begin.z; z < end.z; z++, edgeNum += 3) {
+                        edgeNum = GetEdge3D(x, y, z, 0, res1);
                         density1 = data[x][y][z][0];
 
                         if(density1 == 0) {
@@ -58,7 +147,7 @@ namespace SE {
                             vertices.Add(new Vector3(x, y, z));
                             continue;
                         }
-                        if(y >= 1) {
+                        if(y >= begin.x + 1) {
                             density2 = data[x][y-1][z][0];
                             if((density1 & 256) != (density2 & 256)) {
                                 if(density2 == 0) {
@@ -74,7 +163,7 @@ namespace SE {
                                 }
                             }
                         }
-                        if(x >= 1) {
+                        if(x >= begin.y + 1) {
                             density2 = data[x-1][y][z][0];
                             if((density1 & 256) != (density2 & 256)) {
                                 if(density2 == 0) {
@@ -90,7 +179,7 @@ namespace SE {
                                 }
                             }
                         }
-                        if(z >= 1) {
+                        if(z >= begin.z + 1) {
                             density2 = data[x][y][z-1][0];
                             if((density1 & 256) != (density2 & 256)) {
                                 if(density2 == 0) {
@@ -110,7 +199,7 @@ namespace SE {
                 }
             }
         }
-        public static void Triangulate(ushort[] edges, List<int> triangles, int resolution, sbyte[][][][] data) {
+        public static void Triangulate(ushort[] edges, Vector3Int begin, Vector3Int end, List<int> triangles, int resolution, sbyte[][][][] data) {
             sbyte[] densities = new sbyte[8];
             int i, j;
             int mcEdge;
@@ -120,9 +209,9 @@ namespace SE {
             
             int t1, t2, t3;
 
-            for(int x = 0; x < resolution; x++) {
-				for(int y = 0; y < resolution; y++) {
-					for(int z = 0; z < resolution; z++) {
+            for(int x = begin.x; x < end.x; x++) {
+				for(int y = begin.y; y < end.y; y++) {
+					for(int z = begin.z; z < end.z; z++) {
                         byte caseCode = 0;
 
                         densities[0] = data[x][y][z+1][0];
@@ -178,8 +267,94 @@ namespace SE {
                 }
             }
         }
+        public static void GenerateTransitionCells(List<Vector3> vertices, List<int> triangles, int resolution, sbyte[][][][] data, byte lod) {
+            for(int x = 0; x < resolution; x += 2) {
+                for(int y = 0; y < resolution; y += 2) {
+                    for(int z = 0; z < resolution; z += 2) {
+                        byte cellLod = 0;
+
+                        if(x == 0) cellLod |= 1;
+                        if(x == resolution - 2) cellLod |= 2;
+                        if(y == 0) cellLod |= 4;
+                        if(y == resolution - 2) cellLod |= 8;
+                        if(z == 0) cellLod |= 16;
+                        if(z == resolution - 2) cellLod |= 32;
+
+                        cellLod = (byte)(lod & cellLod);
+
+                        if(cellLod == 0) {
+                            continue;
+                        }
+
+                        Util.GridCell tvCellBounds = new Util.GridCell();
+                        tvCellBounds.points = new Util.Point[8];
+                        for(int i = 0; i < 8; i++) {
+                            tvCellBounds.points[i].position = new Vector3(x, y, z) + Tables.CellOffsets[i] * 2;
+                            DebugPoints.Add(tvCellBounds.points[i].position);
+                        }
+                        TVDebugGridCellBounds.Add(tvCellBounds);
+
+                        byte[][] offsets = Tables.MCLodTable[cellLod];
+
+                        Debug.Log("offset length: " + offsets.Length);
+
+                        if(offsets.Length > 0) {
+                            for(int i = 0; i < offsets.Length; i++) {
+                                Util.GridCell cell = new Util.GridCell();
+                                cell.points = new Util.Point[8];
+
+                                string strOffs = "Cell " + i + " offsets: ";
+
+                                for(int j = 0; j < 8; j++) {
+                                    cell.points[j] = new Util.Point();
+                                    Vector3 pos = new Vector3(x + 1, y + 1, z + 1);
+                                    byte offset = offsets[i][j];
+                                    if((offset & 1) == 1) pos.x -= 1;
+                                    if((offset & 2) == 2) pos.x += 1;
+                                    if((offset & 4) == 4) pos.y -= 1;
+                                    if((offset & 8) == 8) pos.y += 1;
+                                    if((offset & 16) == 16) pos.z -= 1;
+                                    if((offset & 32) == 32) pos.z += 1;
+                                    
+                                    strOffs += pos + " (" + offset + "), ";
+                                    
+                                    cell.points[j].position = pos;
+                                    cell.points[j].density = (float)data[((int)pos.x)][((int)pos.y)][((int)pos.z)][0];
+
+
+
+
+                                }
+
+                                Debug.Log(strOffs);
+                                Polyganise(cell, vertices, triangles, 0f);
+                                TVDebugGridCells.Add(cell);
+
+                            }
+                        }
+
+                        
+
+                        //if(cellLod) 
+                    }
+                }
+            }
+        }
 
         public static void DrawGizmos() {
+            Gizmos.color = Color.white;
+            foreach(Vector4 cube in cubesGizmos) {
+                UnityEngine.Gizmos.DrawWireCube(new Vector3(cube.x, cube.y, cube.z), Vector3.one * cube.w);
+            }
+
+            Gizmos.color = Color.red;
+            DrawCubeGizmos();
+
+            Gizmos.color = Color.blue;
+            foreach(Vector3 point in DebugPoints) {
+                //Gizmos.DrawSphere(point, 0.5f);
+            }
+
             return;
         }
 
@@ -210,6 +385,26 @@ namespace SE {
             return (3 * ((x * res * res) + (y * res) + z)) + edgeNum;
         }
 
+        public static void DrawCubeGizmos() {
+            int nGridcells = 0;
+            foreach(Util.GridCell cell in TVDebugGridCells) {
+                nGridcells++;
+                DrawGridCell(cell);
+            }
+            Debug.Log("Drew " + nGridcells + " gridcells.");
+            foreach(Util.GridCell cell in TVDebugGridCellBounds) {
+                DrawGridCell(cell);
+            }
+        }
+
+        public static void DrawGridCell(Util.GridCell cell) {
+            for(int i = 0; i < 12; i++) {
+                Vector3 vert1 = cell.points[Tables.edgePairs[i, 0]].position;
+                Vector3 vert2 = cell.points[Tables.edgePairs[i, 1]].position;
+                Gizmos.DrawLine(vert1, vert2);
+            }
+        }
+
         public static Vector4 ReverseGetEdge3D(int edgeNum, int res) {
             int res3 = res * res * res;
             int res2 = res * res;
@@ -229,6 +424,62 @@ namespace SE {
             {0, -1, 0}, {-1, 0, 0}, {0, 0, -1}
         };
 
+        static int polycalls = 0;
+		public static void Polyganise(Util.GridCell cell, List<Vector3> vertices, List<int> triangles, float isovalue)
+		{
+            polycalls++;
+			Vector3[] vertlist = new Vector3[12];
+
+			int i,ntriang;
+			int cubeindex;
+
+			cubeindex = 0;
+			if (cell.points[0].density < isovalue) cubeindex |= 1;
+			if (cell.points[1].density < isovalue) cubeindex |= 2;
+			if (cell.points[2].density < isovalue) cubeindex |= 4;
+			if (cell.points[3].density < isovalue) cubeindex |= 8;
+			if (cell.points[4].density < isovalue) cubeindex |= 16;
+			if (cell.points[5].density < isovalue) cubeindex |= 32;
+			if (cell.points[6].density < isovalue) cubeindex |= 64;
+			if (cell.points[7].density < isovalue) cubeindex |= 128;
+
+			/* Cube is entirely in/out of the surface */
+			if (Tables.edgeTable[cubeindex] == 0) {
+				return;
+			}
+
+			/* Find the vertices where the surface intersects the cube */
+			if ((Tables.edgeTable[cubeindex] & 1) == 1)
+				vertlist[0] = UtilFuncs.Lerp(isovalue,cell.points[0],cell.points[1]);
+			if ((Tables.edgeTable[cubeindex] & 2) == 2)
+				vertlist[1] = UtilFuncs.Lerp(isovalue,cell.points[1],cell.points[2]);
+			if ((Tables.edgeTable[cubeindex] & 4) == 4)
+				vertlist[2] = UtilFuncs.Lerp(isovalue,cell.points[2],cell.points[3]);
+			if ((Tables.edgeTable[cubeindex] & 8) == 8)
+				vertlist[3] = UtilFuncs.Lerp(isovalue,cell.points[3],cell.points[0]);
+			if ((Tables.edgeTable[cubeindex] & 16) == 16)
+				vertlist[4] = UtilFuncs.Lerp(isovalue,cell.points[4],cell.points[5]);
+			if ((Tables.edgeTable[cubeindex] & 32) == 32)
+				vertlist[5] = UtilFuncs.Lerp(isovalue,cell.points[5],cell.points[6]);
+			if ((Tables.edgeTable[cubeindex] & 64) == 64)
+				vertlist[6] = UtilFuncs.Lerp(isovalue,cell.points[6],cell.points[7]);
+			if ((Tables.edgeTable[cubeindex] & 128) == 128)
+				vertlist[7] = UtilFuncs.Lerp(isovalue,cell.points[7],cell.points[4]);
+			if ((Tables.edgeTable[cubeindex] & 256) == 256)
+				vertlist[8] = UtilFuncs.Lerp(isovalue,cell.points[0],cell.points[4]);
+			if ((Tables.edgeTable[cubeindex] & 512) == 512)
+				vertlist[9] = UtilFuncs.Lerp(isovalue,cell.points[1],cell.points[5]);
+			if ((Tables.edgeTable[cubeindex] & 1024) == 1024)
+				vertlist[10] = UtilFuncs.Lerp(isovalue,cell.points[2],cell.points[6]);
+			if ((Tables.edgeTable[cubeindex] & 2048) == 2048)
+				vertlist[11] = UtilFuncs.Lerp(isovalue,cell.points[3],cell.points[7]);
+
+			/* Create the triangle */
+			for (i = 0; Tables.triTable[cubeindex][i] !=-1; i++) {
+				vertices.Add(vertlist[Tables.triTable[cubeindex][i]]);
+                triangles.Add(vertices.Count - 1);
+			}			
+		}
 
     }
 

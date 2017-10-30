@@ -6,13 +6,16 @@ using System.Runtime.CompilerServices;
 using SE;
 
 public class Controller : MonoBehaviour {
-	static SE.OpenSimplexNoise noise = new SE.OpenSimplexNoise(324);
+	static SE.OpenSimplexNoise noise = new SE.OpenSimplexNoise(3);
 
 	public GameObject MeshPrefab;
 	public GameObject ConsoleObject;
 
 	private GameObject CurrentMesh;
 	private bool IsRunning = false;
+
+	private static double rconstant = 0.2;
+	private static byte loddebug = 0;
 
 
 	Sample[] sampleFunctions = {
@@ -24,7 +27,7 @@ public class Controller : MonoBehaviour {
 			return len - r2;
 		},
 		(float x, float y, float z, float worldSize) => {
-			return (float)(noise.Evaluate(((double)x + 5.5d) * 0.05, ((double)y + 5.5d) * 0.05, ((double)z + 5.5d) * 0.05) * 127d);
+			return (float)(noise.Evaluate(((double)x + 5.5d) * rconstant, ((double)y + 5.5d) * rconstant, ((double)z + 5.5d) * rconstant) * 127d);
 		},
 		(float x, float y, float z, float worldSize) => {
 			return (float)(noise.Evaluate(((double)x + 5.5d) * 0.45, ((double)y + 5.5d) * 0.45, ((double)z + 5.5d) * 0.45) * 127d);
@@ -51,20 +54,24 @@ public class Controller : MonoBehaviour {
 
 	public delegate float Sample(float x, float y, float z, float worldSize);
 
-	int res = 64;
+	int res = 8;
 
 	// Use this for initialization
 	void Start () {
 		IsRunning = true;
-		//System.Random random = new System.Random(5);
-		//GenerateMesh(2);
-		TestTransvoxel();
+		System.Random random = new System.Random(5);
+		LookupTableCreator.GenerateLookupTable();
+		
+		GenerateMesh(2);
+		//TestTransvoxel();
 		ConsoleObject.GetComponent<Console>().SetRegenerateFn(GenerateMesh);
 	}
 	
 	void GenerateMesh(int sampleFn) {
 		int res1 = res + 1;
 		sbyte[][][][] data = new sbyte[res1][][][];
+
+		Sample fn = sampleFunctions[1];
 
 		float f = 0.01f;
 		float nx, ny, nz;
@@ -77,21 +84,17 @@ public class Controller : MonoBehaviour {
 			for(int y = 0; y < res1; y++) {
 				data[x][y] = new sbyte[res1][];
 				for(int z = 0; z < res1; z++) {
-					data[x][y][z] = new sbyte[4];
-					//data[x][y][z] = (sbyte)((random.NextDouble() -0.5d) * 2d * 127d); 
-					//data[x][y][z] = (sbyte)(noise.Evaluate(((double)x + 5.5d) * r, ((double)y + 5.5d) * r, ((double)z + 5.5d) * r) * 127d);
-					//data[x][y][z] = (sbyte)((Mathf.Abs(SurfaceD_torus_z(x - res1/2, y - res1/2, z - res1/2, res1)) < 8 ? -16 * SurfaceD_torus_z(x - res1/2, y - res1/2, z - res1/2, res1) : SurfaceD_torus_z(x - res1/2, y - res1/2, z - res1/2, res1)));
-					
+					data[x][y][z] = new sbyte[4];					
 
 					nx = (float)x - ((float)res1)/2f;
 					ny = (float)y - ((float)res1)/2f;
 					nz = (float)z - ((float)res1)/2f;
 
-					data[x][y][z][0] = (sbyte)(Mathf.Clamp(-8f * SurfaceD_torus_z(nx, ny, nz, res1), -127, 127));
+					data[x][y][z][0] = (sbyte)(Mathf.Clamp(-8f * fn(nx, ny, nz, res1), -127, 127));
 
-					float dx = SurfaceD_torus_z(nx+f, ny, nz, (float)res1) - SurfaceD_torus_z(nx-f, ny, nz, (float)res1);
-					float dy = SurfaceD_torus_z(nx, ny+f, nz, (float)res1) - SurfaceD_torus_z(nx, ny-f, nz, (float)res1);
-					float dz = SurfaceD_torus_z(nx, ny, nz+f, (float)res1) - SurfaceD_torus_z(nx, ny, nz-f, (float)res1);
+					float dx = fn(nx+f, ny, nz, (float)res1) - fn(nx-f, ny, nz, (float)res1);
+					float dy = fn(nx, ny+f, nz, (float)res1) - fn(nx, ny-f, nz, (float)res1);
+					float dz = fn(nx, ny, nz+f, (float)res1) - fn(nx, ny, nz-f, (float)res1);
 
 					float total = (dx*dx) + (dy*dy) + (dz*dz);
 					total = Mathf.Sqrt(total);
@@ -116,7 +119,7 @@ public class Controller : MonoBehaviour {
 
 		//System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 		sw1.Start();
-		SE.MCMesh m = SE.MarchingCubes.PolygonizeArea(new Vector3(0, 0, 0), 16f, 0, res, data);
+		SE.MCMesh m = SE.MarchingCubes.PolygonizeArea(new Vector3(0, 0, 0), 16f, loddebug, res, data);
 		sw1.Stop();
 		sw.Stop();
 
@@ -220,7 +223,7 @@ public class Controller : MonoBehaviour {
 		MeshFilter mf = clone.GetComponent<MeshFilter>();
 		UnityEngine.Mesh m2 = new Mesh();
 		m2.SetVertices(m.Vertices);
-		m2.SetNormals(m.Normals);
+		//m2.SetNormals(m.Normals);
 		m2.triangles = m.Triangles;
 		mf.mesh = m2;
 		m2.RecalculateNormals();

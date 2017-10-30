@@ -13,7 +13,7 @@ namespace MarchingCubes {
 
         static Vector3Int arrLoc;
 
-        public static MCMesh PolygonizeArea(Vector3 min, float size, int resolution, byte lod, sbyte[][][] data) {
+        public static MCMesh PolygonizeArea(Vector3 min, float size, int resolution, sbyte[][][] data) {
 			MCMesh m = new MCMesh();
 
             List<Vector3> Vertices = new List<Vector3>();
