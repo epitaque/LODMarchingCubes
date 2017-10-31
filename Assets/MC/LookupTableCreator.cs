@@ -5,7 +5,7 @@ using UnityEngine;
 using SE;
 
 public static class LookupTableCreator {
-    public static string GenerateLookupTable() {
+    public static void GenerateLookupTable() {
         GenerateOffsetLookupTable();
     }
 
@@ -36,9 +36,6 @@ public static class LookupTableCreator {
                     int nMaxes = 0;
                     if(A.x == 1 || A.y == 1 || A.z == 1) nMaxes++;
                     if(B.x == 1 || B.y == 1 || B.z == 1) nMaxes++;
-                    if(nMaxes == 2) {
-                        
-                    }
                 }
             }
 

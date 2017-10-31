@@ -49,8 +49,6 @@ namespace SE {
 
             MCVT(vertices, triangles, normals, resolution, lod, data);
 
-            Debug.Log("polycalls: " + polycalls);
-
             m.Vertices = vertices;
             m.Triangles = triangles.ToArray();
             m.Normals = normals;
@@ -62,7 +60,7 @@ namespace SE {
             for(int x = 0; x < resolution; x += 2) {
                 for(int y = 0; y < resolution; y += 2) {
                     for(int z = 0; z < resolution; z += 2) {
-                                                byte cellLod = 0;
+                        byte cellLod = 0;
 
                         if(x == 0) cellLod |= 1;
                         if(x == resolution - 2) cellLod |= 2;
@@ -108,7 +106,47 @@ namespace SE {
                                     cell.points[j].position = pos;
                                     cell.points[j].density = (float)data[((int)pos.x)][((int)pos.y)][((int)pos.z)][0];
 
+                                    { // Polyganise
+                                        float isovalue = 0;
+                                        Vector3[] vertlist = new Vector3[12];
 
+                                        int iz,ntriang;
+                                        int cubeindex;
+
+                                        cubeindex = 0;
+                                        if (cell.points[0].density < isovalue) cubeindex |= 1;
+                                        if (cell.points[1].density < isovalue) cubeindex |= 2;
+                                        if (cell.points[2].density < isovalue) cubeindex |= 4;
+                                        if (cell.points[3].density < isovalue) cubeindex |= 8;
+                                        if (cell.points[4].density < isovalue) cubeindex |= 16;
+                                        if (cell.points[5].density < isovalue) cubeindex |= 32;
+                                        if (cell.points[6].density < isovalue) cubeindex |= 64;
+                                        if (cell.points[7].density < isovalue) cubeindex |= 128;
+
+                                        /* Cube is entirely in/out of the surface */
+                                        if (Tables.edgeTable[cubeindex] == 0) {
+                                            return;
+                                        }
+
+                                        int[,] edgepairs = { {0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6}, {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7} };
+
+                                        int andEd = 1;
+
+                                        for(int ja = 0; ja < 12; ja++) {
+                                            Util.Point A_ = cell.points[edgepairs[j,0]];
+                                            Util.Point B_ = cell.points[edgepairs[j,0]];
+                                            if((Tables.edgeTable[cubeindex] & andEd) == andEd) {
+                                                vertlist[ja] = UtilFuncs.Lerp(isovalue, A_, B_);
+                                            }
+                                            andEd *= 2;
+                                        }
+
+                                        /* Create the triangle */
+                                        for (i = 0; Tables.triTable[cubeindex][i] !=-1; i++) {
+                                            vertices.Add(vertlist[Tables.triTable[cubeindex][i]]);
+                                            triangles.Add(vertices.Count - 1);
+                                        }			
+                                    }
 
 
                                 }
@@ -122,6 +160,93 @@ namespace SE {
                     }
                 }
             }
+        }
+
+        public static void FindEdgeId(byte lod, Vector3 A, Vector3 B) {
+            //dim0: cell#
+            //dim1: edge# (0-12)
+            //dim2: edge# (0-1)
+
+            // first step: get all the unique edges of the lod cell and number them
+            //Vector3[][][] tempTable = new Vector3[Tables.MCLodTable[lod].Length][][];
+
+            List<Vector3[]> UniqueEdges = new List<Vector3[]>();
+
+            byte[][] tempOffsetTable = Tables.MCLodTable[lod];
+
+            for(int i = 0; i < tempOffsetTable.Length; i++) {
+                for(int j = 0; j < 12; j++) {
+                    int a = Tables.edgePairs[j,0];
+                    int b = Tables.edgePairs[j,1];
+
+                    Vector3 A_ = ByteToVector3(tempOffsetTable[i][a]);
+                    Vector3 B_ = ByteToVector3(tempOffsetTable[i][b]);
+
+                    bool unique = true;
+
+                    foreach(Vector3[] pair in UniqueEdges) {
+                        if(pair[0] == A_ && pair[1] == B_) {unique = false; break;}
+                        if(pair[0] == B_ && pair[1] == A_) {unique = false; break;}
+                    }
+
+                    if(unique) {
+                        Vector3[] pair = {A_, B_};
+                        UniqueEdges.Add(pair);
+                    }
+
+                }
+            }
+
+
+
+        }
+
+        public static void GenerateUniqueEdgeLists() {
+            Vector3[][][] table = new Vector3[63][][];
+
+            for(int lod = 0; lod < 63; lod++) {
+
+                List<Vector3[]> UniqueEdges = new List<Vector3[]>();
+
+                byte[][] tempOffsetTable = Tables.MCLodTable[lod];
+
+                for(int i = 0; i < tempOffsetTable.Length; i++) {
+                    for(int j = 0; j < 12; j++) {
+                        int a = Tables.edgePairs[j,0];
+                        int b = Tables.edgePairs[j,1];
+
+                        Vector3 A_ = ByteToVector3(tempOffsetTable[i][a]);
+                        Vector3 B_ = ByteToVector3(tempOffsetTable[i][b]);
+
+                        bool unique = true;
+
+                        foreach(Vector3[] pair in UniqueEdges) {
+                            if(pair[0] == A_ && pair[1] == B_) {unique = false; break;}
+                            if(pair[0] == B_ && pair[1] == A_) {unique = false; break;}
+                        }
+
+                        if(unique) {
+                            Vector3[] pair = {A_, B_};
+                            UniqueEdges.Add(pair);
+                        }
+
+                    }
+                }
+
+                table[lod] = UniqueEdges.ToArray();
+            }
+        }
+
+        public static Vector3 ByteToVector3(byte e) {
+            Vector3 pos = new Vector3(1,1, 1);
+            byte offset = e;
+            if((offset & 1) == 1) pos.x -= 1;
+            if((offset & 2) == 2) pos.x += 1;
+            if((offset & 4) == 4) pos.y -= 1;
+            if((offset & 8) == 8) pos.y += 1;
+            if((offset & 16) == 16) pos.z -= 1;
+            if((offset & 32) == 32) pos.z += 1;
+            return pos;
         }
 
         public static void CreateVertices(ushort[] edges, Vector3Int begin, Vector3Int end, List<Vector3> vertices, List<Vector3> normals, int res1, sbyte[][][][] data) {
@@ -424,10 +549,8 @@ namespace SE {
             {0, -1, 0}, {-1, 0, 0}, {0, 0, -1}
         };
 
-        static int polycalls = 0;
 		public static void Polyganise(Util.GridCell cell, List<Vector3> vertices, List<int> triangles, float isovalue)
 		{
-            polycalls++;
 			Vector3[] vertlist = new Vector3[12];
 
 			int i,ntriang;
