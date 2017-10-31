@@ -608,13 +608,667 @@ public static byte[][][] MCLodTable = new byte[][][] {
 // dim0:lod  |  dim1:edge#
 // result: array of vertices of the edge (length: 2)
 public static byte[][][] MCLodUniqueEdges = new byte[][][] {
-
+	new byte[][] { // lod 0 (0)
+		new byte[] { 21, 20 }, new byte[] { 20, 4 }, new byte[] { 4, 5 }, new byte[] { 5, 21 }, 
+		new byte[] { 17, 16 }, new byte[] { 16, 0 }, new byte[] { 0, 1 }, new byte[] { 1, 17 }, 
+		new byte[] { 21, 17 }, new byte[] { 20, 16 }, new byte[] { 4, 0 }, new byte[] { 5, 1 }, 
+		new byte[] { 20, 22 }, new byte[] { 22, 6 }, new byte[] { 6, 4 }, new byte[] { 16, 18 }, 
+		new byte[] { 18, 2 }, new byte[] { 2, 0 }, new byte[] { 22, 18 }, new byte[] { 6, 2 }, 
+		new byte[] { 6, 38 }, new byte[] { 38, 36 }, new byte[] { 36, 4 }, new byte[] { 2, 34 }, 
+		new byte[] { 34, 32 }, new byte[] { 32, 0 }, new byte[] { 38, 34 }, new byte[] { 36, 32 }, 
+		new byte[] { 36, 37 }, new byte[] { 37, 5 }, new byte[] { 32, 33 }, new byte[] { 33, 1 }, 
+		new byte[] { 37, 33 }, new byte[] { 25, 24 }, new byte[] { 24, 8 }, new byte[] { 8, 9 }, 
+		new byte[] { 9, 25 }, new byte[] { 17, 25 }, new byte[] { 16, 24 }, new byte[] { 0, 8 }, 
+		new byte[] { 1, 9 }, new byte[] { 24, 26 }, new byte[] { 26, 10 }, new byte[] { 10, 8 }, 
+		new byte[] { 18, 26 }, new byte[] { 2, 10 }, new byte[] { 10, 42 }, new byte[] { 42, 40 }, 
+		new byte[] { 40, 8 }, new byte[] { 34, 42 }, new byte[] { 32, 40 }, new byte[] { 40, 41 }, 
+		new byte[] { 41, 9 }, new byte[] { 33, 41 }
+	}, 
+	new byte[][] { // lod 1 (1)
+		new byte[] { 0, 25 }, new byte[] { 25, 25 }, new byte[] { 25, 8 }, new byte[] { 8, 0 }, 
+		new byte[] { 16, 25 }, new byte[] { 25, 24 }, new byte[] { 24, 16 }, new byte[] { 0, 16 }, 
+		new byte[] { 8, 24 }, new byte[] { 4, 21 }, new byte[] { 21, 21 }, new byte[] { 21, 0 }, 
+		new byte[] { 0, 4 }, new byte[] { 20, 21 }, new byte[] { 21, 16 }, new byte[] { 16, 20 }, 
+		new byte[] { 4, 20 }, new byte[] { 32, 41 }, new byte[] { 41, 41 }, new byte[] { 41, 40 }, 
+		new byte[] { 40, 32 }, new byte[] { 0, 41 }, new byte[] { 41, 8 }, new byte[] { 32, 0 }, 
+		new byte[] { 40, 8 }, new byte[] { 36, 37 }, new byte[] { 37, 37 }, new byte[] { 37, 32 }, 
+		new byte[] { 32, 36 }, new byte[] { 4, 37 }, new byte[] { 37, 0 }, new byte[] { 36, 4 }, 
+		new byte[] { 0, 0 }, new byte[] { 21, 25 }, new byte[] { 16, 16 }, new byte[] { 32, 32 }, 
+		new byte[] { 37, 41 }, new byte[] { 4, 4 }, new byte[] { 37, 21 }, new byte[] { 41, 25 }, 
+		new byte[] { 8, 8 }
+	}, 
+	new byte[][] { // lod 2 (10)
+		new byte[] { 0, 42 }, new byte[] { 42, 42 }, new byte[] { 42, 8 }, new byte[] { 8, 0 }, 
+		new byte[] { 32, 42 }, new byte[] { 42, 40 }, new byte[] { 40, 32 }, new byte[] { 0, 32 }, 
+		new byte[] { 8, 40 }, new byte[] { 4, 38 }, new byte[] { 38, 38 }, new byte[] { 38, 0 }, 
+		new byte[] { 0, 4 }, new byte[] { 36, 38 }, new byte[] { 38, 32 }, new byte[] { 32, 36 }, 
+		new byte[] { 4, 36 }, new byte[] { 16, 26 }, new byte[] { 26, 26 }, new byte[] { 26, 24 }, 
+		new byte[] { 24, 16 }, new byte[] { 0, 26 }, new byte[] { 26, 8 }, new byte[] { 16, 0 }, 
+		new byte[] { 24, 8 }, new byte[] { 20, 22 }, new byte[] { 22, 22 }, new byte[] { 22, 16 }, 
+		new byte[] { 16, 20 }, new byte[] { 4, 22 }, new byte[] { 22, 0 }, new byte[] { 20, 4 }, 
+		new byte[] { 0, 0 }, new byte[] { 38, 42 }, new byte[] { 32, 32 }, new byte[] { 16, 16 }, 
+		new byte[] { 22, 26 }, new byte[] { 4, 4 }, new byte[] { 22, 38 }, new byte[] { 26, 42 }, 
+		new byte[] { 8, 8 }
+	}, 
+	new byte[][] { // lod 3 (11)
+	}, 
+	new byte[][] { // lod 4 (100)
+		new byte[] { 0, 38 }, new byte[] { 38, 38 }, new byte[] { 38, 2 }, new byte[] { 2, 0 }, 
+		new byte[] { 32, 38 }, new byte[] { 38, 34 }, new byte[] { 34, 32 }, new byte[] { 0, 32 }, 
+		new byte[] { 2, 34 }, new byte[] { 1, 37 }, new byte[] { 37, 37 }, new byte[] { 37, 0 }, 
+		new byte[] { 0, 1 }, new byte[] { 33, 37 }, new byte[] { 37, 32 }, new byte[] { 32, 33 }, 
+		new byte[] { 1, 33 }, new byte[] { 16, 22 }, new byte[] { 22, 22 }, new byte[] { 22, 18 }, 
+		new byte[] { 18, 16 }, new byte[] { 0, 22 }, new byte[] { 22, 2 }, new byte[] { 16, 0 }, 
+		new byte[] { 18, 2 }, new byte[] { 17, 21 }, new byte[] { 21, 21 }, new byte[] { 21, 16 }, 
+		new byte[] { 16, 17 }, new byte[] { 1, 21 }, new byte[] { 21, 0 }, new byte[] { 17, 1 }, 
+		new byte[] { 0, 0 }, new byte[] { 37, 38 }, new byte[] { 32, 32 }, new byte[] { 16, 16 }, 
+		new byte[] { 21, 22 }, new byte[] { 1, 1 }, new byte[] { 21, 37 }, new byte[] { 22, 38 }, 
+		new byte[] { 2, 2 }
+	}, 
+	new byte[][] { // lod 5 (101)
+		new byte[] { 2, 0 }, new byte[] { 0, 21 }, new byte[] { 21, 22 }, new byte[] { 22, 2 }, 
+		new byte[] { 0, 37 }, new byte[] { 37, 38 }, new byte[] { 38, 2 }, new byte[] { 2, 2 }, 
+		new byte[] { 0, 0 }, new byte[] { 21, 37 }, new byte[] { 22, 38 }, new byte[] { 18, 16 }, 
+		new byte[] { 16, 21 }, new byte[] { 22, 18 }, new byte[] { 18, 2 }, new byte[] { 16, 0 }, 
+		new byte[] { 34, 32 }, new byte[] { 32, 37 }, new byte[] { 38, 34 }, new byte[] { 2, 34 }, 
+		new byte[] { 0, 32 }, new byte[] { 8, 25 }, new byte[] { 25, 21 }, new byte[] { 0, 8 }, 
+		new byte[] { 8, 41 }, new byte[] { 41, 37 }, new byte[] { 8, 8 }, new byte[] { 25, 41 }, 
+		new byte[] { 24, 25 }, new byte[] { 16, 24 }, new byte[] { 24, 8 }, new byte[] { 40, 41 }, 
+		new byte[] { 32, 40 }, new byte[] { 8, 40 }
+	}, 
+	new byte[][] { // lod 6 (110)
+		new byte[] { 8, 0 }, new byte[] { 0, 22 }, new byte[] { 22, 26 }, new byte[] { 26, 8 }, 
+		new byte[] { 0, 38 }, new byte[] { 38, 42 }, new byte[] { 42, 8 }, new byte[] { 8, 8 }, 
+		new byte[] { 0, 0 }, new byte[] { 22, 38 }, new byte[] { 26, 42 }, new byte[] { 24, 16 }, 
+		new byte[] { 16, 22 }, new byte[] { 26, 24 }, new byte[] { 24, 8 }, new byte[] { 16, 0 }, 
+		new byte[] { 40, 32 }, new byte[] { 32, 38 }, new byte[] { 42, 40 }, new byte[] { 8, 40 }, 
+		new byte[] { 0, 32 }, new byte[] { 1, 21 }, new byte[] { 21, 22 }, new byte[] { 0, 1 }, 
+		new byte[] { 1, 37 }, new byte[] { 37, 38 }, new byte[] { 1, 1 }, new byte[] { 21, 37 }, 
+		new byte[] { 17, 21 }, new byte[] { 16, 17 }, new byte[] { 17, 1 }, new byte[] { 33, 37 }, 
+		new byte[] { 32, 33 }, new byte[] { 1, 33 }
+	}, 
+	new byte[][] { // lod 7 (111)
+	}, 
+	new byte[][] { // lod 8 (1000)
+		new byte[] { 0, 41 }, new byte[] { 41, 41 }, new byte[] { 41, 1 }, new byte[] { 1, 0 }, 
+		new byte[] { 32, 41 }, new byte[] { 41, 33 }, new byte[] { 33, 32 }, new byte[] { 0, 32 }, 
+		new byte[] { 1, 33 }, new byte[] { 2, 42 }, new byte[] { 42, 42 }, new byte[] { 42, 0 }, 
+		new byte[] { 0, 2 }, new byte[] { 34, 42 }, new byte[] { 42, 32 }, new byte[] { 32, 34 }, 
+		new byte[] { 2, 34 }, new byte[] { 16, 25 }, new byte[] { 25, 25 }, new byte[] { 25, 17 }, 
+		new byte[] { 17, 16 }, new byte[] { 0, 25 }, new byte[] { 25, 1 }, new byte[] { 16, 0 }, 
+		new byte[] { 17, 1 }, new byte[] { 18, 26 }, new byte[] { 26, 26 }, new byte[] { 26, 16 }, 
+		new byte[] { 16, 18 }, new byte[] { 2, 26 }, new byte[] { 26, 0 }, new byte[] { 18, 2 }, 
+		new byte[] { 0, 0 }, new byte[] { 42, 41 }, new byte[] { 32, 32 }, new byte[] { 16, 16 }, 
+		new byte[] { 26, 25 }, new byte[] { 2, 2 }, new byte[] { 26, 42 }, new byte[] { 25, 41 }, 
+		new byte[] { 1, 1 }
+	}, 
+	new byte[][] { // lod 9 (1001)
+		new byte[] { 2, 0 }, new byte[] { 0, 41 }, new byte[] { 41, 42 }, new byte[] { 42, 2 }, 
+		new byte[] { 0, 25 }, new byte[] { 25, 26 }, new byte[] { 26, 2 }, new byte[] { 2, 2 }, 
+		new byte[] { 0, 0 }, new byte[] { 41, 25 }, new byte[] { 42, 26 }, new byte[] { 34, 32 }, 
+		new byte[] { 32, 41 }, new byte[] { 42, 34 }, new byte[] { 34, 2 }, new byte[] { 32, 0 }, 
+		new byte[] { 18, 16 }, new byte[] { 16, 25 }, new byte[] { 26, 18 }, new byte[] { 2, 18 }, 
+		new byte[] { 0, 16 }, new byte[] { 4, 37 }, new byte[] { 37, 41 }, new byte[] { 0, 4 }, 
+		new byte[] { 4, 21 }, new byte[] { 21, 25 }, new byte[] { 4, 4 }, new byte[] { 37, 21 }, 
+		new byte[] { 36, 37 }, new byte[] { 32, 36 }, new byte[] { 36, 4 }, new byte[] { 20, 21 }, 
+		new byte[] { 16, 20 }, new byte[] { 4, 20 }
+	}, 
+	new byte[][] { // lod 10 (1010)
+		new byte[] { 1, 0 }, new byte[] { 0, 26 }, new byte[] { 26, 25 }, new byte[] { 25, 1 }, 
+		new byte[] { 0, 42 }, new byte[] { 42, 41 }, new byte[] { 41, 1 }, new byte[] { 1, 1 }, 
+		new byte[] { 0, 0 }, new byte[] { 26, 42 }, new byte[] { 25, 41 }, new byte[] { 17, 16 }, 
+		new byte[] { 16, 26 }, new byte[] { 25, 17 }, new byte[] { 17, 1 }, new byte[] { 16, 0 }, 
+		new byte[] { 33, 32 }, new byte[] { 32, 42 }, new byte[] { 41, 33 }, new byte[] { 1, 33 }, 
+		new byte[] { 0, 32 }, new byte[] { 4, 22 }, new byte[] { 22, 26 }, new byte[] { 0, 4 }, 
+		new byte[] { 4, 38 }, new byte[] { 38, 42 }, new byte[] { 4, 4 }, new byte[] { 22, 38 }, 
+		new byte[] { 20, 22 }, new byte[] { 16, 20 }, new byte[] { 20, 4 }, new byte[] { 36, 38 }, 
+		new byte[] { 32, 36 }, new byte[] { 4, 36 }
+	}, 
+	new byte[][] { // lod 11 (1011)
+	}, 
+	new byte[][] { // lod 12 (1100)
+	}, 
+	new byte[][] { // lod 13 (1101)
+	}, 
+	new byte[][] { // lod 14 (1110)
+	}, 
+	new byte[][] { // lod 15 (1111)
+	}, 
+	new byte[][] { // lod 16 (10000)
+		new byte[] { 0, 26 }, new byte[] { 26, 26 }, new byte[] { 26, 8 }, new byte[] { 8, 0 }, 
+		new byte[] { 2, 26 }, new byte[] { 26, 10 }, new byte[] { 10, 2 }, new byte[] { 0, 2 }, 
+		new byte[] { 8, 10 }, new byte[] { 4, 22 }, new byte[] { 22, 22 }, new byte[] { 22, 0 }, 
+		new byte[] { 0, 4 }, new byte[] { 6, 22 }, new byte[] { 22, 2 }, new byte[] { 2, 6 }, 
+		new byte[] { 4, 6 }, new byte[] { 1, 25 }, new byte[] { 25, 25 }, new byte[] { 25, 9 }, 
+		new byte[] { 9, 1 }, new byte[] { 0, 25 }, new byte[] { 25, 8 }, new byte[] { 1, 0 }, 
+		new byte[] { 9, 8 }, new byte[] { 5, 21 }, new byte[] { 21, 21 }, new byte[] { 21, 1 }, 
+		new byte[] { 1, 5 }, new byte[] { 4, 21 }, new byte[] { 21, 0 }, new byte[] { 5, 4 }, 
+		new byte[] { 0, 0 }, new byte[] { 22, 26 }, new byte[] { 2, 2 }, new byte[] { 1, 1 }, 
+		new byte[] { 21, 25 }, new byte[] { 4, 4 }, new byte[] { 21, 22 }, new byte[] { 25, 26 }, 
+		new byte[] { 8, 8 }
+	}, 
+	new byte[][] { // lod 17 (10001)
+		new byte[] { 2, 0 }, new byte[] { 0, 25 }, new byte[] { 25, 26 }, new byte[] { 26, 2 }, 
+		new byte[] { 0, 21 }, new byte[] { 21, 22 }, new byte[] { 22, 2 }, new byte[] { 2, 2 }, 
+		new byte[] { 0, 0 }, new byte[] { 25, 21 }, new byte[] { 26, 22 }, new byte[] { 10, 8 }, 
+		new byte[] { 8, 25 }, new byte[] { 26, 10 }, new byte[] { 10, 2 }, new byte[] { 8, 0 }, 
+		new byte[] { 6, 4 }, new byte[] { 4, 21 }, new byte[] { 22, 6 }, new byte[] { 2, 6 }, 
+		new byte[] { 0, 4 }, new byte[] { 32, 41 }, new byte[] { 41, 25 }, new byte[] { 0, 32 }, 
+		new byte[] { 32, 37 }, new byte[] { 37, 21 }, new byte[] { 32, 32 }, new byte[] { 41, 37 }, 
+		new byte[] { 40, 41 }, new byte[] { 8, 40 }, new byte[] { 40, 32 }, new byte[] { 36, 37 }, 
+		new byte[] { 4, 36 }, new byte[] { 32, 36 }
+	}, 
+	new byte[][] { // lod 18 (10010)
+		new byte[] { 32, 0 }, new byte[] { 0, 26 }, new byte[] { 26, 42 }, new byte[] { 42, 32 }, 
+		new byte[] { 0, 22 }, new byte[] { 22, 38 }, new byte[] { 38, 32 }, new byte[] { 32, 32 }, 
+		new byte[] { 0, 0 }, new byte[] { 26, 22 }, new byte[] { 42, 38 }, new byte[] { 40, 8 }, 
+		new byte[] { 8, 26 }, new byte[] { 42, 40 }, new byte[] { 40, 32 }, new byte[] { 8, 0 }, 
+		new byte[] { 36, 4 }, new byte[] { 4, 22 }, new byte[] { 38, 36 }, new byte[] { 32, 36 }, 
+		new byte[] { 0, 4 }, new byte[] { 1, 25 }, new byte[] { 25, 26 }, new byte[] { 0, 1 }, 
+		new byte[] { 1, 21 }, new byte[] { 21, 22 }, new byte[] { 1, 1 }, new byte[] { 25, 21 }, 
+		new byte[] { 9, 25 }, new byte[] { 8, 9 }, new byte[] { 9, 1 }, new byte[] { 5, 21 }, 
+		new byte[] { 4, 5 }, new byte[] { 1, 5 }
+	}, 
+	new byte[][] { // lod 19 (10011)
+	}, 
+	new byte[][] { // lod 20 (10100)
+		new byte[] { 8, 0 }, new byte[] { 0, 21 }, new byte[] { 21, 25 }, new byte[] { 25, 8 }, 
+		new byte[] { 0, 22 }, new byte[] { 22, 26 }, new byte[] { 26, 8 }, new byte[] { 8, 8 }, 
+		new byte[] { 0, 0 }, new byte[] { 21, 22 }, new byte[] { 25, 26 }, new byte[] { 9, 1 }, 
+		new byte[] { 1, 21 }, new byte[] { 25, 9 }, new byte[] { 9, 8 }, new byte[] { 1, 0 }, 
+		new byte[] { 10, 2 }, new byte[] { 2, 22 }, new byte[] { 26, 10 }, new byte[] { 8, 10 }, 
+		new byte[] { 0, 2 }, new byte[] { 32, 37 }, new byte[] { 37, 21 }, new byte[] { 0, 32 }, 
+		new byte[] { 32, 38 }, new byte[] { 38, 22 }, new byte[] { 32, 32 }, new byte[] { 37, 38 }, 
+		new byte[] { 33, 37 }, new byte[] { 1, 33 }, new byte[] { 33, 32 }, new byte[] { 34, 38 }, 
+		new byte[] { 2, 34 }, new byte[] { 32, 34 }
+	}, 
+	new byte[][] { // lod 21 (10101)
+		new byte[] { 34, 32 }, new byte[] { 32, 0 }, new byte[] { 0, 2 }, new byte[] { 2, 34 }, 
+		new byte[] { 38, 37 }, new byte[] { 37, 21 }, new byte[] { 21, 22 }, new byte[] { 22, 38 }, 
+		new byte[] { 34, 38 }, new byte[] { 32, 37 }, new byte[] { 0, 21 }, new byte[] { 2, 22 }, 
+		new byte[] { 10, 8 }, new byte[] { 8, 25 }, new byte[] { 25, 26 }, new byte[] { 26, 10 }, 
+		new byte[] { 10, 2 }, new byte[] { 8, 0 }, new byte[] { 25, 21 }, new byte[] { 26, 22 }, 
+		new byte[] { 40, 41 }, new byte[] { 41, 25 }, new byte[] { 8, 40 }, new byte[] { 40, 32 }, 
+		new byte[] { 41, 37 }
+	}, 
+	new byte[][] { // lod 22 (10110)
+		new byte[] { 33, 1 }, new byte[] { 1, 0 }, new byte[] { 0, 32 }, new byte[] { 32, 33 }, 
+		new byte[] { 37, 21 }, new byte[] { 21, 22 }, new byte[] { 22, 38 }, new byte[] { 38, 37 }, 
+		new byte[] { 33, 37 }, new byte[] { 1, 21 }, new byte[] { 0, 22 }, new byte[] { 32, 38 }, 
+		new byte[] { 40, 8 }, new byte[] { 8, 26 }, new byte[] { 26, 42 }, new byte[] { 42, 40 }, 
+		new byte[] { 40, 32 }, new byte[] { 8, 0 }, new byte[] { 26, 22 }, new byte[] { 42, 38 }, 
+		new byte[] { 9, 25 }, new byte[] { 25, 26 }, new byte[] { 8, 9 }, new byte[] { 9, 1 }, 
+		new byte[] { 25, 21 }
+	}, 
+	new byte[][] { // lod 23 (10111)
+	}, 
+	new byte[][] { // lod 24 (11000)
+		new byte[] { 32, 0 }, new byte[] { 0, 25 }, new byte[] { 25, 41 }, new byte[] { 41, 32 }, 
+		new byte[] { 0, 26 }, new byte[] { 26, 42 }, new byte[] { 42, 32 }, new byte[] { 32, 32 }, 
+		new byte[] { 0, 0 }, new byte[] { 25, 26 }, new byte[] { 41, 42 }, new byte[] { 33, 1 }, 
+		new byte[] { 1, 25 }, new byte[] { 41, 33 }, new byte[] { 33, 32 }, new byte[] { 1, 0 }, 
+		new byte[] { 34, 2 }, new byte[] { 2, 26 }, new byte[] { 42, 34 }, new byte[] { 32, 34 }, 
+		new byte[] { 0, 2 }, new byte[] { 4, 21 }, new byte[] { 21, 25 }, new byte[] { 0, 4 }, 
+		new byte[] { 4, 22 }, new byte[] { 22, 26 }, new byte[] { 4, 4 }, new byte[] { 21, 22 }, 
+		new byte[] { 5, 21 }, new byte[] { 1, 5 }, new byte[] { 5, 4 }, new byte[] { 6, 22 }, 
+		new byte[] { 2, 6 }, new byte[] { 4, 6 }
+	}, 
+	new byte[][] { // lod 25 (11001)
+		new byte[] { 6, 4 }, new byte[] { 4, 0 }, new byte[] { 0, 2 }, new byte[] { 2, 6 }, 
+		new byte[] { 22, 21 }, new byte[] { 21, 25 }, new byte[] { 25, 26 }, new byte[] { 26, 22 }, 
+		new byte[] { 6, 22 }, new byte[] { 4, 21 }, new byte[] { 0, 25 }, new byte[] { 2, 26 }, 
+		new byte[] { 34, 32 }, new byte[] { 32, 41 }, new byte[] { 41, 42 }, new byte[] { 42, 34 }, 
+		new byte[] { 34, 2 }, new byte[] { 32, 0 }, new byte[] { 41, 25 }, new byte[] { 42, 26 }, 
+		new byte[] { 36, 37 }, new byte[] { 37, 41 }, new byte[] { 32, 36 }, new byte[] { 36, 4 }, 
+		new byte[] { 37, 21 }
+	}, 
+	new byte[][] { // lod 26 (11010)
+		new byte[] { 36, 4 }, new byte[] { 4, 0 }, new byte[] { 0, 32 }, new byte[] { 32, 36 }, 
+		new byte[] { 38, 22 }, new byte[] { 22, 26 }, new byte[] { 26, 42 }, new byte[] { 42, 38 }, 
+		new byte[] { 36, 38 }, new byte[] { 4, 22 }, new byte[] { 0, 26 }, new byte[] { 32, 42 }, 
+		new byte[] { 33, 1 }, new byte[] { 1, 25 }, new byte[] { 25, 41 }, new byte[] { 41, 33 }, 
+		new byte[] { 33, 32 }, new byte[] { 1, 0 }, new byte[] { 25, 26 }, new byte[] { 41, 42 }, 
+		new byte[] { 5, 21 }, new byte[] { 21, 25 }, new byte[] { 1, 5 }, new byte[] { 5, 4 }, 
+		new byte[] { 21, 22 }
+	}, 
+	new byte[][] { // lod 27 (11011)
+	}, 
+	new byte[][] { // lod 28 (11100)
+	}, 
+	new byte[][] { // lod 29 (11101)
+	}, 
+	new byte[][] { // lod 30 (11110)
+	}, 
+	new byte[][] { // lod 31 (11111)
+	}, 
+	new byte[][] { // lod 32 (100000)
+		new byte[] { 0, 41 }, new byte[] { 41, 41 }, new byte[] { 41, 8 }, new byte[] { 8, 0 }, 
+		new byte[] { 1, 41 }, new byte[] { 41, 9 }, new byte[] { 9, 1 }, new byte[] { 0, 1 }, 
+		new byte[] { 8, 9 }, new byte[] { 4, 37 }, new byte[] { 37, 37 }, new byte[] { 37, 0 }, 
+		new byte[] { 0, 4 }, new byte[] { 5, 37 }, new byte[] { 37, 1 }, new byte[] { 1, 5 }, 
+		new byte[] { 4, 5 }, new byte[] { 2, 42 }, new byte[] { 42, 42 }, new byte[] { 42, 10 }, 
+		new byte[] { 10, 2 }, new byte[] { 0, 42 }, new byte[] { 42, 8 }, new byte[] { 2, 0 }, 
+		new byte[] { 10, 8 }, new byte[] { 6, 38 }, new byte[] { 38, 38 }, new byte[] { 38, 2 }, 
+		new byte[] { 2, 6 }, new byte[] { 4, 38 }, new byte[] { 38, 0 }, new byte[] { 6, 4 }, 
+		new byte[] { 0, 0 }, new byte[] { 37, 41 }, new byte[] { 1, 1 }, new byte[] { 2, 2 }, 
+		new byte[] { 38, 42 }, new byte[] { 4, 4 }, new byte[] { 38, 37 }, new byte[] { 42, 41 }, 
+		new byte[] { 8, 8 }
+	}, 
+	new byte[][] { // lod 33 (100001)
+		new byte[] { 16, 0 }, new byte[] { 0, 41 }, new byte[] { 41, 25 }, new byte[] { 25, 16 }, 
+		new byte[] { 0, 37 }, new byte[] { 37, 21 }, new byte[] { 21, 16 }, new byte[] { 16, 16 }, 
+		new byte[] { 0, 0 }, new byte[] { 41, 37 }, new byte[] { 25, 21 }, new byte[] { 24, 8 }, 
+		new byte[] { 8, 41 }, new byte[] { 25, 24 }, new byte[] { 24, 16 }, new byte[] { 8, 0 }, 
+		new byte[] { 20, 4 }, new byte[] { 4, 37 }, new byte[] { 21, 20 }, new byte[] { 16, 20 }, 
+		new byte[] { 0, 4 }, new byte[] { 2, 42 }, new byte[] { 42, 41 }, new byte[] { 0, 2 }, 
+		new byte[] { 2, 38 }, new byte[] { 38, 37 }, new byte[] { 2, 2 }, new byte[] { 42, 38 }, 
+		new byte[] { 10, 42 }, new byte[] { 8, 10 }, new byte[] { 10, 2 }, new byte[] { 6, 38 }, 
+		new byte[] { 4, 6 }, new byte[] { 2, 6 }
+	}, 
+	new byte[][] { // lod 34 (100010)
+		new byte[] { 1, 0 }, new byte[] { 0, 42 }, new byte[] { 42, 41 }, new byte[] { 41, 1 }, 
+		new byte[] { 0, 38 }, new byte[] { 38, 37 }, new byte[] { 37, 1 }, new byte[] { 1, 1 }, 
+		new byte[] { 0, 0 }, new byte[] { 42, 38 }, new byte[] { 41, 37 }, new byte[] { 9, 8 }, 
+		new byte[] { 8, 42 }, new byte[] { 41, 9 }, new byte[] { 9, 1 }, new byte[] { 8, 0 }, 
+		new byte[] { 5, 4 }, new byte[] { 4, 38 }, new byte[] { 37, 5 }, new byte[] { 1, 5 }, 
+		new byte[] { 0, 4 }, new byte[] { 16, 26 }, new byte[] { 26, 42 }, new byte[] { 0, 16 }, 
+		new byte[] { 16, 22 }, new byte[] { 22, 38 }, new byte[] { 16, 16 }, new byte[] { 26, 22 }, 
+		new byte[] { 24, 26 }, new byte[] { 8, 24 }, new byte[] { 24, 16 }, new byte[] { 20, 22 }, 
+		new byte[] { 4, 20 }, new byte[] { 16, 20 }
+	}, 
+	new byte[][] { // lod 35 (100011)
+	}, 
+	new byte[][] { // lod 36 (100100)
+		new byte[] { 8, 0 }, new byte[] { 0, 38 }, new byte[] { 38, 42 }, new byte[] { 42, 8 }, 
+		new byte[] { 0, 37 }, new byte[] { 37, 41 }, new byte[] { 41, 8 }, new byte[] { 8, 8 }, 
+		new byte[] { 0, 0 }, new byte[] { 38, 37 }, new byte[] { 42, 41 }, new byte[] { 10, 2 }, 
+		new byte[] { 2, 38 }, new byte[] { 42, 10 }, new byte[] { 10, 8 }, new byte[] { 2, 0 }, 
+		new byte[] { 9, 1 }, new byte[] { 1, 37 }, new byte[] { 41, 9 }, new byte[] { 8, 9 }, 
+		new byte[] { 0, 1 }, new byte[] { 16, 22 }, new byte[] { 22, 38 }, new byte[] { 0, 16 }, 
+		new byte[] { 16, 21 }, new byte[] { 21, 37 }, new byte[] { 16, 16 }, new byte[] { 22, 21 }, 
+		new byte[] { 18, 22 }, new byte[] { 2, 18 }, new byte[] { 18, 16 }, new byte[] { 17, 21 }, 
+		new byte[] { 1, 17 }, new byte[] { 16, 17 }
+	}, 
+	new byte[][] { // lod 37 (100101)
+		new byte[] { 18, 2 }, new byte[] { 2, 0 }, new byte[] { 0, 16 }, new byte[] { 16, 18 }, 
+		new byte[] { 22, 38 }, new byte[] { 38, 37 }, new byte[] { 37, 21 }, new byte[] { 21, 22 }, 
+		new byte[] { 18, 22 }, new byte[] { 2, 38 }, new byte[] { 0, 37 }, new byte[] { 16, 21 }, 
+		new byte[] { 24, 8 }, new byte[] { 8, 41 }, new byte[] { 41, 25 }, new byte[] { 25, 24 }, 
+		new byte[] { 24, 16 }, new byte[] { 8, 0 }, new byte[] { 41, 37 }, new byte[] { 25, 21 }, 
+		new byte[] { 10, 42 }, new byte[] { 42, 41 }, new byte[] { 8, 10 }, new byte[] { 10, 2 }, 
+		new byte[] { 42, 38 }
+	}, 
+	new byte[][] { // lod 38 (100110)
+		new byte[] { 17, 16 }, new byte[] { 16, 0 }, new byte[] { 0, 1 }, new byte[] { 1, 17 }, 
+		new byte[] { 21, 22 }, new byte[] { 22, 38 }, new byte[] { 38, 37 }, new byte[] { 37, 21 }, 
+		new byte[] { 17, 21 }, new byte[] { 16, 22 }, new byte[] { 0, 38 }, new byte[] { 1, 37 }, 
+		new byte[] { 9, 8 }, new byte[] { 8, 42 }, new byte[] { 42, 41 }, new byte[] { 41, 9 }, 
+		new byte[] { 9, 1 }, new byte[] { 8, 0 }, new byte[] { 42, 38 }, new byte[] { 41, 37 }, 
+		new byte[] { 24, 26 }, new byte[] { 26, 42 }, new byte[] { 8, 24 }, new byte[] { 24, 16 }, 
+		new byte[] { 26, 22 }
+	}, 
+	new byte[][] { // lod 39 (100111)
+	}, 
+	new byte[][] { // lod 40 (101000)
+		new byte[] { 16, 0 }, new byte[] { 0, 42 }, new byte[] { 42, 26 }, new byte[] { 26, 16 }, 
+		new byte[] { 0, 41 }, new byte[] { 41, 25 }, new byte[] { 25, 16 }, new byte[] { 16, 16 }, 
+		new byte[] { 0, 0 }, new byte[] { 42, 41 }, new byte[] { 26, 25 }, new byte[] { 18, 2 }, 
+		new byte[] { 2, 42 }, new byte[] { 26, 18 }, new byte[] { 18, 16 }, new byte[] { 2, 0 }, 
+		new byte[] { 17, 1 }, new byte[] { 1, 41 }, new byte[] { 25, 17 }, new byte[] { 16, 17 }, 
+		new byte[] { 0, 1 }, new byte[] { 4, 38 }, new byte[] { 38, 42 }, new byte[] { 0, 4 }, 
+		new byte[] { 4, 37 }, new byte[] { 37, 41 }, new byte[] { 4, 4 }, new byte[] { 38, 37 }, 
+		new byte[] { 6, 38 }, new byte[] { 2, 6 }, new byte[] { 6, 4 }, new byte[] { 5, 37 }, 
+		new byte[] { 1, 5 }, new byte[] { 4, 5 }
+	}, 
+	new byte[][] { // lod 41 (101001)
+		new byte[] { 20, 4 }, new byte[] { 4, 0 }, new byte[] { 0, 16 }, new byte[] { 16, 20 }, 
+		new byte[] { 21, 37 }, new byte[] { 37, 41 }, new byte[] { 41, 25 }, new byte[] { 25, 21 }, 
+		new byte[] { 20, 21 }, new byte[] { 4, 37 }, new byte[] { 0, 41 }, new byte[] { 16, 25 }, 
+		new byte[] { 18, 2 }, new byte[] { 2, 42 }, new byte[] { 42, 26 }, new byte[] { 26, 18 }, 
+		new byte[] { 18, 16 }, new byte[] { 2, 0 }, new byte[] { 42, 41 }, new byte[] { 26, 25 }, 
+		new byte[] { 6, 38 }, new byte[] { 38, 42 }, new byte[] { 2, 6 }, new byte[] { 6, 4 }, 
+		new byte[] { 38, 37 }
+	}, 
+	new byte[][] { // lod 42 (101010)
+		new byte[] { 5, 4 }, new byte[] { 4, 0 }, new byte[] { 0, 1 }, new byte[] { 1, 5 }, 
+		new byte[] { 37, 38 }, new byte[] { 38, 42 }, new byte[] { 42, 41 }, new byte[] { 41, 37 }, 
+		new byte[] { 5, 37 }, new byte[] { 4, 38 }, new byte[] { 0, 42 }, new byte[] { 1, 41 }, 
+		new byte[] { 17, 16 }, new byte[] { 16, 26 }, new byte[] { 26, 25 }, new byte[] { 25, 17 }, 
+		new byte[] { 17, 1 }, new byte[] { 16, 0 }, new byte[] { 26, 42 }, new byte[] { 25, 41 }, 
+		new byte[] { 20, 22 }, new byte[] { 22, 26 }, new byte[] { 16, 20 }, new byte[] { 20, 4 }, 
+		new byte[] { 22, 38 }
+	}, 
+	new byte[][] { // lod 43 (101011)
+	}, 
+	new byte[][] { // lod 44 (101100)
+	}, 
+	new byte[][] { // lod 45 (101101)
+	}, 
+	new byte[][] { // lod 46 (101110)
+	}, 
+	new byte[][] { // lod 47 (101111)
+	}, 
+	new byte[][] { // lod 48 (110000)
+	}, 
+	new byte[][] { // lod 49 (110001)
+	}, 
+	new byte[][] { // lod 50 (110010)
+	}, 
+	new byte[][] { // lod 51 (110011)
+	}, 
+	new byte[][] { // lod 52 (110100)
+	}, 
+	new byte[][] { // lod 53 (110101)
+	}, 
+	new byte[][] { // lod 54 (110110)
+	}, 
+	new byte[][] { // lod 55 (110111)
+	}, 
+	new byte[][] { // lod 56 (111000)
+	}, 
+	new byte[][] { // lod 57 (111001)
+	}, 
+	new byte[][] { // lod 58 (111010)
+	}, 
+	new byte[][] { // lod 59 (111011)
+	}, 
+	new byte[][] { // lod 60 (111100)
+	}, 
+	new byte[][] { // lod 61 (111101)
+	}, 
+	new byte[][] { // lod 62 (111110)
+	}, 
 };
 
-// dim0: lod  |  dim1:gridcell#  |  dim2: vert#
-// result: edge#
-public static byte[][][] MCLodEdgeMapping = new byte[][][] {
-
+// dim0: lod  |  dim1:gridcell#  |  dim2: edge#
+// result: edge id#
+public static byte[][,] MCLodEdgeMappingTable = new byte[][,] {
+	new byte[8,12] { // lod 0 (0)
+		{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+		{12, 13, 14, 1, 15, 16, 17, 5, 9, 18, 19, 10 },
+		{14, 20, 21, 22, 17, 23, 24, 25, 10, 19, 26, 27 },
+		{2, 22, 28, 29, 6, 25, 30, 31, 11, 10, 27, 32 },
+		{4, 5, 6, 7, 33, 34, 35, 36, 37, 38, 39, 40 },
+		{15, 16, 17, 5, 41, 42, 43, 34, 38, 44, 45, 39 },
+		{17, 23, 24, 25, 43, 46, 47, 48, 39, 45, 49, 50 },
+		{6, 25, 30, 31, 35, 48, 51, 52, 40, 39, 50, 53 }
+	},
+	new byte[9,12] { // lod 1 (1)
+		{0, 1, 2, 3, 4, 1, 5, 6, 7, 1, 1, 8 },
+		{9, 10, 11, 12, 13, 10, 14, 15, 16, 10, 10, 7 },
+		{17, 18, 19, 20, 21, 18, 22, 3, 23, 18, 18, 24 },
+		{25, 26, 27, 28, 29, 26, 30, 12, 31, 26, 26, 23 },
+		{14, 11, 32, 7, 14, 33, 4, 34, 34, 10, 0, 7 },
+		{30, 27, 35, 23, 30, 36, 21, 32, 32, 26, 17, 23 },
+		{29, 26, 30, 12, 9, 10, 11, 12, 37, 38, 38, 32 },
+		{21, 18, 22, 3, 0, 1, 2, 3, 32, 39, 39, 40 },
+		{30, 36, 21, 32, 11, 33, 0, 32, 32, 38, 39, 32 }
+	},
+	new byte[9,12] { // lod 2 (10)
+		{0, 1, 2, 3, 4, 1, 5, 6, 7, 1, 1, 8 },
+		{9, 10, 11, 12, 13, 10, 14, 15, 16, 10, 10, 7 },
+		{17, 18, 19, 20, 21, 18, 22, 3, 23, 18, 18, 24 },
+		{25, 26, 27, 28, 29, 26, 30, 12, 31, 26, 26, 23 },
+		{14, 11, 32, 7, 14, 33, 4, 34, 34, 10, 0, 7 },
+		{30, 27, 35, 23, 30, 36, 21, 32, 32, 26, 17, 23 },
+		{29, 26, 30, 12, 9, 10, 11, 12, 37, 38, 38, 32 },
+		{21, 18, 22, 3, 0, 1, 2, 3, 32, 39, 39, 40 },
+		{30, 36, 21, 32, 11, 33, 0, 32, 32, 38, 39, 32 }
+	},
+	new byte[0,12] { // lod 3 (11)
+	},
+	new byte[9,12] { // lod 4 (100)
+		{0, 1, 2, 3, 4, 1, 5, 6, 7, 1, 1, 8 },
+		{9, 10, 11, 12, 13, 10, 14, 15, 16, 10, 10, 7 },
+		{17, 18, 19, 20, 21, 18, 22, 3, 23, 18, 18, 24 },
+		{25, 26, 27, 28, 29, 26, 30, 12, 31, 26, 26, 23 },
+		{14, 11, 32, 7, 14, 33, 4, 34, 34, 10, 0, 7 },
+		{30, 27, 35, 23, 30, 36, 21, 32, 32, 26, 17, 23 },
+		{29, 26, 30, 12, 9, 10, 11, 12, 37, 38, 38, 32 },
+		{21, 18, 22, 3, 0, 1, 2, 3, 32, 39, 39, 40 },
+		{30, 36, 21, 32, 11, 33, 0, 32, 32, 38, 39, 32 }
+	},
+	new byte[6,12] { // lod 5 (101)
+		{0, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10 },
+		{11, 12, 2, 13, 0, 8, 0, 7, 14, 15, 1, 3 },
+		{0, 8, 0, 7, 16, 17, 5, 18, 19, 20, 4, 6 },
+		{21, 22, 1, 23, 24, 25, 4, 23, 26, 27, 9, 8 },
+		{28, 22, 12, 29, 26, 23, 8, 23, 30, 21, 1, 15 },
+		{26, 23, 8, 23, 31, 25, 17, 32, 33, 24, 4, 20 }
+	},
+	new byte[6,12] { // lod 6 (110)
+		{0, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10 },
+		{11, 12, 2, 13, 0, 8, 0, 7, 14, 15, 1, 3 },
+		{0, 8, 0, 7, 16, 17, 5, 18, 19, 20, 4, 6 },
+		{21, 22, 1, 23, 24, 25, 4, 23, 26, 27, 9, 8 },
+		{28, 22, 12, 29, 26, 23, 8, 23, 30, 21, 1, 15 },
+		{26, 23, 8, 23, 31, 25, 17, 32, 33, 24, 4, 20 }
+	},
+	new byte[0,12] { // lod 7 (111)
+	},
+	new byte[9,12] { // lod 8 (1000)
+		{0, 1, 2, 3, 4, 1, 5, 6, 7, 1, 1, 8 },
+		{9, 10, 11, 12, 13, 10, 14, 15, 16, 10, 10, 7 },
+		{17, 18, 19, 20, 21, 18, 22, 3, 23, 18, 18, 24 },
+		{25, 26, 27, 28, 29, 26, 30, 12, 31, 26, 26, 23 },
+		{14, 11, 32, 7, 14, 33, 4, 34, 34, 10, 0, 7 },
+		{30, 27, 35, 23, 30, 36, 21, 32, 32, 26, 17, 23 },
+		{29, 26, 30, 12, 9, 10, 11, 12, 37, 38, 38, 32 },
+		{21, 18, 22, 3, 0, 1, 2, 3, 32, 39, 39, 40 },
+		{30, 36, 21, 32, 11, 33, 0, 32, 32, 38, 39, 32 }
+	},
+	new byte[6,12] { // lod 9 (1001)
+		{0, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10 },
+		{11, 12, 2, 13, 0, 8, 0, 7, 14, 15, 1, 3 },
+		{0, 8, 0, 7, 16, 17, 5, 18, 19, 20, 4, 6 },
+		{21, 22, 1, 23, 24, 25, 4, 23, 26, 27, 9, 8 },
+		{28, 22, 12, 29, 26, 23, 8, 23, 30, 21, 1, 15 },
+		{26, 23, 8, 23, 31, 25, 17, 32, 33, 24, 4, 20 }
+	},
+	new byte[6,12] { // lod 10 (1010)
+		{0, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10 },
+		{11, 12, 2, 13, 0, 8, 0, 7, 14, 15, 1, 3 },
+		{0, 8, 0, 7, 16, 17, 5, 18, 19, 20, 4, 6 },
+		{21, 22, 1, 23, 24, 25, 4, 23, 26, 27, 9, 8 },
+		{28, 22, 12, 29, 26, 23, 8, 23, 30, 21, 1, 15 },
+		{26, 23, 8, 23, 31, 25, 17, 32, 33, 24, 4, 20 }
+	},
+	new byte[0,12] { // lod 11 (1011)
+	},
+	new byte[0,12] { // lod 12 (1100)
+	},
+	new byte[0,12] { // lod 13 (1101)
+	},
+	new byte[0,12] { // lod 14 (1110)
+	},
+	new byte[0,12] { // lod 15 (1111)
+	},
+	new byte[9,12] { // lod 16 (10000)
+		{0, 1, 2, 3, 4, 1, 5, 6, 7, 1, 1, 8 },
+		{9, 10, 11, 12, 13, 10, 14, 15, 16, 10, 10, 7 },
+		{17, 18, 19, 20, 21, 18, 22, 3, 23, 18, 18, 24 },
+		{25, 26, 27, 28, 29, 26, 30, 12, 31, 26, 26, 23 },
+		{14, 11, 32, 7, 14, 33, 4, 34, 34, 10, 0, 7 },
+		{30, 27, 35, 23, 30, 36, 21, 32, 32, 26, 17, 23 },
+		{29, 26, 30, 12, 9, 10, 11, 12, 37, 38, 38, 32 },
+		{21, 18, 22, 3, 0, 1, 2, 3, 32, 39, 39, 40 },
+		{30, 36, 21, 32, 11, 33, 0, 32, 32, 38, 39, 32 }
+	},
+	new byte[6,12] { // lod 17 (10001)
+		{0, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10 },
+		{11, 12, 2, 13, 0, 8, 0, 7, 14, 15, 1, 3 },
+		{0, 8, 0, 7, 16, 17, 5, 18, 19, 20, 4, 6 },
+		{21, 22, 1, 23, 24, 25, 4, 23, 26, 27, 9, 8 },
+		{28, 22, 12, 29, 26, 23, 8, 23, 30, 21, 1, 15 },
+		{26, 23, 8, 23, 31, 25, 17, 32, 33, 24, 4, 20 }
+	},
+	new byte[6,12] { // lod 18 (10010)
+		{0, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10 },
+		{11, 12, 2, 13, 0, 8, 0, 7, 14, 15, 1, 3 },
+		{0, 8, 0, 7, 16, 17, 5, 18, 19, 20, 4, 6 },
+		{21, 22, 1, 23, 24, 25, 4, 23, 26, 27, 9, 8 },
+		{28, 22, 12, 29, 26, 23, 8, 23, 30, 21, 1, 15 },
+		{26, 23, 8, 23, 31, 25, 17, 32, 33, 24, 4, 20 }
+	},
+	new byte[0,12] { // lod 19 (10011)
+	},
+	new byte[6,12] { // lod 20 (10100)
+		{0, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10 },
+		{11, 12, 2, 13, 0, 8, 0, 7, 14, 15, 1, 3 },
+		{0, 8, 0, 7, 16, 17, 5, 18, 19, 20, 4, 6 },
+		{21, 22, 1, 23, 24, 25, 4, 23, 26, 27, 9, 8 },
+		{28, 22, 12, 29, 26, 23, 8, 23, 30, 21, 1, 15 },
+		{26, 23, 8, 23, 31, 25, 17, 32, 33, 24, 4, 20 }
+	},
+	new byte[3,12] { // lod 21 (10101)
+		{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+		{12, 13, 14, 15, 2, 10, 6, 11, 16, 17, 18, 19 },
+		{20, 21, 13, 22, 9, 5, 10, 1, 23, 24, 18, 17 }
+	},
+	new byte[3,12] { // lod 22 (10110)
+		{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+		{12, 13, 14, 15, 2, 10, 6, 11, 16, 17, 18, 19 },
+		{20, 21, 13, 22, 9, 5, 10, 1, 23, 24, 18, 17 }
+	},
+	new byte[0,12] { // lod 23 (10111)
+	},
+	new byte[6,12] { // lod 24 (11000)
+		{0, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10 },
+		{11, 12, 2, 13, 0, 8, 0, 7, 14, 15, 1, 3 },
+		{0, 8, 0, 7, 16, 17, 5, 18, 19, 20, 4, 6 },
+		{21, 22, 1, 23, 24, 25, 4, 23, 26, 27, 9, 8 },
+		{28, 22, 12, 29, 26, 23, 8, 23, 30, 21, 1, 15 },
+		{26, 23, 8, 23, 31, 25, 17, 32, 33, 24, 4, 20 }
+	},
+	new byte[3,12] { // lod 25 (11001)
+		{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+		{12, 13, 14, 15, 2, 10, 6, 11, 16, 17, 18, 19 },
+		{20, 21, 13, 22, 9, 5, 10, 1, 23, 24, 18, 17 }
+	},
+	new byte[3,12] { // lod 26 (11010)
+		{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+		{12, 13, 14, 15, 2, 10, 6, 11, 16, 17, 18, 19 },
+		{20, 21, 13, 22, 9, 5, 10, 1, 23, 24, 18, 17 }
+	},
+	new byte[0,12] { // lod 27 (11011)
+	},
+	new byte[0,12] { // lod 28 (11100)
+	},
+	new byte[0,12] { // lod 29 (11101)
+	},
+	new byte[0,12] { // lod 30 (11110)
+	},
+	new byte[0,12] { // lod 31 (11111)
+	},
+	new byte[9,12] { // lod 32 (100000)
+		{0, 1, 2, 3, 4, 1, 5, 6, 7, 1, 1, 8 },
+		{9, 10, 11, 12, 13, 10, 14, 15, 16, 10, 10, 7 },
+		{17, 18, 19, 20, 21, 18, 22, 3, 23, 18, 18, 24 },
+		{25, 26, 27, 28, 29, 26, 30, 12, 31, 26, 26, 23 },
+		{14, 11, 32, 7, 14, 33, 4, 34, 34, 10, 0, 7 },
+		{30, 27, 35, 23, 30, 36, 21, 32, 32, 26, 17, 23 },
+		{29, 26, 30, 12, 9, 10, 11, 12, 37, 38, 38, 32 },
+		{21, 18, 22, 3, 0, 1, 2, 3, 32, 39, 39, 40 },
+		{30, 36, 21, 32, 11, 33, 0, 32, 32, 38, 39, 32 }
+	},
+	new byte[6,12] { // lod 33 (100001)
+		{0, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10 },
+		{11, 12, 2, 13, 0, 8, 0, 7, 14, 15, 1, 3 },
+		{0, 8, 0, 7, 16, 17, 5, 18, 19, 20, 4, 6 },
+		{21, 22, 1, 23, 24, 25, 4, 23, 26, 27, 9, 8 },
+		{28, 22, 12, 29, 26, 23, 8, 23, 30, 21, 1, 15 },
+		{26, 23, 8, 23, 31, 25, 17, 32, 33, 24, 4, 20 }
+	},
+	new byte[6,12] { // lod 34 (100010)
+		{0, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10 },
+		{11, 12, 2, 13, 0, 8, 0, 7, 14, 15, 1, 3 },
+		{0, 8, 0, 7, 16, 17, 5, 18, 19, 20, 4, 6 },
+		{21, 22, 1, 23, 24, 25, 4, 23, 26, 27, 9, 8 },
+		{28, 22, 12, 29, 26, 23, 8, 23, 30, 21, 1, 15 },
+		{26, 23, 8, 23, 31, 25, 17, 32, 33, 24, 4, 20 }
+	},
+	new byte[0,12] { // lod 35 (100011)
+	},
+	new byte[6,12] { // lod 36 (100100)
+		{0, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10 },
+		{11, 12, 2, 13, 0, 8, 0, 7, 14, 15, 1, 3 },
+		{0, 8, 0, 7, 16, 17, 5, 18, 19, 20, 4, 6 },
+		{21, 22, 1, 23, 24, 25, 4, 23, 26, 27, 9, 8 },
+		{28, 22, 12, 29, 26, 23, 8, 23, 30, 21, 1, 15 },
+		{26, 23, 8, 23, 31, 25, 17, 32, 33, 24, 4, 20 }
+	},
+	new byte[3,12] { // lod 37 (100101)
+		{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+		{12, 13, 14, 15, 2, 10, 6, 11, 16, 17, 18, 19 },
+		{20, 21, 13, 22, 9, 5, 10, 1, 23, 24, 18, 17 }
+	},
+	new byte[3,12] { // lod 38 (100110)
+		{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+		{12, 13, 14, 15, 2, 10, 6, 11, 16, 17, 18, 19 },
+		{20, 21, 13, 22, 9, 5, 10, 1, 23, 24, 18, 17 }
+	},
+	new byte[0,12] { // lod 39 (100111)
+	},
+	new byte[6,12] { // lod 40 (101000)
+		{0, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10 },
+		{11, 12, 2, 13, 0, 8, 0, 7, 14, 15, 1, 3 },
+		{0, 8, 0, 7, 16, 17, 5, 18, 19, 20, 4, 6 },
+		{21, 22, 1, 23, 24, 25, 4, 23, 26, 27, 9, 8 },
+		{28, 22, 12, 29, 26, 23, 8, 23, 30, 21, 1, 15 },
+		{26, 23, 8, 23, 31, 25, 17, 32, 33, 24, 4, 20 }
+	},
+	new byte[3,12] { // lod 41 (101001)
+		{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+		{12, 13, 14, 15, 2, 10, 6, 11, 16, 17, 18, 19 },
+		{20, 21, 13, 22, 9, 5, 10, 1, 23, 24, 18, 17 }
+	},
+	new byte[3,12] { // lod 42 (101010)
+		{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+		{12, 13, 14, 15, 2, 10, 6, 11, 16, 17, 18, 19 },
+		{20, 21, 13, 22, 9, 5, 10, 1, 23, 24, 18, 17 }
+	},
+	new byte[0,12] { // lod 43 (101011)
+	},
+	new byte[0,12] { // lod 44 (101100)
+	},
+	new byte[0,12] { // lod 45 (101101)
+	},
+	new byte[0,12] { // lod 46 (101110)
+	},
+	new byte[0,12] { // lod 47 (101111)
+	},
+	new byte[0,12] { // lod 48 (110000)
+	},
+	new byte[0,12] { // lod 49 (110001)
+	},
+	new byte[0,12] { // lod 50 (110010)
+	},
+	new byte[0,12] { // lod 51 (110011)
+	},
+	new byte[0,12] { // lod 52 (110100)
+	},
+	new byte[0,12] { // lod 53 (110101)
+	},
+	new byte[0,12] { // lod 54 (110110)
+	},
+	new byte[0,12] { // lod 55 (110111)
+	},
+	new byte[0,12] { // lod 56 (111000)
+	},
+	new byte[0,12] { // lod 57 (111001)
+	},
+	new byte[0,12] { // lod 58 (111010)
+	},
+	new byte[0,12] { // lod 59 (111011)
+	},
+	new byte[0,12] { // lod 60 (111100)
+	},
+	new byte[0,12] { // lod 61 (111101)
+	},
+	new byte[0,12] { // lod 62 (111110)
+	},
+	new byte[0,12] { // lod 63 (111111)
+	}
 };
 public static readonly int[,] edgePairs = {
    {0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6}, {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7}

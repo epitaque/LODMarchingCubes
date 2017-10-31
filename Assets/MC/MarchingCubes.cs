@@ -106,7 +106,7 @@ namespace SE {
                                     cell.points[j].position = pos;
                                     cell.points[j].density = (float)data[((int)pos.x)][((int)pos.y)][((int)pos.z)][0];
 
-                                    { // Polyganise
+                                    /*{ // Polyganise
                                         float isovalue = 0;
                                         Vector3[] vertlist = new Vector3[12];
 
@@ -123,7 +123,7 @@ namespace SE {
                                         if (cell.points[6].density < isovalue) cubeindex |= 64;
                                         if (cell.points[7].density < isovalue) cubeindex |= 128;
 
-                                        /* Cube is entirely in/out of the surface */
+                                        // Cube is entirely in/out of the surface 
                                         if (Tables.edgeTable[cubeindex] == 0) {
                                             return;
                                         }
@@ -133,22 +133,21 @@ namespace SE {
                                         int andEd = 1;
 
                                         for(int ja = 0; ja < 12; ja++) {
-                                            Util.Point A_ = cell.points[edgepairs[j,0]];
-                                            Util.Point B_ = cell.points[edgepairs[j,0]];
+                                            Util.Point A_ = cell.points[edgepairs[ja,0]];
+                                            Util.Point B_ = cell.points[edgepairs[ja,0]];
                                             if((Tables.edgeTable[cubeindex] & andEd) == andEd) {
                                                 vertlist[ja] = UtilFuncs.Lerp(isovalue, A_, B_);
                                             }
                                             andEd *= 2;
                                         }
 
-                                        /* Create the triangle */
-                                        for (i = 0; Tables.triTable[cubeindex][i] !=-1; i++) {
-                                            vertices.Add(vertlist[Tables.triTable[cubeindex][i]]);
+                                        // Create the triangle
+                                        for (iz = 0; Tables.triTable[cubeindex][iz] !=-1; iz++) {
+                                            vertices.Add(vertlist[Tables.triTable[cubeindex][iz]]);
                                             triangles.Add(vertices.Count - 1);
                                         }			
-                                    }
-
-
+                                    }*/
+                                    Polyganise(cell, vertices, triangles, 0);
                                 }
 
                                 Debug.Log(strOffs);

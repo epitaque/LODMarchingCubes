@@ -7,49 +7,154 @@ using SE;
 public static class LookupTableCreator {
     public static void GenerateLookupTable() {
         GenerateOffsetLookupTable();
+        GenerateUniqueEdgesLookupTable();
+        GenerateMCLodEdgeMappingTable();
+    }
+
+    public static string GenerateMCLodEdgeMappingTable() {
+        byte[][,] edgeMapTable = new byte[64][,];
+
+        string table = "public static byte[][,] MCLodEdgeMappingTable = new byte[][,] {\n";
+
+        for(byte lod = 0; lod < 64; lod++) {
+
+            byte[][] gridCells = Tables.MCLodTable[lod];
+            byte[,] edgeMap = new byte[Tables.MCLodTable[lod].Length, 12];
+
+            table += "	new byte[" + edgeMap.GetLength(0) + "," + edgeMap.GetLength(1) + "] { // lod " + lod + " (" + System.Convert.ToString(lod, 2) + ")\n";
+
+            for(int gridCellNum = 0; gridCellNum < gridCells.Length; gridCellNum++) {
+				table += "		{";
+                for(int edgeNum = 0; edgeNum < 12; edgeNum++) {
+                    byte[] edge = new byte[2];
+                    edge[0] = gridCells[gridCellNum][Tables.edgePairs[edgeNum, 0]];
+                    edge[1] = gridCells[gridCellNum][Tables.edgePairs[edgeNum, 1]];
+
+                    edgeMap[gridCellNum, edgeNum] = FindEdgeID(lod, edge);
+
+                    table += edgeMap[gridCellNum, edgeNum];
+                    if(edgeNum != 11) {
+                        table += ",";
+                    }
+                    table += " ";
+                }
+                table += "}";
+				if(gridCellNum != gridCells.Length - 1) {
+					table += ",";
+				}
+				table += "\n";
+            }
+
+            table += "	}";
+            if(lod != 63) {
+                table += ",";
+            }
+            table += "\n";
+        }
+		table += "};";
+
+        UnityEngine.Debug.Log("Edgemap Table: \n" + table);
+
+        UnityEditor.EditorGUIUtility.systemCopyBuffer = table;
+
+        return table;
+    }
+
+    public static byte FindEdgeID(byte lod, byte[] edge) {
+        byte[][] uniqueEdges = Tables.MCLodUniqueEdges[lod];
+        for(byte uniqueEdgeNum = 0; uniqueEdgeNum < uniqueEdges.Length; uniqueEdgeNum++) {
+            byte[] uniqueEdge = uniqueEdges[uniqueEdgeNum];
+            if(IsEdgeEqual(uniqueEdge, edge)) {
+                return uniqueEdgeNum;
+            }
+        }
+        UnityEngine.Debug.Assert(false);
+        return byte.MaxValue;
     }
 
     public static void GenerateUniqueEdgesLookupTable() {
         byte[][][] uniqueEdgesTable = new byte[64][][];
+        string table = "public static byte[][][] MCLodUniqueEdges = new byte[][][] {\n";
 
-        for(int i = 0; i < 63; i++) {
-            byte[][] gridCellOffsets = SE.Tables.MCLodTable[i];
+        for(int lod = 0; lod < 64; lod++) {
+            byte[][] gridCellOffsets = SE.Tables.MCLodTable[lod];
         
+            table += "	new byte[][] { // lod " + lod + " (" + System.Convert.ToString(lod, 2) + ")\n";
 
-            Dictionary<byte, byte> UniqueEdges = new Dictionary<byte, byte>();
+            //Dictionary<byte, byte> UniqueEdges = new Dictionary<byte, byte>();
+            List<System.Tuple<byte, byte>> uniqueEdges = new List<System.Tuple<byte, byte>>();
 
-            int uniques = 0;
             foreach(byte[] gridCellOffs in gridCellOffsets) {
-                for(int j = 0; j < Tables.edgePairs.GetLength(0); i++) {
+                for(int j = 0; j < Tables.edgePairs.GetLength(0); j++) {
                     byte bA = gridCellOffs[Tables.edgePairs[j, 0]];
                     byte bB = gridCellOffs[Tables.edgePairs[j, 1]];
 
                     Vector3 A = ByteToVector3(bA);
                     Vector3 B = ByteToVector3(bB);
 
-                    if(UniqueEdges.ContainsKey(bA) && UniqueEdges[bA] == bB) continue;
-                    if(UniqueEdges.ContainsKey(bB) && UniqueEdges[bB] == bA) continue;
-                    
-                    UniqueEdges.Add(bA, bB);
-                    uniques++;
+                    System.Tuple<byte, byte> currentEdge = new System.Tuple<byte, byte>(bA, bB);
+
+                    bool unique = true;
+                    foreach(System.Tuple<byte, byte> edge in uniqueEdges) {
+                        if(IsEdgeEqual(currentEdge, edge)) { unique = false; break; }
+                    }
+
+                    if(unique) {
+                        uniqueEdges.Add(currentEdge);
+                    }
 
                     int nMaxes = 0;
                     if(A.x == 1 || A.y == 1 || A.z == 1) nMaxes++;
                     if(B.x == 1 || B.y == 1 || B.z == 1) nMaxes++;
+
+                
                 }
             }
 
-            uniqueEdgesTable[i] = new byte[uniques][];
+            uniqueEdgesTable[lod] = new byte[uniqueEdges.Count][];
 
             int n = 0;
-            foreach(KeyValuePair<byte, byte> e in UniqueEdges) {
+            foreach(System.Tuple<byte, byte> e in uniqueEdges) {
+                if(n == 0) {
+                    table += "		";
+                }
                 byte[] pair = new byte[2];
-                pair[0] = e.Key;
-                pair[1] = e.Value;
-                uniqueEdgesTable[i][n] = pair;
+                pair[0] = e.Item1;
+                pair[1] = e.Item2;
+                table += "new byte[] { " + pair[0] + ", " + pair[1] + " }";
+                if(n != uniqueEdges.Count - 1) {
+                    table += ", ";
+                    if(n % 4 == 3) {
+                        table += "\n		";
+                    }
+                }
+                else {
+                    table += "\n";
+                }
+
+
+                uniqueEdgesTable[lod][n] = pair;
                 n++;
             }
+			table += "	}";
+
+            if(lod != 63) {
+				table += ", ";
+			}
+			table += "\n";
         }
+        table += "};";
+
+
+		Debug.Log("Unique Edges Lookup Table: \n" + table);
+    }
+
+    private static bool IsEdgeEqual(System.Tuple<byte, byte> e1, System.Tuple<byte, byte> e2) {
+        return (e1.Item1 == e2.Item1 && e1.Item2 == e2.Item2) || (e1.Item2 == e2.Item1 && e1.Item1 == e2.Item2);
+    }
+
+    private static bool IsEdgeEqual(byte[] e1, byte[] e2) {
+        return (e1[0] == e2[0] && e1[1] == e2[1]) || (e1[1] == e2[0] && e1[0] == e2[1]);
     }
 
     private static Vector3 ByteToVector3(byte vec3) {
@@ -105,7 +210,7 @@ public static class LookupTableCreator {
         } 
 		table += "};";
 
-		Debug.Log("Lookup Table: \n" + table);
+		Debug.Log("Offset Lookup Table: \n" + table);
 
         SE.Tables.MCLodTable = offsetTable;
 
