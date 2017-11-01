@@ -56,20 +56,51 @@ namespace SE {
             return m;
         }
 
-        public static void MCVT(List<Vector3> vertices, List<int> triangles, List<Vector3> normals, int resolution, byte lod, sbyte[][][][] data) {
+        private struct MCVT_Cell {
+            public ushort[] uniqueEdges; // max size of 54
+        };
+
+        public static void MCVT(List<Vector3> vertices, List<int> triangles, List<Vector3> normals, int resolution, byte chunkLod, sbyte[][][][] data) {
+            Debug.Assert(resolution % 2 == 0);
+            MCVT_Cell[][,] cellBuffer = new MCVT_Cell[2][,];
+            for(int i = 0; i < 2; i++) cellBuffer[i] = new MCVT_Cell[resolution/2, resolution/2];
+        
+            int currentCache = 0;
+
             for(int x = 0; x < resolution; x += 2) {
                 for(int y = 0; y < resolution; y += 2) {
                     for(int z = 0; z < resolution; z += 2) {
-                        byte cellLod = 0;
+                        MCVT_Cell mcvtcell = new MCVT_Cell();
 
-                        if(x == 0) cellLod |= 1;
-                        if(x == resolution - 2) cellLod |= 2;
-                        if(y == 0) cellLod |= 4;
-                        if(y == resolution - 2) cellLod |= 8;
-                        if(z == 0) cellLod |= 16;
-                        if(z == resolution - 2) cellLod |= 32;
 
-                        cellLod = (byte)(lod & cellLod);
+                        byte lod = 0;
+
+                        if(x == 0) lod |= 1;
+                        if(x == resolution - 2) lod |= 2;
+                        if(y == 0) lod |= 4;
+                        if(y == resolution - 2) lod |= 8;
+                        if(z == 0) lod |= 16;
+                        if(z == resolution - 2) lod |= 32;
+
+                        lod = (byte)(chunkLod & lod);
+                        mcvtcell.uniqueEdges = new ushort[Tables.MCLodUniqueEdges[lod].Length];
+
+                        for(int edgeNum = 0; edgeNum < Tables.MCLodUniqueEdges[lod].Length; edgeNum++) {
+                            Vector3 A = ByteToVector3(Tables.MCLodUniqueEdges[lod][edgeNum][0]) + new Vector3(x, y, z);
+                            Vector3 B = ByteToVector3(Tables.MCLodUniqueEdges[lod][edgeNum][1]) + new Vector3(x, y, z);
+                            sbyte d1 = data[(int)A.x][(int)A.y][(int)A.z][0];
+                            sbyte d2 = data[(int)B.x][(int)B.y][(int)B.z][0];
+                            if((d1 & 256) != (d2 & 256)) {
+                                Util.Point A_ = new Util.Point();
+                                A_.density = d1; A_.position = A;
+                                Util.Point B_ = new Util.Point();
+                                B_.density = d1; B_.position = B;
+
+                                Vector3 lerped = UtilFuncs.Lerp(0, A_, B_);
+                                mcvtcell.uniqueEdges[edgeNum] = (ushort)vertices.Count;
+                                vertices.Add(lerped);
+                            }
+                        }
 
                         Util.GridCell tvCellBounds = new Util.GridCell();
                         tvCellBounds.points = new Util.Point[8];
@@ -79,7 +110,7 @@ namespace SE {
                         }
                         TVDebugGridCellBounds.Add(tvCellBounds);
 
-                        byte[][] offsets = Tables.MCLodTable[cellLod];
+                        byte[][] offsets = Tables.MCLodTable[lod];
 
                         Debug.Log("offset length: " + offsets.Length);
 
@@ -106,52 +137,57 @@ namespace SE {
                                     cell.points[j].position = pos;
                                     cell.points[j].density = (float)data[((int)pos.x)][((int)pos.y)][((int)pos.z)][0];
 
-                                    /*{ // Polyganise
-                                        float isovalue = 0;
-                                        Vector3[] vertlist = new Vector3[12];
+                                }
 
-                                        int iz,ntriang;
-                                        int cubeindex;
+                                Debug.Log(strOffs);
+                                { // Polyganise
+                                    float isovalue = 0;
+                                    Vector3[] vertlist = new Vector3[12];
 
-                                        cubeindex = 0;
-                                        if (cell.points[0].density < isovalue) cubeindex |= 1;
-                                        if (cell.points[1].density < isovalue) cubeindex |= 2;
-                                        if (cell.points[2].density < isovalue) cubeindex |= 4;
-                                        if (cell.points[3].density < isovalue) cubeindex |= 8;
-                                        if (cell.points[4].density < isovalue) cubeindex |= 16;
-                                        if (cell.points[5].density < isovalue) cubeindex |= 32;
-                                        if (cell.points[6].density < isovalue) cubeindex |= 64;
-                                        if (cell.points[7].density < isovalue) cubeindex |= 128;
+                                    int iz,ntriang;
+                                    int cubeindex;
 
-                                        // Cube is entirely in/out of the surface 
-                                        if (Tables.edgeTable[cubeindex] == 0) {
-                                            return;
-                                        }
+                                    cubeindex = 0;
+                                    if (cell.points[0].density < isovalue) cubeindex |= 1;
+                                    if (cell.points[1].density < isovalue) cubeindex |= 2;
+                                    if (cell.points[2].density < isovalue) cubeindex |= 4;
+                                    if (cell.points[3].density < isovalue) cubeindex |= 8;
+                                    if (cell.points[4].density < isovalue) cubeindex |= 16;
+                                    if (cell.points[5].density < isovalue) cubeindex |= 32;
+                                    if (cell.points[6].density < isovalue) cubeindex |= 64;
+                                    if (cell.points[7].density < isovalue) cubeindex |= 128;
 
-                                        int[,] edgepairs = { {0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6}, {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7} };
+                                    // Cube is entirely in/out of the surface 
+                                    if (Tables.edgeTable[cubeindex] != 0) {
+                                        /*int[,] edgepairs = { {0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6}, {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7} };
 
                                         int andEd = 1;
 
                                         for(int ja = 0; ja < 12; ja++) {
-                                            Util.Point A_ = cell.points[edgepairs[ja,0]];
-                                            Util.Point B_ = cell.points[edgepairs[ja,0]];
                                             if((Tables.edgeTable[cubeindex] & andEd) == andEd) {
+                                                byte id = Tables.MCLodEdgeMapping[lod][i][ja];
+                                                ushort vertId = mcvtcell.uniqueEdges[id];
+                                                Util.Point A_ = cell.points[edgepairs[ja,0]];
+                                                Util.Point B_ = cell.points[edgepairs[ja,1]];
+
                                                 vertlist[ja] = UtilFuncs.Lerp(isovalue, A_, B_);
                                             }
                                             andEd *= 2;
-                                        }
+                                        }*/
 
                                         // Create the triangle
                                         for (iz = 0; Tables.triTable[cubeindex][iz] !=-1; iz++) {
-                                            vertices.Add(vertlist[Tables.triTable[cubeindex][iz]]);
-                                            triangles.Add(vertices.Count - 1);
-                                        }			
-                                    }*/
-                                    Polyganise(cell, vertices, triangles, 0);
-                                }
+                                            int edgeNum = Tables.triTable[cubeindex][iz];
+                                            
+                                            byte id = SE.Tables.MCLodEdgeMappingTable[lod][i,edgeNum];
+                                            ushort vertId = mcvtcell.uniqueEdges[id];
 
-                                Debug.Log(strOffs);
-                                Polyganise(cell, vertices, triangles, 0f);
+                                            triangles.Add(vertId);
+                                        }			
+                                    }
+
+                                }
+                                //Polyganise(cell, vertices, triangles, 0f);
                                 TVDebugGridCells.Add(cell);
 
                             }
@@ -391,7 +427,13 @@ namespace SE {
                 }
             }
         }
+
+        unsafe private struct Cell {
+            fixed int vertIDs[12];
+        };
+
         public static void GenerateTransitionCells(List<Vector3> vertices, List<int> triangles, int resolution, sbyte[][][][] data, byte lod) {
+
             for(int x = 0; x < resolution; x += 2) {
                 for(int y = 0; y < resolution; y += 2) {
                     for(int z = 0; z < resolution; z += 2) {
@@ -444,10 +486,6 @@ namespace SE {
                                     
                                     cell.points[j].position = pos;
                                     cell.points[j].density = (float)data[((int)pos.x)][((int)pos.y)][((int)pos.z)][0];
-
-
-
-
                                 }
 
                                 Debug.Log(strOffs);
