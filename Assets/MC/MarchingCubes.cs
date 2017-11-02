@@ -94,7 +94,7 @@ namespace SE {
                                 Util.Point A_ = new Util.Point();
                                 A_.density = d1; A_.position = A;
                                 Util.Point B_ = new Util.Point();
-                                B_.density = d1; B_.position = B;
+                                B_.density = d2; B_.position = B;
 
                                 Vector3 lerped = UtilFuncs.Lerp(0, A_, B_);
                                 mcvtcell.uniqueEdges[edgeNum] = (ushort)vertices.Count;
