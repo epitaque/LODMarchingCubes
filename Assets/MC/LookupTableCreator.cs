@@ -5,18 +5,28 @@ using UnityEngine;
 using SE;
 
 public static class LookupTableCreator {
+    public static readonly int HIGHEST_LOD_INDEX = 43;
+
     public static void GenerateLookupTable() {
         GenerateOffsetLookupTable();
         GenerateUniqueEdgesLookupTable();
         GenerateMCLodEdgeMappingTable();
     }
 
+    public static string GenerateMCLodEdgeToReIDTable() {
+        byte[][,] eToReTable = new byte[HIGHEST_LOD_INDEX][,];
+
+        for(byte lod = 0; lod < HIGHEST_LOD_INDEX; lod++) {
+            eToReTable[lod] = new byte[16, 2];
+        }
+    }
+
     public static string GenerateMCLodEdgeMappingTable() {
-        byte[][,] edgeMapTable = new byte[64][,];
+        byte[][,] edgeMapTable = new byte[HIGHEST_LOD_INDEX][,];
 
         string table = "public static byte[][,] MCLodEdgeMappingTable = new byte[][,] {\n";
 
-        for(byte lod = 0; lod < 64; lod++) {
+        for(byte lod = 0; lod < HIGHEST_LOD_INDEX; lod++) {
 
             byte[][] gridCells = Tables.MCLodTable[lod];
             byte[,] edgeMap = new byte[Tables.MCLodTable[lod].Length, 12];
@@ -73,10 +83,10 @@ public static class LookupTableCreator {
     }
 
     public static void GenerateUniqueEdgesLookupTable() {
-        byte[][][] uniqueEdgesTable = new byte[64][][];
+        byte[][][] uniqueEdgesTable = new byte[HIGHEST_LOD_INDEX][][];
         string table = "public static byte[][][] MCLodUniqueEdges = new byte[][][] {\n";
 
-        for(int lod = 0; lod < 64; lod++) {
+        for(int lod = 0; lod < HIGHEST_LOD_INDEX; lod++) {
             byte[][] gridCellOffsets = SE.Tables.MCLodTable[lod];
         
             table += "	new byte[][] { // lod " + lod + " (" + System.Convert.ToString(lod, 2) + ")\n";
@@ -176,9 +186,9 @@ public static class LookupTableCreator {
 
         string table = "public static byte[][][] MCLodTable = new byte[][][] {\n";
 
-        byte[][][] offsetTable = new byte[64][][];
+        byte[][][] offsetTable = new byte[HIGHEST_LOD_INDEX][][];
 
-        for(byte lod = 0; lod < 64; lod++) {
+        for(byte lod = 0; lod < HIGHEST_LOD_INDEX; lod++) {
             Vector3[][] offsets = GetOffsetsForLod(lod);
             byte[][] bOffsets = ConvertToByteOffsets(offsets);
             offsetTable[lod] = bOffsets;

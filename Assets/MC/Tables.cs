@@ -1270,6 +1270,14 @@ public static byte[][,] MCLodEdgeMappingTable = new byte[][,] {
 	new byte[0,12] { // lod 63 (111111)
 	}
 };
+
+//dim0: lod   |  {edgeNum, reusableEdgeNumber}
+public static byte[][,] MCLodEdgeToReID = new byte[][,] {
+	new byte[,] {
+		{3, 2}
+	}
+};
+
 public static readonly int[,] edgePairs = {
    {0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6}, {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7}
 };
