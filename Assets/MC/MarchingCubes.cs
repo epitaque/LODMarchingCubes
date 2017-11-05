@@ -60,13 +60,17 @@ namespace SE {
             public ushort[] uniqueEdges; // max size of 54
         };
 
+        public static readonly ushort REUSABLE_EDGES_PER_CELL = 16;
+
         public static void MCVT(List<Vector3> vertices, List<int> triangles, List<Vector3> normals, int resolution, byte chunkLod, sbyte[][][][] data) {
             Debug.Assert(resolution % 2 == 0);
-            MCVT_Cell[][,] cellBuffer = new MCVT_Cell[2][,];
-            for(int i = 0; i < 2; i++) cellBuffer[i] = new MCVT_Cell[resolution/2, resolution/2];
-        
-            int currentCache = 0;
+            
+            int halfres = resolution/2;
 
+            ushort[] reusedEdges = new ushort[REUSABLE_EDGES_PER_CELL * halfres * halfres]
+            //MCVT_Cell[,] cellBuffer = new MCVT_Cell[resolution/2,resolution/2];
+            //for(int i = 0; i < 2; i++) cellBuffer[i] = new MCVT_Cell[resolution/2, resolution/2];
+        
             for(int x = 0; x < resolution; x += 2) {
                 for(int y = 0; y < resolution; y += 2) {
                     for(int z = 0; z < resolution; z += 2) {
