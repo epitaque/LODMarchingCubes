@@ -67,7 +67,7 @@ namespace SE {
             
             int halfres = resolution/2;
 
-            ushort[] reusedEdges = new ushort[REUSABLE_EDGES_PER_CELL * halfres * halfres]
+            ushort[] reusedEdges = new ushort[REUSABLE_EDGES_PER_CELL * halfres * halfres];
             //MCVT_Cell[,] cellBuffer = new MCVT_Cell[resolution/2,resolution/2];
             //for(int i = 0; i < 2; i++) cellBuffer[i] = new MCVT_Cell[resolution/2, resolution/2];
         
