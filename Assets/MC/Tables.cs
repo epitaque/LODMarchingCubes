@@ -606,8 +606,14 @@ public static byte[][][] MCLodTable = new byte[][][] {
 };
 
 // dim0:lod  |  dim1:edge#
-// result: array of vertices of the edge (length: 2)
-public static byte[][][] MCLodUniqueEdges = new byte[][][] {
+// result: integer
+// b0 = edge 1 | b1 = edge 2 | b3 = reuse cell |  b4 = reuse index
+
+public static int[][] MCLodUniqueEdges = new int[][] {
+	new int[] {}
+};
+
+/*public static byte[][][] MCLodUniqueEdges = new byte[][][] {
 	new byte[][] { // lod 0 (0)
 		new byte[] { 21, 20 }, new byte[] { 20, 4 }, new byte[] { 4, 5 }, new byte[] { 5, 21 }, 
 		new byte[] { 17, 16 }, new byte[] { 16, 0 }, new byte[] { 0, 1 }, new byte[] { 1, 17 }, 
@@ -978,7 +984,7 @@ public static byte[][][] MCLodUniqueEdges = new byte[][][] {
 	}, 
 	new byte[][] { // lod 62 (111110)
 	}, 
-};
+};*/
 
 // dim0: lod  |  dim1:gridcell#  |  dim2: edge#
 // result: edge id#
