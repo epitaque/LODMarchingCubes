@@ -87,11 +87,38 @@ namespace SE {
                         if(z == resolution - 2) lod |= 32;
 
                         lod = (byte)(chunkLod & lod);
-                        mcvtcell.uniqueEdges = new ushort[Tables.MCLodUniqueEdges[lod].Length];
+                        mcvtcell.uniqueEdges = new ushort[Tables.MCLodUniqueEdgesReuse[lod].Length];
 
-                        for(int edgeNum = 0; edgeNum < Tables.MCLodUniqueEdges[lod].Length; edgeNum++) {
-                            Vector3 A = ByteToVector3(Tables.MCLodUniqueEdges[lod][edgeNum][0]) + new Vector3(x, y, z);
-                            Vector3 B = ByteToVector3(Tables.MCLodUniqueEdges[lod][edgeNum][1]) + new Vector3(x, y, z);
+                        for(int edgeNum = 0; edgeNum < Tables.MCLodUniqueEdgesReuse[lod].Length; edgeNum++) {
+                            int longb = Tables.MCLodUniqueEdgesReuse[lod][edgeNum];
+                            byte EdgeA = (byte)(longb & 255);
+                            byte EdgeB = (byte)( (longb >> 8) & 255);
+                            byte ReuseCell = (byte)( (longb >> 16) & 255);
+                            byte ReuseIndex = (byte)( (longb >> 24) & 255);
+
+                            bool reusing = false;
+                            Vector3 ReuseIndices = new Vector3(x, y, z);
+                            if(ReuseCell != 0) {
+                                reusing = true;
+                                if(ReuseCell == 1) {
+                                    ReuseIndices.x += 1;
+                                }
+                                else if(ReuseCell == 2) {
+                                    ReuseIndices.y += 1;
+                                }
+                                else if(ReuseCell == 4) {
+                                    ReuseIndices.z += 1;
+                                }
+                                if(ReuseIndices.x < 0 || ReuseIndices.y < 0 || ReuseIndices.z < 0) {
+                                    reusing = false;
+                                }
+                            }
+                            if(reusing) {
+                                
+                            }
+
+                            Vector3 A = ByteToVector3(EdgeA) + new Vector3(x, y, z);
+                            Vector3 B = ByteToVector3(EdgeB) + new Vector3(x, y, z);
                             sbyte d1 = data[(int)A.x][(int)A.y][(int)A.z][0];
                             sbyte d2 = data[(int)B.x][(int)B.y][(int)B.z][0];
                             if((d1 & 256) != (d2 & 256)) {
@@ -148,7 +175,7 @@ namespace SE {
                                     float isovalue = 0;
                                     Vector3[] vertlist = new Vector3[12];
 
-                                    int iz,ntriang;
+                                    int iz;
                                     int cubeindex;
 
                                     cubeindex = 0;

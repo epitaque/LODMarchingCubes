@@ -11,7 +11,8 @@ public static class LookupTableCreator {
 		GenerateOffsetLookupTable();
 		GenerateUniqueEdgesLookupTable();
 		GenerateMCLodEdgeMappingTable();
-		GenerateMCLodEdgeToReIDTable(true);
+		GenerateMCLodEdgeToReIDTable();
+		GenerateUniqueEdgesLookupTableReuse(true);
 	}
 
 	public static string GenerateMCLodEdgeToReIDTable(bool copy = false) {
@@ -93,9 +94,6 @@ public static class LookupTableCreator {
 		return byte.MaxValue;
 	}
 
-	public static bool IsMaximalEdge(Vector3 A, Vector3 B) {
-		return (A.x == 1 || A.y == 1 || A.z == 1) && (B.x == 1 || B.y == 1 || B.z == 1);
-	}
 
 	public static string GenerateMCLodEdgeMappingTable(bool copy = false) {
 		byte[][,] edgeMapTable = new byte[HIGHEST_LOD_INDEX][,];
@@ -233,6 +231,119 @@ public static class LookupTableCreator {
 
 
 		Debug.Log("Unique Edges Lookup Table: \n" + table);
+	}
+
+	public static void GenerateUniqueEdgesLookupTableReuse(bool copy = false) {
+		byte[][][] uniqueEdgesTable = new byte[HIGHEST_LOD_INDEX][][];
+		string table = "public static int[][] MCLodUniqueEdgesReuse = new int[][] {\n";
+
+		for(int lod = 0; lod < HIGHEST_LOD_INDEX; lod++) {
+			byte[][] gridCellOffsets = SE.Tables.MCLodTable[lod];
+		
+			table += "	new int[] { // lod " + lod + " (" + System.Convert.ToString(lod, 2) + ")\n";
+
+			int n = 0;
+			for(int edgeNum = 0; edgeNum < Tables.MCLodUniqueEdges[lod].Length; edgeNum++) {
+				byte[] edgePoints = Tables.MCLodUniqueEdges[lod][edgeNum];
+
+				byte bA = edgePoints[0];
+				byte bB = edgePoints[1];
+
+				if(bA == bB) continue;
+				n++;
+
+				if(edgeNum == 0) {
+					table += "		";
+				}
+				else if(edgeNum % 8 == 0 && edgeNum != Tables.MCLodUniqueEdges[lod].Length - 1) {
+					table += "\n		";
+				}
+
+				Vector3 A = ByteToVector3(bA);
+				Vector3 B = ByteToVector3(bB);
+
+				Vector3 AShifted = A;
+				Vector3 BShifted = B;
+
+				byte ReuseCell = 0;
+				byte ReuseIndex = 0;
+
+				if(IsMinimalEdge(A, B)) {
+					bool XMinimalSide = A.x == -1 && B.x == -1;
+					bool YMinimalSide = A.y == -1 && B.y == -1;
+					bool ZMinimalSide = A.z == -1 && B.z == -1;
+
+					bool CellOnX = (lod & 1) != 1;
+					bool CellOnY = (lod & 4) != 4;
+					bool CellOnZ = (lod & 16) != 16;
+
+					if(YMinimalSide && CellOnY) {
+						ReuseCell = 2;
+						AShifted.y += 2;
+						BShifted.y += 2;
+					}
+					else if(XMinimalSide && CellOnX) {
+						ReuseCell = 1;
+						AShifted.x += 2;
+						BShifted.x += 2;
+					}
+					else if(ZMinimalSide && CellOnZ) {
+						ReuseCell = 4;
+						AShifted.z += 2;
+						BShifted.z += 2;
+					}
+					
+					if(ReuseCell != 0) {
+						// try to find index of reused edge
+						byte id = GetStandardID(AShifted, BShifted);
+
+						if(id == byte.MaxValue) {
+							Debug.LogError("Error creating UniqueEdgesLookupTableReuse: unable to find a reuse index. Edge A: " + A + "(shifted: " + AShifted + "), B: " + B + " (shifted: " + BShifted + ")");
+							Debug.Assert(false);
+						}
+						else {
+							ReuseIndex = id;
+						}
+					}
+				}
+
+				int finalEdge = (int)bA + ((int)bB << 8) + ((int)ReuseIndex << 16) + ((int)ReuseCell << 24);	
+
+				table += "0x" + finalEdge.ToString("X8");
+
+				if(edgeNum != Tables.MCLodUniqueEdges[lod].Length - 1) {
+					table += ", ";
+				}
+
+				//table += " ";
+			}
+
+
+			table += "\n	}";
+
+			if(lod != HIGHEST_LOD_INDEX) {
+				table += ", ";
+			}
+			table += "\n";
+		}
+		table += "};";
+
+		Debug.Log("Unique Edges Lookup Table Reuse: \n" + table);
+
+		if(copy) UnityEditor.EditorGUIUtility.systemCopyBuffer = table;
+	}
+
+	/*public static bool IsNotReusableEdge(byte A, byte B, byte lod) {
+		bool XMinimalSide = false;
+		if()
+	}*/
+
+	public static bool IsMinimalEdge(Vector3 A, Vector3 B) {
+		return (A.x == -1 || A.y == -1 || A.z == -1) && (B.x == -1 || B.y == -1 || B.z == -1);
+	}
+
+	public static bool IsMaximalEdge(Vector3 A, Vector3 B) {
+		return (A.x == 1 || A.y == 1 || A.z == 1) && (B.x == 1 || B.y == 1 || B.z == 1);
 	}
 
 	private static bool IsEdgeEqual(System.Tuple<byte, byte> e1, System.Tuple<byte, byte> e2) {
