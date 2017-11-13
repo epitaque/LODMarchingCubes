@@ -39,6 +39,10 @@ public class Controller : MonoBehaviour {
 			result += (float)(noise.Evaluate(((double)x + 5.5d) * 0.1, ((double)y + 5.5d) * 0.1, ((double)z + 5.5d) * 0.1) * 127d) * 0.1f;
 
 			return result;
+		},
+		(float x, float y, float z, float worldSize) => {
+			float result = -y - (7f/8f);
+			return result;
 		}
 	};
 
@@ -54,7 +58,7 @@ public class Controller : MonoBehaviour {
 
 	public delegate float Sample(float x, float y, float z, float worldSize);
 
-	int res = 8;
+	int res = 4;
 
 	// Use this for initialization
 	void Start () {
@@ -62,7 +66,7 @@ public class Controller : MonoBehaviour {
 		System.Random random = new System.Random(5);
 		LookupTableCreator.GenerateLookupTable();
 		
-		GenerateMesh(2);
+		GenerateMesh(4);
 		//TestTransvoxel();
 		ConsoleObject.GetComponent<Console>().SetRegenerateFn(GenerateMesh);
 	}
@@ -71,7 +75,7 @@ public class Controller : MonoBehaviour {
 		int res1 = res + 1;
 		sbyte[][][][] data = new sbyte[res1][][][];
 
-		Sample fn = sampleFunctions[1];
+		Sample fn = sampleFunctions[sampleFn];
 
 		float f = 0.01f;
 		float nx, ny, nz;

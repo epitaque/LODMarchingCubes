@@ -56,7 +56,7 @@ namespace SE {
             return m;
         }
 
-        private struct MCVT_Cell {
+        private class MCVT_Cell {
             public ushort[] uniqueEdges; // max size of 54
         };
 
@@ -67,15 +67,21 @@ namespace SE {
             
             int halfres = resolution/2;
 
-            ushort[] reusedEdges = new ushort[REUSABLE_EDGES_PER_CELL * halfres * halfres];
+            //ushort[] reusedEdges = new ushort[REUSABLE_EDGES_PER_CELL * halfres * halfres];
             //MCVT_Cell[,] cellBuffer = new MCVT_Cell[resolution/2,resolution/2];
             //for(int i = 0; i < 2; i++) cellBuffer[i] = new MCVT_Cell[resolution/2, resolution/2];
-        
-            for(int x = 0; x < resolution; x += 2) {
-                for(int y = 0; y < resolution; y += 2) {
-                    for(int z = 0; z < resolution; z += 2) {
+            MCVT_Cell[,,] cells = new MCVT_Cell[halfres, halfres, halfres];
+
+            ushort[,,,] cellReusedEdges = new ushort[halfres,halfres,halfres,51];
+
+            int hx = -1; int hy = -1; int hz = -1;
+
+            for(int x = 0; x < resolution; x += 2) { hx = x/2;
+                for(int y = 0; y < resolution; y += 2) { hy = y/2;
+                    for(int z = 0; z < resolution; z += 2) { hz = z/2;
                         MCVT_Cell mcvtcell = new MCVT_Cell();
 
+                        cells[hx,hy,hz] = mcvtcell;
 
                         byte lod = 0;
 
@@ -92,45 +98,64 @@ namespace SE {
                         for(int edgeNum = 0; edgeNum < Tables.MCLodUniqueEdgesReuse[lod].Length; edgeNum++) {
                             int longb = Tables.MCLodUniqueEdgesReuse[lod][edgeNum];
                             byte EdgeA = (byte)(longb & 255);
-                            byte EdgeB = (byte)( (longb >> 8) & 255);
-                            byte ReuseCell = (byte)( (longb >> 16) & 255);
-                            byte ReuseIndex = (byte)( (longb >> 24) & 255);
+                            byte EdgeB = (byte)((longb >> 8) & 255);
+                            byte ReuseIndex = (byte)((longb >> 16) & 255);  
+                            byte ReuseCell = (byte)((longb >> 24) & 255);
 
                             bool reusing = false;
-                            Vector3 ReuseIndices = new Vector3(x, y, z);
+                            Vector3Int ReuseIndices = new Vector3Int(hx, hy, hz);
                             if(ReuseCell != 0) {
                                 reusing = true;
                                 if(ReuseCell == 1) {
-                                    ReuseIndices.x += 1;
+                                    ReuseIndices.x -= 1;
                                 }
                                 else if(ReuseCell == 2) {
-                                    ReuseIndices.y += 1;
+                                    ReuseIndices.y -= 1  ;
                                 }
                                 else if(ReuseCell == 4) {
-                                    ReuseIndices.z += 1;
+                                    ReuseIndices.z -= 1;
                                 }
                                 if(ReuseIndices.x < 0 || ReuseIndices.y < 0 || ReuseIndices.z < 0) {
+                                    Debug.Log("ee");
                                     reusing = false;
                                 }
                             }
                             if(reusing) {
-                                
+                                Debug.Log("Got here reuse cell" + ReuseCell);
+                                mcvtcell.uniqueEdges[edgeNum] = 
+                                    cellReusedEdges[
+                                        ReuseIndices.x, 
+                                        ReuseIndices.y, 
+                                        ReuseIndices.z, 
+                                        ReuseIndex
+                                    ];
+                            }
+                            else {
+                                Vector3 A = ByteToVector3(EdgeA) + new Vector3(x, y, z);
+                                Vector3 B = ByteToVector3(EdgeB) + new Vector3(x, y, z);
+                                sbyte d1 = data[(int)A.x][(int)A.y][(int)A.z][0];
+                                sbyte d2 = data[(int)B.x][(int)B.y][(int)B.z][0];
+                                if((d1 & 256) != (d2 & 256)) {
+                                    Util.Point A_ = new Util.Point();
+                                    A_.density = d1; A_.position = A;
+                                    Util.Point B_ = new Util.Point();
+                                    B_.density = d2; B_.position = B;
+
+                                    Vector3 lerped = UtilFuncs.Lerp(0, A_, B_);
+                                    mcvtcell.uniqueEdges[edgeNum] = (ushort)vertices.Count;
+                                    vertices.Add(lerped);
+                                }
                             }
 
-                            Vector3 A = ByteToVector3(EdgeA) + new Vector3(x, y, z);
-                            Vector3 B = ByteToVector3(EdgeB) + new Vector3(x, y, z);
-                            sbyte d1 = data[(int)A.x][(int)A.y][(int)A.z][0];
-                            sbyte d2 = data[(int)B.x][(int)B.y][(int)B.z][0];
-                            if((d1 & 256) != (d2 & 256)) {
-                                Util.Point A_ = new Util.Point();
-                                A_.density = d1; A_.position = A;
-                                Util.Point B_ = new Util.Point();
-                                B_.density = d2; B_.position = B;
+                        }
 
-                                Vector3 lerped = UtilFuncs.Lerp(0, A_, B_);
-                                mcvtcell.uniqueEdges[edgeNum] = (ushort)vertices.Count;
-                                vertices.Add(lerped);
-                            }
+                        //Debug.Log("Cell vertex count: " + mcvtcell.uniqueEdges.Length);
+
+                        for(int i = 0; i < Tables.MCLodEdgeToReID[lod].GetLength(0); i++) {
+                            byte edgeNum = Tables.MCLodEdgeToReID[lod][i,0];
+                            byte reId = Tables.MCLodEdgeToReID[lod][i,1];
+
+                            cellReusedEdges[hx,hy,hz,reId] = mcvtcell.uniqueEdges[edgeNum];
                         }
 
                         Util.GridCell tvCellBounds = new Util.GridCell();
@@ -170,7 +195,7 @@ namespace SE {
 
                                 }
 
-                                Debug.Log(strOffs);
+                                //Debug.Log(strOffs);
                                 { // Polyganise
                                     float isovalue = 0;
                                     Vector3[] vertlist = new Vector3[12];
@@ -584,7 +609,7 @@ namespace SE {
                 nGridcells++;
                 DrawGridCell(cell);
             }
-            Debug.Log("Drew " + nGridcells + " gridcells.");
+            //Debug.Log("Drew " + nGridcells + " gridcells.");
             foreach(Util.GridCell cell in TVDebugGridCellBounds) {
                 DrawGridCell(cell);
             }

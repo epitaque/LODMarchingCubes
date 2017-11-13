@@ -607,7 +607,7 @@ public static byte[][][] MCLodTable = new byte[][][] {
 
 // dim0:lod  |  dim1:edge#
 // result: integer
-// b0 = edge 1 | b1 = edge 2 | b3 = reuse cell |  b4 = reuse index
+// b0 = edge 1 | b1 = edge 2 | b4 = reuse index | b3 = reuse cell (if ) 
 
 public static int[][] MCLodUniqueEdgesReuse = new int[][] {
 	new int[] { // lod 0 (0)
