@@ -28,13 +28,38 @@ public static class Transvoxel {
 
     public static List<Vector3> OffsetPoints = new List<Vector3>();
 
+	public static void GenerateAllCells(List<Vector3> vertices, List<int> triangles, sbyte[][][][] data, int res, byte lod) {
+		GenerateTransitionCells(vertices, triangles, data, res);
+		GenerateRegularCells(vertices, triangles, data, res);
+	}
+
     public static void GenerateTransitionCells(List<Vector3> vertices, List<int> triangles, sbyte[][][][] data, int res) {
         for(int x = 0; x < res; x += 2) {
             for(int y = 0; y < res; y += 2) {
-                GenerateTransitionCell(new Vector3Int(x, y, 0), vertices, triangles, 0, data);
+                GenerateTransitionCell(new Vector3Int(x, y, res - 2), vertices, triangles, 0, data);
             }
         }
     }
+
+	public static void GenerateRegularCells(List<Vector3> vertices, List<int> triangles, sbyte[][][][] data, int res) {
+		for(int x = 0; x < res; x++) {
+			for(int y = 0; y < res; y++) {
+				for(int z = 0; z < res - 2; z++) {
+					Util.GridCell cell = new Util.GridCell();
+					cell.points = new Util.Point[8];
+
+					for(int i = 0; i < 8; i++) {
+						Vector3Int offset = new Vector3Int((int)Tables.CellOffsets[i].x, (int)Tables.CellOffsets[i].y, (int)Tables.CellOffsets[i].z) + new Vector3Int(x, y, z);
+						sbyte density = data[(int)offset.x][offset.y][offset.z][0];
+						cell.points[i].density = density;
+						cell.points[i].position = offset;
+					}
+
+					GenerateRegularCell(cell, vertices, triangles, 0);
+				}
+			}
+		} 
+	}
 
     private readonly static ushort[] sums = {0x0001, 0x0002, 0x0004, 0x0080, 0x0100, 0x0008, 0x0040, 0x0020, 0x0010 };
 
@@ -306,7 +331,7 @@ public static class Transvoxel {
         Debug.Assert(vertCount <= 12);
     }
 
-    public static void GenerateRegularCell(Util.GridCell cell, List<Vector3> vertices, float isovalue) {
+    public static void GenerateRegularCell(Util.GridCell cell, List<Vector3> vertices, List<int> triangles, float isovalue) {
         Vector3[] vertlist = new Vector3[12];
 
         int i,ntriang;
@@ -354,11 +379,13 @@ public static class Transvoxel {
             vertlist[11] = UtilFuncs.Lerp(isovalue,cell.points[3],cell.points[7]);
 
         /* Create the triangle */
+
         ntriang = 0;
         for (i=0;Tables.triTable[cubeindex][i]!=-1;i+=3) {
             ntriang++;
         }
         for (i = 0; Tables.triTable[cubeindex][i] !=-1; i++) {
+			triangles.Add(vertices.Count);
             vertices.Add(vertlist[Tables.triTable[cubeindex][i]]);
         }
     }

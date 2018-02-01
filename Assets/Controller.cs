@@ -66,8 +66,8 @@ public class Controller : MonoBehaviour {
 		System.Random random = new System.Random(5);
 		LookupTableCreator.GenerateLookupTable();
 		
-		GenerateMesh(1);
-		//TestTransvoxel();
+		//GenerateMesh(1);
+		TestTransvoxel();
 		ConsoleObject.GetComponent<Console>().SetRegenerateFn(GenerateMesh);
 	}
 	
@@ -194,7 +194,7 @@ public class Controller : MonoBehaviour {
 		}
 
 
-		SE.Transvoxel.Transvoxel.GenerateTransitionCells(vertices, triangles, data, res);
+		SE.Transvoxel.Transvoxel.GenerateAllCells(vertices, triangles, data, res, 0);
 
 		Debug.Log("0 tris");
 
