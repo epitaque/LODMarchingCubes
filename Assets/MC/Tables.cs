@@ -611,8 +611,22 @@ public static byte[][][] MCLodTable = new byte[][][] {
 
 // binary is normally read right to left but here it's left to right
 // new: 6 bits = edge1 | 6 bits = edge 2 | 4 bits = reuse offset | 6 bits = reuse index A | 6 bits = reuse index B | 4 bits left over
-
 public static int[][] MCLodUniqueEdgesReuse = new int[][] {
+	// old: 0000 0010 0000 0101 0001 0100 0001 0101
+	// b0 (edge1) = 0001 0101 = 21
+	// b1 (edge2) = 0001 0100 = 20
+	// b2 (reuse index) = 0000 0101 = 5
+	// b3 (reuse cell) = 0000 0010
+
+	// new: uuuu inde x2in dex1 corn edge e2ed gee1
+	// new: 0000 0001 0101 1111 0110 0101 0001 0101
+	// console reading: EdgeA: 21, EdgeB20, ReuseCell: 4, ReuseIndex: 6, AlternateReuseIndex: 4
+	// bits0-5 (edge1) = 01 0101 = 21
+	// bits6-11 (edge2) = 0101 00 = 20
+	// bits12-15 (reuse offset) = 0110 = 4
+	// bits16-21 (reuse index 1) = 01 1111 = 31
+	// bits22-27 (reuse index 2) = 0001 01 = 5
+	
 	new int[] { // lod 0 (0)
 		0x015F6515, 0x000A4114, 0x000B4144, 0x01935545, 0x00252411, 0x00000010, 0x00000040, 0x00181441, 
 		0x08143455, 0x00242414, 0x00000004, 0x00171045, 0x011E6594, 0x00034196, 0x00094106, 0x00232490, 
@@ -2015,7 +2029,6 @@ public static byte[][,] MCLodEdgeToReID = new byte[][,] {
 		{24, 47}
 	}
 };
-
 public static readonly int[,] edgePairs = {
    {0, 1}, {1, 2}, {2, 3}, {3, 0}, {4, 5}, {5, 6}, {6, 7}, {7, 4}, {0, 4}, {1, 5}, {2, 6}, {3, 7}
 };

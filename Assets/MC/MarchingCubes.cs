@@ -41,16 +41,24 @@ namespace SE
             Vector3Int begin = new Vector3Int(0, 0, 0);
             Vector3Int end = new Vector3Int(res1, res1, res1);
 
-            //CreateVertices(edges, begin, end, vertices, normals, res1, data);
+			System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+			sw.Start();
+
+            CreateVertices(edges, begin, end, vertices, normals, res1, data);
 
             begin = new Vector3Int(1, 1, 1);
             end = new Vector3Int(resm1, resm1, resm1);
 
-            //Triangulate(edges, begin, end, triangles, resolution, data);
+            Triangulate(edges, begin, end, triangles, resolution, data);
 
-            //GenerateTransitionCells(vertices, triangles, resolution, data, LOD);
+			Debug.Log("Phase 1 of surface extraction took " + sw.ElapsedMilliseconds + " ms.");
 
-            MCVT(vertices, triangles, normals, resolution, lod, data);
+			sw.Restart();
+
+            GenerateTransitionCells(vertices, triangles, resolution, data, lod);
+
+			Debug.Log("Phase 2 of surface extraction took " + sw.ElapsedMilliseconds + " ms.");
+            //MCVT(vertices, triangles, normals, resolution, lod, data);
 
             m.Vertices = vertices;
             m.Triangles = triangles.ToArray();
@@ -77,7 +85,7 @@ namespace SE
             //for(int i = 0; i < 2; i++) cellBuffer[i] = new MCVT_Cell[resolution/2, resolution/2];
             MCVT_Cell[,,] cells = new MCVT_Cell[halfres, halfres, halfres];
 
-            ushort[,,,] cellReusedEdges = new ushort[halfres, halfres, halfres, 51];
+            ushort[,,,] cellReusedEdges = new ushort[halfres, halfres, halfres, 52];
 
             int hx = -1; int hy = -1; int hz = -1;
 
@@ -106,20 +114,29 @@ namespace SE
                         lod = (byte)(chunkLod & lod);
                         mcvtcell.uniqueEdges = new ushort[Tables.MCLodUniqueEdgesReuse[lod].Length];
 
+                        Debug.Log("creating uniqueEdges array with length: " + Tables.MCLodUniqueEdgesReuse[lod].Length + " (lod " + lod + ")");
+
                         for (int edgeNum = 0; edgeNum < Tables.MCLodUniqueEdgesReuse[lod].Length; edgeNum++)
                         {
                             int longb = Tables.MCLodUniqueEdgesReuse[lod][edgeNum];
                             byte EdgeA = (byte)(longb & 63);
                             byte EdgeB = (byte)((longb >> 6) & 63);
-                            byte ReuseCell = (byte)((longb >> 12) & 4);
-                            byte ReuseIndex = (byte)((longb >> 16) & 6);
-                            byte AlternateReuseIndex = (byte)((longb >> 22) & 6);
+                            byte ReuseCell = (byte)((longb >> 12) & 15);
+                            byte ReuseIndex = (byte)((longb >> 16) & 63);
+                            byte AlternateReuseIndex = (byte)((longb >> 22) & 63);
+
+                            if (edgeNum == 0)
+                            {
+                                Debug.Log("EdgeA: " + EdgeA + ", EdgeB" + EdgeB + ", ReuseCell: " + ReuseCell + ", ReuseIndex: " + ReuseIndex + ", AlternateReuseIndex: " + AlternateReuseIndex);
+                            }
 
                             bool reusing = false;
                             bool altreusing = false;
                             Vector3Int ReuseIndices = new Vector3Int(hx, hy, hz);
 
                             Vector3Int AlternateReuseIndices = new Vector3Int(hx, hy, hz);
+
+                            bool altReuseExists = false;
 
                             if (ReuseCell != 0)
                             {
@@ -129,10 +146,12 @@ namespace SE
                                     ReuseIndices.x -= 1;
                                     if ((ReuseCell & 2) == 2)
                                     {
+                                        altReuseExists = true;
                                         AlternateReuseIndices.z -= 1;
                                     }
                                     else if ((ReuseCell & 4) == 4)
                                     {
+                                        altReuseExists = true;
                                         AlternateReuseIndices.y -= 1;
                                     }
                                 }
@@ -141,6 +160,7 @@ namespace SE
                                     ReuseIndices.z -= 1;
                                     if ((ReuseCell & 4) == 4)
                                     {
+                                        altReuseExists = true;
                                         AlternateReuseIndices.y -= 1;
                                     }
                                 }
@@ -150,10 +170,11 @@ namespace SE
                                 }
                                 if (ReuseIndices.x < 0 || ReuseIndices.y < 0 || ReuseIndices.z < 0)
                                 {
-                                    Debug.Log("ee");
+                                    //Debug.Log("ee");
                                     reusing = false;
                                     altreusing = true;
-                                    if(AlternateReuseIndices.x < 0 || AlternateReuseIndices.y < 0 || AlternateReuseIndices.z < 0) {
+                                    if (!altReuseExists || (AlternateReuseIndices.x < 0 || AlternateReuseIndices.y < 0 || AlternateReuseIndices.z < 0))
+                                    {
                                         altreusing = false;
                                     }
                                 }
@@ -169,7 +190,8 @@ namespace SE
                                         ReuseIndex
                                     ];
                             }
-                            else if(altreusing) {
+                            else if (altreusing)
+                            {
                                 mcvtcell.uniqueEdges[edgeNum] =
                                 cellReusedEdges[
                                     AlternateReuseIndices.x,
@@ -206,7 +228,14 @@ namespace SE
                             byte edgeNum = Tables.MCLodEdgeToReID[lod][i, 0];
                             byte reId = Tables.MCLodEdgeToReID[lod][i, 1];
 
-                            cellReusedEdges[hx, hy, hz, reId] = mcvtcell.uniqueEdges[edgeNum];
+                            if(edgeNum > mcvtcell.uniqueEdges.Length) {
+                                Debug.LogError("ERROR: edgeNum > mcvtcell.uniqueEdges.Length");
+                                Debug.LogError("EdgeNum: " + edgeNum + ", lod: " + lod + ", Tables.UniqueEdges[lod].length: " + Tables.MCLodUniqueEdges[lod].Length + ", uniqueEdges length: " + mcvtcell.uniqueEdges.Length);
+                            }
+
+                            ushort id = mcvtcell.uniqueEdges[edgeNum];
+
+                            cellReusedEdges[hx, hy, hz, reId] = id;
                         }
 
                         Util.GridCell tvCellBounds = new Util.GridCell();
@@ -635,7 +664,7 @@ namespace SE
 
                         byte[][] offsets = Tables.MCLodTable[cellLod];
 
-                        Debug.Log("offset length: " + offsets.Length);
+                        //Debug.Log("offset length: " + offsets.Length);
 
                         if (offsets.Length > 0)
                         {
@@ -664,7 +693,7 @@ namespace SE
                                     cell.points[j].density = (float)data[((int)pos.x)][((int)pos.y)][((int)pos.z)][0];
                                 }
 
-                                Debug.Log(strOffs);
+                                //Debug.Log(strOffs);
                                 Polyganise(cell, vertices, triangles, 0f);
                                 TVDebugGridCells.Add(cell);
 

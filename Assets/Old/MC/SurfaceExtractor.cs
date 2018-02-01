@@ -4,6 +4,7 @@ using Util;
 
 public static class SurfaceExtractor {
     public static ExtractionResult ExtractSurface(ExtractionInput input) {
+		Debug.Log("SurfaceExtractor ExtractSurface ran");
         ExtractionResult r = new ExtractionResult();
         
         List<GridCell> cells = new List<GridCell>();

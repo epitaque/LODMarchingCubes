@@ -15,7 +15,7 @@ public class Controller : MonoBehaviour {
 	private bool IsRunning = false;
 
 	private static double rconstant = 0.2;
-	private static byte loddebug = 0;
+	private static byte loddebug = 1;
 
 
 	Sample[] sampleFunctions = {
@@ -58,7 +58,7 @@ public class Controller : MonoBehaviour {
 
 	public delegate float Sample(float x, float y, float z, float worldSize);
 
-	int res = 4;
+	int res = 16;
 
 	// Use this for initialization
 	void Start () {
@@ -66,7 +66,7 @@ public class Controller : MonoBehaviour {
 		System.Random random = new System.Random(5);
 		LookupTableCreator.GenerateLookupTable();
 		
-		GenerateMesh(4);
+		GenerateMesh(1);
 		//TestTransvoxel();
 		ConsoleObject.GetComponent<Console>().SetRegenerateFn(GenerateMesh);
 	}

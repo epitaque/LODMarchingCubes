@@ -13,8 +13,8 @@ public static class LookupTableCreator
         GenerateOffsetLookupTable();
         GenerateUniqueEdgesLookupTable();
         GenerateMCLodEdgeMappingTable();
-        GenerateMCLodEdgeToReIDTable();
-        GenerateUniqueEdgesLookupTableReuse(true);
+        GenerateMCLodEdgeToReIDTable(true);
+        GenerateUniqueEdgesLookupTableReuse();
     }
 
     public static string GenerateMCLodEdgeToReIDTable(bool copy = false)
@@ -35,7 +35,7 @@ public static class LookupTableCreator
                 Vector3 A = ByteToVector3(bA);
                 Vector3 B = ByteToVector3(bB);
 
-                if (IsMaximalEdge(A, B))
+                if (IsMaximalEdge2(A, B))
                 {
                     byte edgeID = (byte)edgeNum;
                     byte standardID = (byte)GetStandardID(A, B);
@@ -107,7 +107,6 @@ public static class LookupTableCreator
         Debug.Assert(false);
         return byte.MaxValue;
     }
-
 
     public static string GenerateMCLodEdgeMappingTable(bool copy = false)
     {
@@ -400,7 +399,7 @@ public static class LookupTableCreator
                     }
                 }
 
-				int finalEdge = (int)bA + ((int)bB << 6) + ((int)ReuseCell << 12) + ((int)ReuseIndex << 16) + ((int)AlternateReuseIndex << 22);
+				int finalEdge = ((int)bA) | ((int)bB << 6) | ((int)ReuseCell << 12) | ((int)ReuseIndex << 16) | ((int)AlternateReuseIndex << 22);
 
 				if(bA > 63 || bB > 63) {
 					Debug.Assert(false);
@@ -451,6 +450,15 @@ public static class LookupTableCreator
     public static bool IsMaximalEdge(Vector3 A, Vector3 B)
     {
         return (A.x == 1 || A.y == 1 || A.z == 1) && (B.x == 1 || B.y == 1 || B.z == 1);
+    }
+
+    public static bool IsMaximalEdge2(Vector3 A, Vector3 B) {
+        for(int edgeNum = 0; edgeNum < Tables.MCLodMaximalEdges.GetLength(0); edgeNum++) {
+            Vector3 mA = new Vector3(Tables.MCLodMaximalEdges[edgeNum,0,0], Tables.MCLodMaximalEdges[edgeNum,0,1], Tables.MCLodMaximalEdges[edgeNum,0,2]);
+            Vector3 mB = new Vector3(Tables.MCLodMaximalEdges[edgeNum,1,0], Tables.MCLodMaximalEdges[edgeNum,1,1], Tables.MCLodMaximalEdges[edgeNum,1,2]);
+            if((A == mA && B == mB) || (A == mB && B == mA)) return true;
+        }
+        return false;
     }
 
     private static bool IsEdgeEqual(System.Tuple<byte, byte> e1, System.Tuple<byte, byte> e2)
