@@ -4,47 +4,157 @@ using UnityEngine;
 namespace SE.Transvoxel {
 public static class Transvoxel {
     public static Vector3Int[] tvCellVertexOffsets = {
-            new Vector3Int(0,0,0), new Vector3Int(1,0,0), new Vector3Int(2,0,0), // High-res lower row
-            new Vector3Int(0,1,0), new Vector3Int(1,1,0), new Vector3Int(2,1,0), // High-res middle row
-            new Vector3Int(0,2,0), new Vector3Int(1,2,0), new Vector3Int(2,2,0), // High-res upper row
+		new Vector3Int(0,0,0), new Vector3Int(1,0,0), new Vector3Int(2,0,0), // High-res lower row
+		new Vector3Int(0,1,0), new Vector3Int(1,1,0), new Vector3Int(2,1,0), // High-res middle row
+		new Vector3Int(0,2,0), new Vector3Int(1,2,0), new Vector3Int(2,2,0), // High-res upper row
 
-            new Vector3Int(0,0,2), new Vector3Int(2,0,2), // Low-res lower row
-            new Vector3Int(0,2,2), new Vector3Int(2,2,2)  // Low-res upper row
+		new Vector3Int(0,0,2), new Vector3Int(2,0,2), // Low-res lower row
+		new Vector3Int(0,2,2), new Vector3Int(2,2,2)  // Low-res upper row
     };
+
+	public static int[,] tvCellEdges = {
+		{0, 1}, {1, 2}, {3, 4}, {4, 5}, {6, 7}, {7, 8}, // Horizontal edges
+		{0, 3}, {1, 4}, {2, 5}, {3, 6}, {4, 7}, {5, 8}, // Vertical edges
+		{0, 9}, {2, 10}, {6, 11}, {8, 12}, // Connected edges
+		{9, 10}, {11, 12}, {9, 11}, {10, 12} // Half-resolution face
+	};
 
     public static Vector3Int[] regCellVertexOffsets = {
         new Vector3Int(0, 0, 0), new Vector3Int(2, 0, 0), new Vector3Int(0, 2, 0), new Vector3Int(2, 2, 0),
         new Vector3Int(0, 0, 2), new Vector3Int(2, 0, 2), new Vector3Int(0, 2, 2), new Vector3Int(2, 2, 2),
     };
 
+	public static int[,] regCellEdges = {
+		{0,4}, {1,5}, {2,6}, {3,7},	// x-axis 
+		{0,2}, {1,3}, {4,6}, {5,7},	// y-axis
+		{0,1}, {2,3}, {4,5}, {6,7}	// z-axis
+	};
+
+	public static Quaternion[] tvCellRotations = {
+		Quaternion.AngleAxis(-90, Vector3.up), // -x
+		Quaternion.AngleAxis(90, Vector3.up), // +x
+		Quaternion.AngleAxis(90, new Vector3(1, 0, 0)), // -y
+		Quaternion.AngleAxis(-90, new Vector3(1, 0, 0)), // +y
+		Quaternion.AngleAxis(180, Vector3.up), // -z
+		Quaternion.identity, // +z
+	};
+
     //int[] order = {0, 1, 2, 5, 8, 7, 6, 3, 4};
 
 
     public static List<Edge> RegCellEdges = new List<Edge>();
 
-    public static List<Edge> Edges = new List<Edge>();
+    public static List<Edge> TVEdges = new List<Edge>();
 
     public static List<Vector3> StartingPoints = new List<Vector3>();
 
     public static List<Vector3> OffsetPoints = new List<Vector3>();
 
-	public static void GenerateAllCells(List<Vector3> vertices, List<int> triangles, sbyte[][][][] data, int res, byte lod) {
-		GenerateTransitionCells(vertices, triangles, data, res);
-		GenerateRegularCells(vertices, triangles, data, res);
+	public static sbyte[][][][] GenerateChunkData(Vector3 min, int resolution, UtilFuncs.Sampler sample) {
+		int res1 = resolution + 1;
+
+		sbyte[][][][] data = new sbyte[res1][][][];
+
+		float f = 0.01f;
+		float nx, ny, nz;
+
+		for(int x = 0; x < res1; x++) {
+			data[x] = new sbyte[res1][][];
+			for(int y = 0; y < res1; y++) {
+				data[x][y] = new sbyte[res1][];
+				for(int z = 0; z < res1; z++) {
+					data[x][y][z] = new sbyte[4];
+					nx = (float)x - ((float)res1)/2f;
+					ny = (float)y - ((float)res1)/2f;
+					nz = (float)z - ((float)res1)/2f;
+
+					data[x][y][z][0] = (sbyte)(Mathf.Clamp(-8f * sample(nx, ny, nz), -127, 127));
+
+					float dx = sample(nx+f, ny, nz) - sample(nx-f, ny, nz);
+					float dy = sample(nx, ny+f, nz) - sample(nx, ny-f, nz);
+					float dz = sample(nx, ny, nz+f) - sample(nx, ny, nz-f);
+
+					float total = (dx*dx) + (dy*dy) + (dz*dz);
+					total = Mathf.Sqrt(total);
+					dx /= total; dx *= 127;
+					dy /= total; dy *= 127;
+					dz /= total; dz *= 127;
+
+					data[x][y][z][1] = (sbyte)dx;
+					data[x][y][z][2] = (sbyte)dy;
+					data[x][y][z][3] = (sbyte)dz;
+				} 
+			}
+		}
+
+		return data;
 	}
 
-    public static void GenerateTransitionCells(List<Vector3> vertices, List<int> triangles, sbyte[][][][] data, int res) {
-        for(int x = 0; x < res; x += 2) {
-            for(int y = 0; y < res; y += 2) {
-                GenerateTransitionCell(new Vector3Int(x, y, res - 2), vertices, triangles, 0, data);
-            }
+	public static void GenerateChunk(Vector3 min, List<Vector3> vertices, List<int> triangles, int resolution, UtilFuncs.Sampler sample, byte lod) {
+		sbyte[][][][] data = GenerateChunkData(min, resolution, sample);
+		GenerateChunkExterior(vertices, triangles, data, lod, resolution);
+		GenerateChunkInterior(vertices, triangles, data, resolution);
+		//GenerateTestTransitionCells(vertices, triangles, data, resolution);
+	}
+
+    public static void GenerateTestTransitionCells(List<Vector3> vertices, List<int> triangles, sbyte[][][][] data, int res) {
+        for(int x = 0; x < 8; x += 2) {
+			GenerateTransitionCell(new Vector3Int(x, 0, 0), vertices, triangles, 0, data, tvCellRotations[x/2]);
+        }
+		for(int x = 0; x < 4; x += 2) {
+			GenerateTransitionCell(new Vector3Int(x, 0, 4), vertices, triangles, 0, data, tvCellRotations[x/2 + 4]);
         }
     }
 
-	public static void GenerateRegularCells(List<Vector3> vertices, List<int> triangles, sbyte[][][][] data, int res) {
-		for(int x = 0; x < res; x++) {
-			for(int y = 0; y < res; y++) {
-				for(int z = 0; z < res - 2; z++) {
+	public static void GenerateChunkExterior(List<Vector3> vertices, List<int> triangles, sbyte[][][][] data, byte chunkLod, int res) {
+		int rm2 = res - 2;
+		for(int x = 0; x < res; x += 2) {
+			for(int y = 0;  y < res; y += 2) {
+				for(int z = 0; z < res; z += 2) {
+					bool isMinimal = x == 0 || y == 0 || z == 0;
+					bool isMaximal = x == rm2 || y == rm2 || z == rm2;
+					if(!isMinimal && !isMaximal) continue;
+
+					byte cellLod = 0;
+					if(x == 0) cellLod |= 1; if(x == rm2) cellLod |= 2;
+					if(y == 0) cellLod |= 4; if(y == rm2) cellLod |= 8;
+					if(z == 0) cellLod |= 16; if(z == rm2) cellLod |= 32;
+					cellLod = (byte)(cellLod & chunkLod);
+
+					
+					int iPos = -1;
+					int numOnes = 0;
+					for(int i = 0; i < 6; i++) {
+						if(((cellLod >> i) & 1) == 1) {
+							numOnes++;
+							iPos = i;
+						}
+					}
+
+					if(numOnes == 1) {
+						Debug.Log("iPos: " + iPos);
+                		GenerateTransitionCell(new Vector3Int(x, y, z), vertices, triangles, 0, data, tvCellRotations[iPos]);
+					}
+					else {
+						Util.GridCell cell = new Util.GridCell();
+						cell.points = new Util.Point[8];
+						for(int i = 0; i < 8; i++) {
+							Vector3Int offset = (new Vector3Int((int)Tables.CellOffsets[i].x, (int)Tables.CellOffsets[i].y, (int)Tables.CellOffsets[i].z))*2 + new Vector3Int(x, y, z);
+							sbyte density = data[(int)offset.x][offset.y][offset.z][0];
+							cell.points[i].density = density;
+							cell.points[i].position = offset;
+						}
+						GenerateRegularCell(cell, vertices, triangles, 0);
+					}
+				}
+			}
+		}
+	}
+
+	public static void GenerateChunkInterior(List<Vector3> vertices, List<int> triangles, sbyte[][][][] data, int res) {
+		for(int x = 2; x < res - 2; x++) {
+			for(int y = 2; y < res - 2; y++) {
+				for(int z = 2; z < res - 2; z++) {
 					Util.GridCell cell = new Util.GridCell();
 					cell.points = new Util.Point[8];
 
@@ -65,14 +175,18 @@ public static class Transvoxel {
 
     //private readonly static int[] lerpedPoss = {0, 2, 3, 5};
 
-    public static void GenerateTransitionCell(Vector3Int min, List<Vector3> Vertices, List<int> Triangles, byte lod, sbyte[][][][] data) {
+    public static void GenerateTransitionCell(Vector3Int min, List<Vector3> Vertices, List<int> Triangles, byte lod, sbyte[][][][] data, Quaternion rot) {
+		Debug.Log("Rot: " + rot);
+
         //int caseCode = 0;
         Vector3[] tvCellVertexPositions = new Vector3[13];
         Vector3[] regCellVertexPositions = new Vector3[8];
         sbyte[] tvDensities = new sbyte[13];
         sbyte[] regDensities = new sbyte[8];
         for(int i = 0; i < 10; i++) {
-            tvCellVertexPositions[i] = min + tvCellVertexOffsets[i];
+			Vector3 rotatedOffset = (rot * (tvCellVertexOffsets[i] - Vector3.one)) + Vector3.one;
+
+            tvCellVertexPositions[i] = min + rotatedOffset;
             tvDensities[i] = data[(int)tvCellVertexPositions[i].x][(int)tvCellVertexPositions[i].y][(int)tvCellVertexPositions[i].z][0];
         }
         tvDensities[0x9] = tvDensities[0];
@@ -80,7 +194,9 @@ public static class Transvoxel {
         tvDensities[0xB] = tvDensities[6];
         tvDensities[0xC] = tvDensities[8];
         for(int i = 0; i < 8; i++) {
-            regCellVertexPositions[i] = min + regCellVertexOffsets[i];
+			Vector3 rotatedOffset = (rot * (regCellVertexOffsets[i] - Vector3.one)) + Vector3.one;
+
+            regCellVertexPositions[i] = min + rotatedOffset;
             regDensities[i] = data[(int)regCellVertexPositions[i].x][(int)regCellVertexPositions[i].y][(int)regCellVertexPositions[i].z][0];
         }
         for(int i = 0; i < 4; i++) {
@@ -115,6 +231,28 @@ public static class Transvoxel {
             densities += tvDensities[i] + ", ";
             if(tvDensities[i] < 0) caseCode += sums[i];
         }
+
+		// Edge gizmos
+		for(int i = 0; i < tvCellEdges.GetLength(0); i++) {
+			Vector3 A = tvCellVertexPositions[tvCellEdges[i,0]];
+			Vector3 B = tvCellVertexPositions[tvCellEdges[i,1]];
+
+			Edge e = new Edge();
+            e.A = A;
+            e.B = B;
+
+			TVEdges.Add(e);
+		}
+
+		for(int i = 0; i < regCellEdges.GetLength(0); i++) {
+			Vector3 A = regCellVertexPositions[regCellEdges[i, 0]];
+			Vector3 B = regCellVertexPositions[regCellEdges[i, 1]];
+
+			Edge e = new Edge();
+            e.A = A;
+            e.B = B;
+			RegCellEdges.Add(e);
+		}
 
         string CellInfo = "Transvoxel Cell Information\n";
         
@@ -171,6 +309,7 @@ public static class Transvoxel {
 
         Vector3[] vertices = new Vector3[vertCount];
 
+
         // vertex generation phase
         for(int i = 0; i < edges.Length; i++) {
             lowNibbles[i] = (byte)(edgeData[i] & 0x00FF);
@@ -198,7 +337,7 @@ public static class Transvoxel {
             Vector3 result = Lerp(density1, density2, A.x, A.y, A.z, B.x, B.y, B.z);
 
             e.IsoVertex = result;
-            Edges.Add(e);
+            //Edges.Add(e);
 
             //Debug.Log("Lerped: " + result);
 
@@ -218,7 +357,7 @@ public static class Transvoxel {
         StringEdges += "\n";
         CellInfo += StringEdges;
 
-        Debug.Log(CellInfo);
+        //Debug.Log(CellInfo);
 
         byte[] indices = tCellData.Indices();
 
@@ -315,7 +454,7 @@ public static class Transvoxel {
             regCellString += "   - A (" + DensityA + "): " + A + ", B (" + DensityB + "): " + B + "\n";
             regCellString += "   - Lerped: " + regVertices[i] + "\n";
         }
-        Debug.Log(regCellString);
+        //Debug.Log(regCellString);
 
         byte[] regCellIndices = regCell.Indices();
         intIndices = new int[triCount * 3];
@@ -411,14 +550,18 @@ public static class Transvoxel {
     }
 
     public static void DrawGizmos() {
-        Gizmos.color = Color.gray;
-        foreach(Edge e in Edges) {
-            //UnityEngine.Gizmos.DrawLine(e.A, e.B);
+        Gizmos.color = new Color(255f/255f,99f/255f,71f/255f, 1f);
+        foreach(Edge e in RegCellEdges) {
+            UnityEngine.Gizmos.DrawLine(e.A, e.B);
+        }
+        Gizmos.color = Color.red;
+        foreach(Edge e in TVEdges) {
+            UnityEngine.Gizmos.DrawLine(e.A, e.B);
         }
 
-        Gizmos.color = new Color(1, 1, 0, 0.07f);
-        foreach(Edge e in Edges) {
-            UnityEngine.Gizmos.DrawSphere(e.IsoVertex, 0.2f);
+        Gizmos.color = new Color(1, 0, 0, 0.07f);
+        foreach(Edge e in TVEdges) {
+            //UnityEngine.Gizmos.DrawSphere(e.IsoVertex, 0.2f);
         }
 
         Gizmos.color = Color.red;

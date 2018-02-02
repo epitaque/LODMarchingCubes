@@ -67,7 +67,7 @@ public class Controller : MonoBehaviour {
 		LookupTableCreator.GenerateLookupTable();
 		
 		//GenerateMesh(1);
-		TestTransvoxel();
+		TestTransvoxel(1);
 		ConsoleObject.GetComponent<Console>().SetRegenerateFn(GenerateMesh);
 	}
 	
@@ -138,7 +138,7 @@ public class Controller : MonoBehaviour {
 	}
 
 
-	void TestTransvoxel() {
+	void TestTransvoxel(int sF) {
 		int res = 8;
 		int res1 = res + 1;
 
@@ -147,54 +147,11 @@ public class Controller : MonoBehaviour {
 		List<Vector3> vertices = new List<Vector3>();
 		List<int> triangles = new List<int>();
 
-		sbyte[][][][] data = new sbyte[res1][][][];
+		int sampleFn = 1;
+		byte lod = 63;
 
-		float f = 0.01f;
-		float nx, ny, nz;
-
-		int sF = 2;
-
-		for(int x = 0; x < res1; x++) {
-			data[x] = new sbyte[res1][][];
-			for(int y = 0; y < res1; y++) {
-				data[x][y] = new sbyte[res1][];
-				for(int z = 0; z < res1; z++) {
-					data[x][y][z] = new sbyte[4];
-					//data[x][y][z] = (sbyte)((random.NextDouble() -0.5d) * 2d * 127d); 
-					//data[x][y][z] = (sbyte)(noise.Evaluate(((double)x + 5.5d) * r, ((double)y + 5.5d) * r, ((double)z + 5.5d) * r) * 127d);
-					//data[x][y][z] = (sbyte)((Mathf.Abs(SurfaceD_torus_z(x - res1/2, y - res1/2, z - res1/2, res1)) < 8 ? -16 * SurfaceD_torus_z(x - res1/2, y - res1/2, z - res1/2, res1) : SurfaceD_torus_z(x - res1/2, y - res1/2, z - res1/2, res1)));
-					
-
-					nx = (float)x - ((float)res1)/2f;
-					ny = (float)y - ((float)res1)/2f;
-					nz = (float)z - ((float)res1)/2f;
-
-					data[x][y][z][0] = (sbyte)(Mathf.Clamp(-8f * sampleFunctions[sF](nx, ny, nz, res1), -127, 127));
-
-					float dx = sampleFunctions[sF](nx+f, ny, nz, (float)res1) - sampleFunctions[sF](nx-f, ny, nz, (float)res1);
-					float dy = sampleFunctions[sF](nx, ny+f, nz, (float)res1) - sampleFunctions[sF](nx, ny-f, nz, (float)res1);
-					float dz = sampleFunctions[sF](nx, ny, nz+f, (float)res1) - sampleFunctions[sF](nx, ny, nz-f, (float)res1);
-
-					float total = (dx*dx) + (dy*dy) + (dz*dz);
-					total = Mathf.Sqrt(total);
-
-					dx /= total;
-					dy /= total;
-					dz /= total;
-
-					dx *= 127;
-					dy *= 127;
-					dz *= 127;
-
-					data[x][y][z][1] = (sbyte)dx;
-					data[x][y][z][2] = (sbyte)dy;
-					data[x][y][z][3] = (sbyte)dz;
-				} 
-			}
-		}
-
-
-		SE.Transvoxel.Transvoxel.GenerateAllCells(vertices, triangles, data, res, 0);
+		UtilFuncs.Sampler fn = (float x, float y, float z) => sampleFunctions[sampleFn](x, y, z, 16);
+		SE.Transvoxel.Transvoxel.GenerateChunk(new Vector3(0, 0, 0), vertices, triangles, res, fn, lod);
 
 		Debug.Log("0 tris");
 
