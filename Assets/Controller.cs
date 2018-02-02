@@ -139,7 +139,7 @@ public class Controller : MonoBehaviour {
 
 
 	void TestTransvoxel(int sF) {
-		int res = 8;
+		int res = 12;
 		int res1 = res + 1;
 
 		MCMesh m = new MCMesh();

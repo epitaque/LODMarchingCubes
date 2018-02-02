@@ -39,6 +39,11 @@ public static class Transvoxel {
 		Quaternion.identity, // +z
 	};
 
+    // input: 
+    public static Dictionary<byte, bool[]> tvCellFlatPoints = new Dictionary<byte, bool[]>() {
+        {32, new bool[] {false, true, true, false}}
+    };
+
     //int[] order = {0, 1, 2, 5, 8, 7, 6, 3, 4};
 
 
@@ -108,6 +113,7 @@ public static class Transvoxel {
 
 	public static void GenerateChunkExterior(List<Vector3> vertices, List<int> triangles, sbyte[][][][] data, byte chunkLod, int res) {
 		int rm2 = res - 2;
+        int rm4 = res - 4;
 		for(int x = 0; x < res; x += 2) {
 			for(int y = 0;  y < res; y += 2) {
 				for(int z = 0; z < res; z += 2) {
@@ -121,7 +127,12 @@ public static class Transvoxel {
 					if(z == 0) cellLod |= 16; if(z == rm2) cellLod |= 32;
 					cellLod = (byte)(cellLod & chunkLod);
 
-					
+                    byte cellLod2 = 0;
+                    if(x == 2) cellLod2 |= 1; if(x == rm4) cellLod2 |= 2;
+                    if(y == 2) cellLod2 |= 4; if(y == rm4) cellLod2 |= 8;
+                    if(z == 2) cellLod2 |= 16; if(z == rm4) cellLod2 |= 32;
+                    cellLod2 = (byte)(cellLod2 & chunkLod);
+
 					int iPos = -1;
 					int numOnes = 0;
 					for(int i = 0; i < 6; i++) {
@@ -132,8 +143,7 @@ public static class Transvoxel {
 					}
 
 					if(numOnes == 1) {
-						Debug.Log("iPos: " + iPos);
-                		GenerateTransitionCell(new Vector3Int(x, y, z), vertices, triangles, 0, data, tvCellRotations[iPos]);
+                		GenerateTransitionCell(new Vector3Int(x, y, z), vertices, triangles, cellLod2, data, tvCellRotations[iPos]);
 					}
 					else {
 						Util.GridCell cell = new Util.GridCell();
@@ -176,9 +186,8 @@ public static class Transvoxel {
     //private readonly static int[] lerpedPoss = {0, 2, 3, 5};
 
     public static void GenerateTransitionCell(Vector3Int min, List<Vector3> Vertices, List<int> Triangles, byte lod, sbyte[][][][] data, Quaternion rot) {
-		Debug.Log("Rot: " + rot);
+        Debug.Log("LOD: " + System.Convert.ToString(lod, 2));
 
-        //int caseCode = 0;
         Vector3[] tvCellVertexPositions = new Vector3[13];
         Vector3[] regCellVertexPositions = new Vector3[8];
         sbyte[] tvDensities = new sbyte[13];
@@ -199,8 +208,17 @@ public static class Transvoxel {
             regCellVertexPositions[i] = min + rotatedOffset;
             regDensities[i] = data[(int)regCellVertexPositions[i].x][(int)regCellVertexPositions[i].y][(int)regCellVertexPositions[i].z][0];
         }
+        float[] lerpPositions = {0.75f, 0.75f, 0.75f, 0.75f};
+        if(tvCellFlatPoints.ContainsKey(lod)) {
+            Debug.Log("Came accross cell with lod " + lod); 
+            bool[] lerps = tvCellFlatPoints[lod];
+            for(int i = 0; i < 4; i++) {
+                lerpPositions[i] = lerps[i] ? 0.75f : 1f;
+            }
+        }
+
         for(int i = 0; i < 4; i++) {
-            Vector3 lerped = Lerp2(0.75f, regCellVertexPositions[i], regCellVertexPositions[i + 4]);
+            Vector3 lerped = Lerp2(lerpPositions[i], regCellVertexPositions[i], regCellVertexPositions[i + 4]);
 
             //Debug.Log("A: " + regCellVertexPositions[i] + ", B: " + regCellVertexPositions[i + 4] + " lerped: " + lerped);
 
