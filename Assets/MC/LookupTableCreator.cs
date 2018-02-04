@@ -11,10 +11,10 @@ public static class LookupTableCreator
     public static void GenerateLookupTable()
     {
         GenerateOffsetLookupTable();
-        GenerateUniqueEdgesLookupTable();
-        GenerateMCLodEdgeMappingTable();
-        GenerateMCLodEdgeToReIDTable(true);
-        GenerateUniqueEdgesLookupTableReuse();
+        //GenerateUniqueEdgesLookupTable();
+        //GenerateMCLodEdgeMappingTable();
+        //GenerateMCLodEdgeToReIDTable(true);
+        //GenerateUniqueEdgesLookupTableReuse();
     }
 
     public static string GenerateMCLodEdgeToReIDTable(bool copy = false)
@@ -74,7 +74,7 @@ public static class LookupTableCreator
         }
         table += "};";
 
-        if (copy) UnityEditor.EditorGUIUtility.systemCopyBuffer = table;
+        //if (copy) UnityEditor.EditorGUIUtility.systemCopyBuffer = table;
 
         return table;
 
@@ -158,7 +158,7 @@ public static class LookupTableCreator
 
         UnityEngine.Debug.Log("Edgemap Table: \n" + table);
 
-        if (copy) UnityEditor.EditorGUIUtility.systemCopyBuffer = table;
+        //if (copy) UnityEditor.EditorGUIUtility.systemCopyBuffer = table;
 
         return table;
     }
@@ -434,7 +434,7 @@ public static class LookupTableCreator
 
         Debug.Log("Unique Edges Lookup Table Reuse: \n" + table);
 
-        if (copy) UnityEditor.EditorGUIUtility.systemCopyBuffer = table;
+        //if (copy) UnityEditor.EditorGUIUtility.systemCopyBuffer = table;
     }
 
     /*public static bool IsNotReusableEdge(byte A, byte B, byte lod) {
@@ -488,7 +488,7 @@ public static class LookupTableCreator
 
     public static string GenerateOffsetLookupTable()
     {
-        addLodOffsets();
+        //addLodOffsets();
 
         string table = "public static byte[][][] MCLodTable = new byte[][][] {\n";
 
@@ -551,6 +551,10 @@ public static class LookupTableCreator
         {
             Vector3[][] offsets = LODOffsets[lod];
 
+			if(lod == 0) {
+				Debug.Log("Lod 0, returning offsets array with length: " + offsets.Length);
+			}
+
             return offsets;
         }
         else if (!LODRotations.ContainsKey(lod))
@@ -575,8 +579,17 @@ public static class LookupTableCreator
                     stroffsets += rotatedOffset + ", ";
                     offsets[i][j] = rotatedOffset;
                 }
-                //Debug.Log(stroffsets);
             }
+			/*for (int i = 0; i < numGridCells; i++) {
+                offsets[i] = new Vector3[8];
+                for (int j = 0; j < 8; j++)
+                {
+                    Vector3 rotatedOffset = (rotation * LODOffsets[numLODFaces][i][j]);
+                    offsets[i][j] = rotatedOffset;
+                }
+
+			}*/
+
             return offsets;
         }
     }

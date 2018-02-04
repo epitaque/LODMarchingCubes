@@ -3,12 +3,6 @@ using System.Collections;
 using System.Linq;
 using UnityEngine;
 
-
-// index3d(x, y, z) x*dim^2 + y*dim + z
-// if(onMin)
-// getEdge3d(x, y, z, w) (x*dim^2 + y*dim + z) * 3 + w
-
-
 namespace SE
 {
     public static class MarchingCubes
@@ -29,6 +23,7 @@ namespace SE
 
             int res1 = resolution + 1;
             int resm1 = resolution - 1;
+            int resm2 = resolution - 2;
 
             cubesGizmos.Add(new Vector4(min.x + (resolution / 2), min.y + (resolution / 2), min.z + (resolution / 2), resolution));
 
@@ -46,8 +41,15 @@ namespace SE
 
             CreateVertices(edges, begin, end, vertices, normals, res1, data);
 
-            begin = new Vector3Int(1, 1, 1);
-            end = new Vector3Int(resm1, resm1, resm1);
+            begin = new Vector3Int(0, 0, 0);
+			if((lod & 1) == 1) begin.x += 1;
+			if((lod & 2) == 2) begin.y += 1;
+			if((lod & 4) == 4) begin.z += 1;
+
+            end = new Vector3Int(resolution, resolution, resolution);
+			if((lod & 8) == 8) end.x -= 1;
+			if((lod & 16) == 16) end.y -= 1;
+			if((lod & 32) == 32) end.z -= 1;
 
             Triangulate(edges, begin, end, triangles, resolution, data);
 
@@ -630,13 +632,26 @@ namespace SE
 
         public static void GenerateTransitionCells(List<Vector3> vertices, List<int> triangles, int resolution, sbyte[][][][] data, byte lod)
         {
-
+			int resm2 = resolution - 2;
             for (int x = 0; x < resolution; x += 2)
             {
                 for (int y = 0; y < resolution; y += 2)
                 {
                     for (int z = 0; z < resolution; z += 2)
                     {
+						bool isMinimal = false;
+						if(x == 0 || y == 0 || z == 0) {
+							isMinimal = true;
+						}
+						bool isMaximal = false;
+						if(x == resm2 || y == resm2 || z == resm2) {
+							isMaximal = true;
+						}
+
+						if(!isMinimal && !isMaximal) {
+							continue;
+						}
+
                         byte cellLod = 0;
 
                         if (x == 0) cellLod |= 1;
@@ -648,37 +663,32 @@ namespace SE
 
                         cellLod = (byte)(lod & cellLod);
 
-                        if (cellLod == 0)
-                        {
-                            continue;
-                        }
-
-                        Util.GridCell tvCellBounds = new Util.GridCell();
+                        /*Util.GridCell tvCellBounds = new Util.GridCell();
                         tvCellBounds.points = new Util.Point[8];
                         for (int i = 0; i < 8; i++)
                         {
                             tvCellBounds.points[i].position = new Vector3(x, y, z) + Tables.CellOffsets[i] * 2;
                             //DebugPoints.Add(tvCellBounds.points[i].position);
                         }
-                        TVDebugGridCellBounds.Add(tvCellBounds);
+                        TVDebugGridCellBounds.Add(tvCellBounds);*/
 
                         byte[][] offsets = Tables.MCLodTable[cellLod];
-
-                        //Debug.Log("offset length: " + offsets.Length);
 
                         if (offsets.Length > 0)
                         {
                             for (int i = 0; i < offsets.Length; i++)
                             {
-                                Util.GridCell cell = new Util.GridCell();
-                                cell.points = new Util.Point[8];
+                                //Util.GridCell cell = new Util.GridCell();
+                                //cell.points = new Util.Point[8];
 
-                                string strOffs = "Cell " + i + " offsets: ";
+                                //string strOffs = "Cell " + i + " offsets: ";
 
+								//Vector3Int[] cellOffsets = new Vector3Int[8];
+								sbyte[] densities = new sbyte[8];
+								Vector3[] points = new Vector3[8];
                                 for (int j = 0; j < 8; j++)
                                 {
-                                    cell.points[j] = new Util.Point();
-                                    Vector3 pos = new Vector3(x + 1, y + 1, z + 1);
+                                    Vector3Int pos = new Vector3Int(x + 1, y + 1, z + 1);
                                     byte offset = offsets[i][j];
                                     if ((offset & 1) == 1) pos.x -= 1;
                                     if ((offset & 2) == 2) pos.x += 1;
@@ -687,15 +697,97 @@ namespace SE
                                     if ((offset & 16) == 16) pos.z -= 1;
                                     if ((offset & 32) == 32) pos.z += 1;
 
-                                    strOffs += pos + " (" + offset + "), ";
-
-                                    cell.points[j].position = pos;
-                                    cell.points[j].density = (float)data[((int)pos.x)][((int)pos.y)][((int)pos.z)][0];
+									points[j] = pos;
+									//cell.points[j] = new Util.Point();
+									//cell.points[j].position = pos;
+									densities[j] = data[pos.x][pos.y][pos.z][0];
+                                    //cell.points[j].position = pos;
+                                    //cell.points[j].density = (float)data[((int)pos.x)][((int)pos.y)][((int)pos.z)][0];
                                 }
 
+
+								Vector3[] vertlist = new Vector3[12];
+								byte caseCode = 0;
+
+								if (densities[0] < 0) caseCode |= 1;
+								if (densities[1] < 0) caseCode |= 2;
+								if (densities[2] < 0) caseCode |= 4;
+								if (densities[3] < 0) caseCode |= 8;
+								if (densities[4] < 0) caseCode |= 16;
+								if (densities[5] < 0) caseCode |= 32;
+								if (densities[6] < 0) caseCode |= 64;
+								if (densities[7] < 0) caseCode |= 128;
+
+								if ((Tables.edgeTable[caseCode] & 1) == 1)
+									vertlist[0] = Lerp2(densities[0], densities[1], points[0], points[1]);
+								if ((Tables.edgeTable[caseCode] & 2) == 2)
+									vertlist[1] = Lerp2(densities[1], densities[2], points[1], points[2]);
+								if ((Tables.edgeTable[caseCode] & 4) == 4)
+									vertlist[2] = Lerp2(densities[2], densities[3], points[2], points[3]);
+								if ((Tables.edgeTable[caseCode] & 8) == 8)
+									vertlist[3] = Lerp2(densities[3], densities[0], points[3], points[0]);
+								if ((Tables.edgeTable[caseCode] & 16) == 16)
+									vertlist[4] = Lerp2(densities[4], densities[5], points[4], points[5]);
+								if ((Tables.edgeTable[caseCode] & 32) == 32)
+									vertlist[5] = Lerp2(densities[5], densities[6], points[5], points[6]);
+								if ((Tables.edgeTable[caseCode] & 64) == 64)
+									vertlist[6] = Lerp2(densities[6], densities[7], points[6], points[7]);
+								if ((Tables.edgeTable[caseCode] & 128) == 128)
+									vertlist[7] = Lerp2(densities[7], densities[4], points[7], points[4]);
+								if ((Tables.edgeTable[caseCode] & 256) == 256)
+									vertlist[8] = Lerp2(densities[0], densities[4], points[0], points[4]);
+								if ((Tables.edgeTable[caseCode] & 512) == 512)
+									vertlist[9] = Lerp2(densities[1], densities[5], points[1], points[5]);
+								if ((Tables.edgeTable[caseCode] & 1024) == 1024)
+									vertlist[10] = Lerp2(densities[2], densities[6], points[2], points[6]);
+								if ((Tables.edgeTable[caseCode] & 2048) == 2048)
+									vertlist[11] = Lerp2(densities[3], densities[7], points[3], points[7]);
+
+
+								if (caseCode == 0 || caseCode == 255) continue;
+           						int mcEdge;
+								int t1, t2, t3;
+
+								for (int j = 0; Tables.triTable[caseCode][j] != -1; j++)
+								{
+									//mcEdge = Tables.triTable[caseCode][i];
+
+
+									triangles.Add(vertices.Count);
+									vertices.Add(vertlist[Tables.triTable[caseCode][j]]);
+									normals.Add()
+
+									/*t1 = edges[3 * (
+										((x + Tables.MCEdgeToEdgeOffset[mcEdge, 0]) * res1_2) +
+										((y + Tables.MCEdgeToEdgeOffset[mcEdge, 1]) * res1) +
+										z + Tables.MCEdgeToEdgeOffset[mcEdge, 2]) +
+											Tables.MCEdgeToEdgeOffset[mcEdge, 3]];
+
+									mcEdge = Tables.triTable[caseCode][i + 1];
+									t2 = edges[3 * (
+										((x + Tables.MCEdgeToEdgeOffset[mcEdge, 0]) * res1_2) +
+										((y + Tables.MCEdgeToEdgeOffset[mcEdge, 1]) * res1) +
+										z + Tables.MCEdgeToEdgeOffset[mcEdge, 2]) +
+											Tables.MCEdgeToEdgeOffset[mcEdge, 3]];
+
+									mcEdge = Tables.triTable[caseCode][i + 2];
+									t3 = edges[3 * (
+										((x + Tables.MCEdgeToEdgeOffset[mcEdge, 0]) * res1_2) +
+										((y + Tables.MCEdgeToEdgeOffset[mcEdge, 1]) * res1) +
+										z + Tables.MCEdgeToEdgeOffset[mcEdge, 2]) +
+											Tables.MCEdgeToEdgeOffset[mcEdge, 3]];
+
+									if (t1 != t2 && t2 != t3 && t1 != t3)
+									{
+										triangles.Add(t1);
+										triangles.Add(t2);
+										triangles.Add(t3);
+									}*/
+								}
+
+
                                 //Debug.Log(strOffs);
-                                Polyganise(cell, vertices, triangles, 0f);
-                                TVDebugGridCells.Add(cell);
+                                //TVDebugGridCells.Add(cell);
 
                             }
                         }
@@ -746,6 +838,25 @@ namespace SE
             mu = Mathf.Round((density1) / (density1 - density2) * 256) / 256.0f;
 
             return new Vector3(x1 + mu * (x2 - x1), y1 + mu * (y2 - y1), z1 + mu * (z2 - z1));
+        }
+
+        public static Vector3 Lerp2(float density1, float density2, Vector3 A, Vector3 B)
+        {
+            if (density1 < 0.00001f && density1 > -0.00001f)
+            {
+                return new Vector3(A.x, A.y, A.z);
+            }
+            if (density2 < 0.00001f && density2 > -0.00001f)
+            {
+                return new Vector3(B.x, B.y, B.z);
+            }
+            /*if(Mathf.Abs(density1 - density2) < 0.00001f) {
+                return new Vector3(x2, y2, z2);
+            }*/
+
+            mu = Mathf.Round((density1) / (density1 - density2) * 256) / 256.0f;
+
+            return new Vector3(A.x + mu * (B.x - A.x), A.y + mu * (B.y - A.y), A.z + mu * (B.z - A.z));
         }
 
         public static Vector3 LerpN(float density1, float density2, float n1x, float n1y, float n1z, float n2x, float n2y, float n2z)

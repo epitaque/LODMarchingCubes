@@ -16,7 +16,7 @@ public class Controller : MonoBehaviour {
 
 	private static double rconstant = 0.2;
 	private static byte loddebug = 1;
-
+	public int resolution = 16;
 
 	Sample[] sampleFunctions = {
 		(float x, float y, float z, float worldSize) => { // Torus
@@ -41,7 +41,7 @@ public class Controller : MonoBehaviour {
 			return result;
 		},
 		(float x, float y, float z, float worldSize) => {
-			float result = -y - (7f/8f);
+			float result = y - 4f;
 			return result;
 		}
 	};
@@ -58,7 +58,6 @@ public class Controller : MonoBehaviour {
 
 	public delegate float Sample(float x, float y, float z, float worldSize);
 
-	int res = 16;
 
 	// Use this for initialization
 	void Start () {
@@ -66,13 +65,13 @@ public class Controller : MonoBehaviour {
 		System.Random random = new System.Random(5);
 		LookupTableCreator.GenerateLookupTable();
 		
-		//GenerateMesh(1);
-		TestTransvoxel(1);
+		GenerateMesh(0);
+		//TestTransvoxel(1);
 		ConsoleObject.GetComponent<Console>().SetRegenerateFn(GenerateMesh);
 	}
 	
 	void GenerateMesh(int sampleFn) {
-		int res1 = res + 1;
+		int res1 = resolution + 1;
 		sbyte[][][][] data = new sbyte[res1][][][];
 
 		Sample fn = sampleFunctions[sampleFn];
@@ -123,14 +122,14 @@ public class Controller : MonoBehaviour {
 
 		//System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 		sw1.Start();
-		SE.MCMesh m = SE.MarchingCubes.PolygonizeArea(new Vector3(0, 0, 0), 16f, loddebug, res, data);
+		SE.MCMesh m = SE.MarchingCubes.PolygonizeArea(new Vector3(0, 0, 0), 16f, loddebug, resolution, data);
 		sw1.Stop();
 		sw.Stop();
 
-		Debug.Log(res + "^3 terrain took " + sw1.ElapsedMilliseconds + " ms.");
+		Debug.Log(resolution + "^3 terrain took " + sw1.ElapsedMilliseconds + " ms.");
 
-		Debug.Log(res + "^3 terrain took " + sw.ElapsedMilliseconds + " ms.");
-		ConsoleObject.GetComponent<Console>().PrintString(res + "^3 terrain took " + sw.ElapsedMilliseconds + " ms. (sampling = " + SampleTime + " ms, polyganizing = " + sw1.ElapsedMilliseconds + " ms). " + m.Vertices.Count + " vertices and " + (m.Triangles.Length / 3) + " triangles.");
+		Debug.Log(resolution + "^3 terrain took " + sw.ElapsedMilliseconds + " ms.");
+		ConsoleObject.GetComponent<Console>().PrintString(resolution + "^3 terrain took " + sw.ElapsedMilliseconds + " ms. (sampling = " + SampleTime + " ms, polyganizing = " + sw1.ElapsedMilliseconds + " ms). " + m.Vertices.Count + " vertices and " + (m.Triangles.Length / 3) + " triangles.");
 
 
 		Mesh(m);
@@ -139,8 +138,8 @@ public class Controller : MonoBehaviour {
 
 
 	void TestTransvoxel(int sF) {
-		int res = 12;
-		int res1 = res + 1;
+		int resolution = 12;
+		int res1 = resolution + 1;
 
 		MCMesh m = new MCMesh();
 
@@ -151,7 +150,7 @@ public class Controller : MonoBehaviour {
 		byte lod = 63;
 
 		UtilFuncs.Sampler fn = (float x, float y, float z) => sampleFunctions[sampleFn](x, y, z, 16);
-		SE.Transvoxel.Transvoxel.GenerateChunk(new Vector3(0, 0, 0), vertices, triangles, res, fn, lod);
+		SE.Transvoxel.Transvoxel.GenerateChunk(new Vector3(0, 0, 0), vertices, triangles, resolution, fn, lod);
 
 		Debug.Log("0 tris");
 
