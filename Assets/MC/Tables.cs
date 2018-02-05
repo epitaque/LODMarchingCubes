@@ -318,14 +318,6 @@ public readonly static int[] edgeTable = {
 
 public static byte[][][] MCLodTable = new byte[][][] {
 	new byte[][] { // lod 0 (0)
-		new byte[] { 21, 20, 4, 5, 17, 16, 0, 1 },
-		new byte[] { 20, 22, 6, 4, 16, 18, 2, 0 },
-		new byte[] { 4, 6, 38, 36, 0, 2, 34, 32 },
-		new byte[] { 5, 4, 36, 37, 1, 0, 32, 33 },
-		new byte[] { 17, 16, 0, 1, 25, 24, 8, 9 },
-		new byte[] { 16, 18, 2, 0, 24, 26, 10, 8 },
-		new byte[] { 0, 2, 34, 32, 8, 10, 42, 40 },
-		new byte[] { 1, 0, 32, 33, 9, 8, 40, 41 }
 	}, 
 	new byte[][] { // lod 1 (1)
 		new byte[] { 0, 25, 25, 8, 16, 25, 25, 24 },

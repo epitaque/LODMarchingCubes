@@ -17,7 +17,7 @@ namespace SE
         // LOD byte
         // -x +x -y +z -z +z
 
-        public static MCMesh PolygonizeArea(Vector3 min, float size, byte lod, int resolution, sbyte[][][][] data)
+        public static MCMesh PolygonizeArea(Vector3 min, byte lod, int resolution, sbyte[][][][] data)
         {
             MCMesh m = new MCMesh();
 
@@ -33,23 +33,28 @@ namespace SE
 
             ushort[] edges = new ushort[res1 * res1 * res1 * 3];
 
+
             Vector3Int begin = new Vector3Int(0, 0, 0);
             Vector3Int end = new Vector3Int(res1, res1, res1);
 
 			System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 			sw.Start();
 
+			if((lod & 1) == 1) begin.x += 1;
+			if((lod & 2) == 2) end.x -= 1;
+			
+			if((lod & 4) == 4) begin.y += 1;
+			if((lod & 8) == 8) end.y -= 1;
+			
+			if((lod & 16) == 16) begin.z += 1;
+			if((lod & 32) == 32) end.z -= 1;
+
             CreateVertices(edges, begin, end, vertices, normals, res1, data);
 
-            begin = new Vector3Int(0, 0, 0);
-			if((lod & 1) == 1) begin.x += 1;
-			if((lod & 2) == 2) begin.y += 1;
-			if((lod & 4) == 4) begin.z += 1;
 
-            end = new Vector3Int(resolution, resolution, resolution);
-			if((lod & 8) == 8) end.x -= 1;
-			if((lod & 16) == 16) end.y -= 1;
-			if((lod & 32) == 32) end.z -= 1;
+			end -= Vector3Int.one;
+			//if((lod & 1) == 1) begin.x += 1;
+
 
             Triangulate(edges, begin, end, triangles, resolution, data);
 
@@ -57,7 +62,7 @@ namespace SE
 
 			sw.Restart();
 
-            GenerateTransitionCells(vertices, triangles, resolution, data, lod);
+            GenerateTransitionCells(vertices, normals, triangles, resolution, data, lod);
 
 			Debug.Log("Phase 2 of surface extraction took " + sw.ElapsedMilliseconds + " ms.");
             //MCVT(vertices, triangles, normals, resolution, lod, data);
@@ -460,6 +465,8 @@ namespace SE
 
         public static void CreateVertices(ushort[] edges, Vector3Int begin, Vector3Int end, List<Vector3> vertices, List<Vector3> normals, int res1, sbyte[][][][] data)
         {
+			Debug.Log("CreateVertices called with begin " + begin + ", end: " + end);
+
             int edgeNum = 0;
             ushort vertNum = 0;
             sbyte density1, density2;
@@ -486,7 +493,7 @@ namespace SE
                             vertices.Add(new Vector3(x, y, z));
                             continue;
                         }
-                        if (y >= begin.x + 1)
+                        if (y >= begin.y + 1)
                         {
                             density2 = data[x][y - 1][z][0];
                             if ((density1 & 256) != (density2 & 256))
@@ -506,7 +513,7 @@ namespace SE
                                 }
                             }
                         }
-                        if (x >= begin.y + 1)
+                        if (x >= begin.x + 1)
                         {
                             density2 = data[x - 1][y][z][0];
                             if ((density1 & 256) != (density2 & 256))
@@ -630,7 +637,7 @@ namespace SE
             fixed int vertIDs[12];
         };
 
-        public static void GenerateTransitionCells(List<Vector3> vertices, List<int> triangles, int resolution, sbyte[][][][] data, byte lod)
+        public static void GenerateTransitionCells(List<Vector3> vertices, List<Vector3> normals, List<int> triangles, int resolution, sbyte[][][][] data, byte lod)
         {
 			int resm2 = resolution - 2;
             for (int x = 0; x < resolution; x += 2)
@@ -685,7 +692,7 @@ namespace SE
 
 								//Vector3Int[] cellOffsets = new Vector3Int[8];
 								sbyte[] densities = new sbyte[8];
-								Vector3[] points = new Vector3[8];
+								Vector3Int[] points = new Vector3Int[8];
                                 for (int j = 0; j < 8; j++)
                                 {
                                     Vector3Int pos = new Vector3Int(x + 1, y + 1, z + 1);
@@ -706,7 +713,7 @@ namespace SE
                                 }
 
 
-								Vector3[] vertlist = new Vector3[12];
+								//Vector3[] vertlist = new Vector3[12];
 								byte caseCode = 0;
 
 								if (densities[0] < 0) caseCode |= 1;
@@ -718,71 +725,161 @@ namespace SE
 								if (densities[6] < 0) caseCode |= 64;
 								if (densities[7] < 0) caseCode |= 128;
 
-								if ((Tables.edgeTable[caseCode] & 1) == 1)
-									vertlist[0] = Lerp2(densities[0], densities[1], points[0], points[1]);
-								if ((Tables.edgeTable[caseCode] & 2) == 2)
-									vertlist[1] = Lerp2(densities[1], densities[2], points[1], points[2]);
-								if ((Tables.edgeTable[caseCode] & 4) == 4)
-									vertlist[2] = Lerp2(densities[2], densities[3], points[2], points[3]);
-								if ((Tables.edgeTable[caseCode] & 8) == 8)
-									vertlist[3] = Lerp2(densities[3], densities[0], points[3], points[0]);
-								if ((Tables.edgeTable[caseCode] & 16) == 16)
-									vertlist[4] = Lerp2(densities[4], densities[5], points[4], points[5]);
-								if ((Tables.edgeTable[caseCode] & 32) == 32)
-									vertlist[5] = Lerp2(densities[5], densities[6], points[5], points[6]);
-								if ((Tables.edgeTable[caseCode] & 64) == 64)
-									vertlist[6] = Lerp2(densities[6], densities[7], points[6], points[7]);
-								if ((Tables.edgeTable[caseCode] & 128) == 128)
-									vertlist[7] = Lerp2(densities[7], densities[4], points[7], points[4]);
-								if ((Tables.edgeTable[caseCode] & 256) == 256)
-									vertlist[8] = Lerp2(densities[0], densities[4], points[0], points[4]);
-								if ((Tables.edgeTable[caseCode] & 512) == 512)
-									vertlist[9] = Lerp2(densities[1], densities[5], points[1], points[5]);
-								if ((Tables.edgeTable[caseCode] & 1024) == 1024)
-									vertlist[10] = Lerp2(densities[2], densities[6], points[2], points[6]);
-								if ((Tables.edgeTable[caseCode] & 2048) == 2048)
-									vertlist[11] = Lerp2(densities[3], densities[7], points[3], points[7]);
+								int vertCount = vertices.Count;
+								int[] vertList = new int[12];
+
+								if ((Tables.edgeTable[caseCode] & 1) == 1) {
+									int a = 0, b = 1;
+									vertices.Add(Lerp2(densities[a], densities[b], points[a], points[b]));
+
+									sbyte[] data1 = data[points[a].x][points[a].y][points[a].z];
+									sbyte[] data2 = data[points[b].x][points[b].y][points[b].z];
+
+                                    normals.Add(LerpN(densities[a], densities[b],
+                                        data1[1], data1[2], data1[3], data2[1], data2[2], data2[3]));
+
+									vertList[0] = vertCount++;
+								}
+								if ((Tables.edgeTable[caseCode] & 2) == 2) {
+									vertices.Add(Lerp2(densities[1], densities[2], points[1], points[2]));
+
+									int a = 1, b = 2;
+									sbyte[] data1 = data[points[a].x][points[a].y][points[a].z];
+									sbyte[] data2 = data[points[b].x][points[b].y][points[b].z];
+
+                                    normals.Add(LerpN(densities[a], densities[b],
+                                        data1[1], data1[2], data1[3], data2[1], data2[2], data2[3]));
+									
+									vertList[1] = vertCount++;
+								}
+								if ((Tables.edgeTable[caseCode] & 4) == 4) {
+									vertices.Add(Lerp2(densities[2], densities[3], points[2], points[3]));
+
+									int a = 2, b = 3;
+									sbyte[] data1 = data[points[a].x][points[a].y][points[a].z];
+									sbyte[] data2 = data[points[b].x][points[b].y][points[b].z];
+
+                                    normals.Add(LerpN(densities[a], densities[b],
+                                        data1[1], data1[2], data1[3], data2[1], data2[2], data2[3]));
+
+									vertList[2] = vertCount++;
+								}
+								if ((Tables.edgeTable[caseCode] & 8) == 8) {
+									vertices.Add(Lerp2(densities[3], densities[0], points[3], points[0]));
+									
+									int a = 3, b = 0;
+									sbyte[] data1 = data[points[a].x][points[a].y][points[a].z];
+									sbyte[] data2 = data[points[b].x][points[b].y][points[b].z];
+
+                                    normals.Add(LerpN(densities[a], densities[b],
+                                        data1[1], data1[2], data1[3], data2[1], data2[2], data2[3]));
+
+									vertList[3] = vertCount++;
+								}
+								if ((Tables.edgeTable[caseCode] & 16) == 16) {
+									vertices.Add(Lerp2(densities[4], densities[5], points[4], points[5]));
+
+									int a = 4, b = 5;
+									sbyte[] data1 = data[points[a].x][points[a].y][points[a].z];
+									sbyte[] data2 = data[points[b].x][points[b].y][points[b].z];
+
+                                    normals.Add(LerpN(densities[a], densities[b],
+                                        data1[1], data1[2], data1[3], data2[1], data2[2], data2[3]));
+
+									vertList[4] = vertCount++;
+								}
+								if ((Tables.edgeTable[caseCode] & 32) == 32) {
+									vertices.Add(Lerp2(densities[5], densities[6], points[5], points[6]));
+
+									int a = 5, b = 6;
+									sbyte[] data1 = data[points[a].x][points[a].y][points[a].z];
+									sbyte[] data2 = data[points[b].x][points[b].y][points[b].z];
+
+                                    normals.Add(LerpN(densities[a], densities[b],
+                                        data1[1], data1[2], data1[3], data2[1], data2[2], data2[3]));
+
+									vertList[5] = vertCount++;
+								}
+								if ((Tables.edgeTable[caseCode] & 64) == 64) {
+									vertices.Add(Lerp2(densities[6], densities[7], points[6], points[7]));
+
+									int a = 6, b = 7;
+									sbyte[] data1 = data[points[a].x][points[a].y][points[a].z];
+									sbyte[] data2 = data[points[b].x][points[b].y][points[b].z];
+
+                                    normals.Add(LerpN(densities[a], densities[b],
+                                        data1[1], data1[2], data1[3], data2[1], data2[2], data2[3]));
+
+									vertList[6] = vertCount++;
+								}
+								if ((Tables.edgeTable[caseCode] & 128) == 128) {
+									vertices.Add(Lerp2(densities[7], densities[4], points[7], points[4]));
+
+									int a = 7, b = 4;
+									sbyte[] data1 = data[points[a].x][points[a].y][points[a].z];
+									sbyte[] data2 = data[points[b].x][points[b].y][points[b].z];
+
+                                    normals.Add(LerpN(densities[a], densities[b],
+                                        data1[1], data1[2], data1[3], data2[1], data2[2], data2[3]));
+
+									vertList[7] = vertCount++;
+								}
+								if ((Tables.edgeTable[caseCode] & 256) == 256) {
+									vertices.Add(Lerp2(densities[0], densities[4], points[0], points[4]));
+									int a = 0, b = 4;
+									sbyte[] data1 = data[points[a].x][points[a].y][points[a].z];
+									sbyte[] data2 = data[points[b].x][points[b].y][points[b].z];
+
+                                    normals.Add(LerpN(densities[a], densities[b],
+                                        data1[1], data1[2], data1[3], data2[1], data2[2], data2[3]));
+
+									vertList[8] = vertCount++;
+								}
+								if ((Tables.edgeTable[caseCode] & 512) == 512) {
+									vertices.Add(Lerp2(densities[1], densities[5], points[1], points[5]));
+									int a = 1, b = 5;
+									sbyte[] data1 = data[points[a].x][points[a].y][points[a].z];
+									sbyte[] data2 = data[points[b].x][points[b].y][points[b].z];
+
+                                    normals.Add(LerpN(densities[a], densities[b],
+                                        data1[1], data1[2], data1[3], data2[1], data2[2], data2[3]));
+
+									vertList[9] = vertCount++;
+								}
+								if ((Tables.edgeTable[caseCode] & 1024) == 1024) {
+									vertices.Add(Lerp2(densities[2], densities[6], points[2], points[6]));
+									int a = 2, b = 6;
+									sbyte[] data1 = data[points[a].x][points[a].y][points[a].z];
+									sbyte[] data2 = data[points[b].x][points[b].y][points[b].z];
+
+                                    normals.Add(LerpN(densities[a], densities[b],
+                                        data1[1], data1[2], data1[3], data2[1], data2[2], data2[3]));
+
+									vertList[10] = vertCount++;
+								}
+								if ((Tables.edgeTable[caseCode] & 2048) == 2048) {
+									vertices.Add(Lerp2(densities[3], densities[7], points[3], points[7]));
+
+									int a = 3, b = 7;
+									sbyte[] data1 = data[points[a].x][points[a].y][points[a].z];
+									sbyte[] data2 = data[points[a].x][points[a].y][points[a].z];
+
+                                    normals.Add(LerpN(densities[a], densities[b],
+                                        data1[1], data1[2], data1[3], data2[1], data2[2], data2[3]));
+
+									vertList[11] = vertCount++;
+								}
 
 
 								if (caseCode == 0 || caseCode == 255) continue;
            						int mcEdge;
 								int t1, t2, t3;
 
+
+
 								for (int j = 0; Tables.triTable[caseCode][j] != -1; j++)
 								{
-									//mcEdge = Tables.triTable[caseCode][i];
-
-
-									triangles.Add(vertices.Count);
-									vertices.Add(vertlist[Tables.triTable[caseCode][j]]);
-									normals.Add()
-
-									/*t1 = edges[3 * (
-										((x + Tables.MCEdgeToEdgeOffset[mcEdge, 0]) * res1_2) +
-										((y + Tables.MCEdgeToEdgeOffset[mcEdge, 1]) * res1) +
-										z + Tables.MCEdgeToEdgeOffset[mcEdge, 2]) +
-											Tables.MCEdgeToEdgeOffset[mcEdge, 3]];
-
-									mcEdge = Tables.triTable[caseCode][i + 1];
-									t2 = edges[3 * (
-										((x + Tables.MCEdgeToEdgeOffset[mcEdge, 0]) * res1_2) +
-										((y + Tables.MCEdgeToEdgeOffset[mcEdge, 1]) * res1) +
-										z + Tables.MCEdgeToEdgeOffset[mcEdge, 2]) +
-											Tables.MCEdgeToEdgeOffset[mcEdge, 3]];
-
-									mcEdge = Tables.triTable[caseCode][i + 2];
-									t3 = edges[3 * (
-										((x + Tables.MCEdgeToEdgeOffset[mcEdge, 0]) * res1_2) +
-										((y + Tables.MCEdgeToEdgeOffset[mcEdge, 1]) * res1) +
-										z + Tables.MCEdgeToEdgeOffset[mcEdge, 2]) +
-											Tables.MCEdgeToEdgeOffset[mcEdge, 3]];
-
-									if (t1 != t2 && t2 != t3 && t1 != t3)
-									{
-										triangles.Add(t1);
-										triangles.Add(t2);
-										triangles.Add(t3);
-									}*/
+									triangles.Add(vertList[Tables.triTable[caseCode][j]]);
 								}
 
 

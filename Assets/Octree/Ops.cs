@@ -229,34 +229,32 @@ public static class Ops {
                 point.z <= (node.Position.z + node.Size));
     }
 
-    public static void DrawGizmos(Node octree) {
-        DrawGizmosRecursive(octree);
+    public static void DrawGizmos(Node octree, float worldSize) {
+        DrawGizmosRecursive(octree, worldSize);
     }
 
-    public static void DrawGizmosRecursive(Node node) {
+    public static void DrawGizmosRecursive(Node node, float worldSize) {
         if(!node.IsLeaf) {
             for(int i = 0; i < 8; i++) {
-                DrawGizmosRecursive(node.Children[i]);
+                DrawGizmosRecursive(node.Children[i], worldSize);
             }
         }
-        DrawNode(node);
+        DrawNode(node, worldSize);
     }
 
-    public static float scale = 64f;
-    public static void DrawNode(Node node) {
+    public static void DrawNode(Node node, float worldSize) {
         Gizmos.color = UtilFuncs.SinColor( ((float)(node.Depth) * 15f));
-        UnityEngine.Gizmos.DrawWireCube( (node.Position + new Vector3(node.Size / 2f, node.Size / 2f, node.Size / 2f)) * scale, node.Size * Vector3.one * scale);
+        UnityEngine.Gizmos.DrawWireCube( (node.Position + new Vector3(node.Size / 2f, node.Size / 2f, node.Size / 2f)) * worldSize, node.Size * Vector3.one * worldSize);
     }
 
-    public static Mesh PolyganizeNode(Root root, Node node, float WorldSize) {
-        Mesh m = new Mesh();
-        ExtractionInput input = new ExtractionInput();
-        input.Isovalue = 0f;
-        input.Resolution = new Util.Vector3i(16, 16, 16);
-        float size = WorldSize / (Mathf.Pow(2, node.Depth));
-        input.Size = new Vector3(node.Size/16f, node.Size/16f, node.Size/16f);
-        input.Sample = (float x, float y, float z) => UtilFuncs.Sample((x + node.Position.x)  * WorldSize, (y + node.Position.y) * WorldSize, (z + node.Position.z) * WorldSize);
-        input.LODSides = new byte();
+    public static Mesh PolyganizeNode(Root root, Node node, float worldSize, int resolution) {
+		float mul = node.Size;
+
+        UtilFuncs.Sampler sample = (float x, float y, float z) => UtilFuncs.Sample(
+			( ((x*node.Size) / resolution) + node.Position.x) * worldSize, 
+			( ((y*node.Size) / resolution) + node.Position.y) * worldSize, 
+			( ((z*node.Size) / resolution) + node.Position.z) * worldSize);
+		byte lod = 0;
 
         Node[] neighbors = FindNeighbors(root, node);
 
@@ -264,20 +262,63 @@ public static class Ops {
 
         for(int i = 0; i < 6; i++) {
             if(neighbors[i] != null && neighbors[i].Depth < node.Depth) {
-                input.LODSides |= (byte)currentSide;
+                lod |= (byte)currentSide;
             }
             currentSide = currentSide << (byte)1;
         }
 
-        ExtractionResult res = SurfaceExtractor.ExtractSurface(input);
 
-        m.vertices = res.Vertices;
-        m.triangles = res.Triangles;
+		sbyte[][][][] data = GenerateChunkData(resolution, sample);
 
-        m.RecalculateNormals();
+        MCMesh m = SE.MarchingCubes.PolygonizeArea(new Vector3(0, 0, 0), lod, resolution, data);
 
-        return m;
+		Mesh m2 = new Mesh();
+		m2.SetVertices(m.Vertices);
+		m2.SetNormals(m.Normals);
+		m2.triangles = m.Triangles;
+
+        return m2;
     }
+
+	public static sbyte[][][][] GenerateChunkData(int resolution, UtilFuncs.Sampler sample) {
+		int res1 = resolution + 1;
+
+		sbyte[][][][] data = new sbyte[res1][][][];
+
+		float f = 0.01f;
+		float nx, ny, nz;
+
+		for(int x = 0; x < res1; x++) {
+			data[x] = new sbyte[res1][][];
+			for(int y = 0; y < res1; y++) {
+				data[x][y] = new sbyte[res1][];
+				for(int z = 0; z < res1; z++) {
+					data[x][y][z] = new sbyte[4];
+					nx = (float)x; //- ((float)res1)/2f;
+					ny = (float)y; //- ((float)res1)/2f;
+					nz = (float)z; //- ((float)res1)/2f;
+
+					data[x][y][z][0] = (sbyte)(Mathf.Clamp(-8f * sample(nx, ny, nz), -127, 127));
+
+					float dx = sample(nx+f, ny, nz) - sample(nx-f, ny, nz);
+					float dy = sample(nx, ny+f, nz) - sample(nx, ny-f, nz);
+					float dz = sample(nx, ny, nz+f) - sample(nx, ny, nz-f);
+
+					float total = (dx*dx) + (dy*dy) + (dz*dz);
+					total = Mathf.Sqrt(total);
+					dx /= total; dx *= 127;
+					dy /= total; dy *= 127;
+					dz /= total; dz *= 127;
+
+					data[x][y][z][1] = (sbyte)dx;
+					data[x][y][z][2] = (sbyte)dy;
+					data[x][y][z][3] = (sbyte)dz;
+				} 
+			}
+		}
+
+		return data;
+	}
 }
 
 }

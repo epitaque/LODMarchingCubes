@@ -10,9 +10,10 @@ public class OldController : MonoBehaviour {
 	public GameObject ConsoleObject;
 	public float WorldSize = 512f;
 	public int MaxDepth = 13;
+	public int Resolution = 16;
 
 	void Start () {
-		Wrapper = new SE.Octree.Wrapper(this.gameObject.GetComponent<Transform>(), MeshPrefab, WorldSize, MaxDepth, ConsoleObject.GetComponent<Console>());
+		Wrapper = new SE.Octree.Wrapper(this.gameObject.GetComponent<Transform>(), MeshPrefab, WorldSize, MaxDepth, Resolution, ConsoleObject.GetComponent<Console>());
 		Running = true;
 	}
 	

@@ -15,14 +15,16 @@ namespace SE.Octree {
 		Hashtable UnityObjects;
         public float WorldSize;
 		public int MaxDepth;
+		public int Resolution;
 
-        public Wrapper(Transform parent, GameObject meshPrefab, float worldSize, int maxDepth, Console console) {
+        public Wrapper(Transform parent, GameObject meshPrefab, float worldSize, int maxDepth, int resolution, Console console) {
             Parent = parent;
             MeshPrefab = meshPrefab;
             MeshedNodes = new List<Node>();
 			UnityObjects = new Hashtable();
             WorldSize = worldSize;
 			MaxDepth = maxDepth;
+			Resolution = resolution;
 			Console = console;
 			Root = Ops.Create();
 			
@@ -47,7 +49,7 @@ namespace SE.Octree {
 		}
 
         public void DrawGizmos() {
-			SE.Octree.Ops.DrawGizmos(Root.RootNode);
+			SE.Octree.Ops.DrawGizmos(Root.RootNode, WorldSize);
 			//Debugger.DrawGizmos();
         }
 
@@ -90,7 +92,7 @@ namespace SE.Octree {
 			GameObject clone = Object.Instantiate(MeshPrefab, new Vector3(0, 0, 0), Quaternion.identity);
 			Color c = UtilFuncs.SinColor(node.Depth * 3f);
 			clone.GetComponent<MeshRenderer>().material.color = new Color(c.r, c.g, c.b, 0.9f);
-			clone.transform.localScale = Vector3.one * WorldSize;
+			clone.transform.localScale = Vector3.one * (WorldSize * node.Size / Resolution);
 			clone.name = "Node " + node.ID + ", Depth " + node.Depth;
 			
 
@@ -98,7 +100,7 @@ namespace SE.Octree {
 			sw.Stop();
 			totalAllBeforeTime += (float)sw.ElapsedMilliseconds/1000f;
 			sw.Reset(); sw.Start();
-			mf.mesh = SE.Octree.Ops.PolyganizeNode(Root, node, WorldSize);
+			mf.mesh = SE.Octree.Ops.PolyganizeNode(Root, node, WorldSize, Resolution);
 			sw.Stop();
 			totalPolyganizeNodeTime += (float)sw.ElapsedMilliseconds/1000f;
 			clone.GetComponent<Transform>().SetParent(Parent);

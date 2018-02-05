@@ -14,7 +14,9 @@ public static class UtilFuncs {
 
         //float valueAtXY = (float)s.Evaluate((double)x * r, (double)z * r) * 12f;
 
-        float result = Sample2D(x * r, z * r) * 10f - y;
+        float result = (Sample2D(x * r, z * r) * 15f + y - 7.5f) * 128f;
+		//float result = y + 1f;
+		//float result = (y - (Mathf.Sin(x) * Mathf.Sin(z))) * 128f;
         //float result = (float)s.Evaluate((double)x * r, (double)y * r, (double)z * r);
         return result;
     }

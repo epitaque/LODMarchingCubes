@@ -15,7 +15,7 @@ public class Controller : MonoBehaviour {
 	private bool IsRunning = false;
 
 	private static double rconstant = 0.2;
-	private static byte loddebug = 1;
+	public int loddebug = 1;
 	public int resolution = 16;
 
 	Sample[] sampleFunctions = {
@@ -65,7 +65,7 @@ public class Controller : MonoBehaviour {
 		System.Random random = new System.Random(5);
 		LookupTableCreator.GenerateLookupTable();
 		
-		GenerateMesh(0);
+		GenerateMesh(3);
 		//TestTransvoxel(1);
 		ConsoleObject.GetComponent<Console>().SetRegenerateFn(GenerateMesh);
 	}
@@ -122,7 +122,7 @@ public class Controller : MonoBehaviour {
 
 		//System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 		sw1.Start();
-		SE.MCMesh m = SE.MarchingCubes.PolygonizeArea(new Vector3(0, 0, 0), 16f, loddebug, resolution, data);
+		SE.MCMesh m = SE.MarchingCubes.PolygonizeArea(new Vector3(0, 0, 0), (byte)loddebug, resolution, data);
 		sw1.Stop();
 		sw.Stop();
 
@@ -183,10 +183,10 @@ public class Controller : MonoBehaviour {
 		MeshFilter mf = clone.GetComponent<MeshFilter>();
 		UnityEngine.Mesh m2 = new Mesh();
 		m2.SetVertices(m.Vertices);
-		//m2.SetNormals(m.Normals);
+		m2.SetNormals(m.Normals);
 		m2.triangles = m.Triangles;
 		mf.mesh = m2;
-		m2.RecalculateNormals();
+		//m2.RecalculateNormals();
 
 		CurrentMesh = clone;
 	}

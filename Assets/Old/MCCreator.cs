@@ -131,7 +131,7 @@ public class MCCreator : MonoBehaviour {
 
 	void OnDrawGizmos() {
 		if(Running) {
-			SE.Octree.Ops.DrawGizmos(octreeNode);
+			//SE.Octree.Ops.DrawGizmos(octreeNode, WorldSize);
 		}
 	}
 }
