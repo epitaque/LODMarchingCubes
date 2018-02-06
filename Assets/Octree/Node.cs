@@ -12,6 +12,20 @@ public class Node {
     public bool IsLeaf;
     public int Depth;
     public Vector4 Key;
+	public byte LODSides;
+
+	public Node DeepCopy() {
+		Node other = (Node) this.MemberwiseClone();
+		other.Parent = null;
+		if(Children != null) {
+			other.Children = new Node[8];
+			for(int i = 0; i < 8; i++) { 
+				other.Children[i] = Children[i].DeepCopy();
+				other.Children[i].Parent = this;
+			}
+		}
+		return other;
+	}
 }
     
 }

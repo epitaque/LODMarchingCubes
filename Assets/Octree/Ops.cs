@@ -53,7 +53,7 @@ public static class Ops {
         
         for(int i = 0; i < 8; i++) {
             if(!node.Children[i].IsLeaf) {
-                Debug.LogWarning("Coarsening node whose children isn't a leaf. ID: " + node.ID);
+                //Debug.LogWarning("Coarsening node whose children isn't a leaf. ID: " + node.ID);
                 CoarsenNode(root, node.Children[i]);
             }
         }
@@ -67,16 +67,18 @@ public static class Ops {
 
     // make sure position is between [-1, -1, -1] and [1, 1, 1]
     public static void Adapt(Root root, Vector3 position, int maxDepth, int maxIterations) {
+		//Debug.Log("Adapting. Root IDNodes: " + root.IDNodes);
+		//Debug.Log("Adapting. position: " + position + " maxDepth: " + maxDepth + ", maxIterations: " + maxIterations);
         System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
         sw.Start();
         LoopRefine(root, position, maxDepth, maxIterations);
-        sw.Stop(); Debug.Log("BENCH-ADAPT: LoopRefine time: " + (float)sw.ElapsedMilliseconds/1000f + " seconds.");
-        sw.Reset(); sw.Start();
+        //sw.Stop(); Debug.Log("BENCH-ADAPT: LoopRefine time: " + (float)sw.ElapsedMilliseconds/1000f + " seconds.");
+        //sw.Reset(); sw.Start();
         LoopCoarsen(root, position, maxIterations);
-        sw.Stop(); Debug.Log("BENCH-ADAPT: LoopCoarsen time: " + (float)sw.ElapsedMilliseconds/1000f + " seconds.");
-        sw.Reset(); sw.Start();
+        //sw.Stop(); Debug.Log("BENCH-ADAPT: LoopCoarsen time: " + (float)sw.ElapsedMilliseconds/1000f + " seconds.");
+        //sw.Reset(); sw.Start();
         LoopMakeConforming(root, maxIterations);
-        sw.Stop(); Debug.Log("BENCH-ADAPT: LoopMakeConforming time: " + (float)sw.ElapsedMilliseconds/1000f + " seconds.");
+        sw.Stop(); Debug.Log("BENCH-ADAPT: Adapt time: " + (float)sw.ElapsedMilliseconds + "ms.");
     }
 
     public static void LoopRefine(Root root, Vector3 position, int maxDepth, int maxIterations) {
@@ -247,16 +249,15 @@ public static class Ops {
         UnityEngine.Gizmos.DrawWireCube( (node.Position + new Vector3(node.Size / 2f, node.Size / 2f, node.Size / 2f)) * worldSize, node.Size * Vector3.one * worldSize);
     }
 
-    public static Mesh PolyganizeNode(Root root, Node node, float worldSize, int resolution) {
+    public static MCMesh PolyganizeNode(Node node, float worldSize, int resolution) {
 		float mul = node.Size;
 
         UtilFuncs.Sampler sample = (float x, float y, float z) => UtilFuncs.Sample(
 			( ((x*node.Size) / resolution) + node.Position.x) * worldSize, 
 			( ((y*node.Size) / resolution) + node.Position.y) * worldSize, 
 			( ((z*node.Size) / resolution) + node.Position.z) * worldSize);
-		byte lod = 0;
 
-        Node[] neighbors = FindNeighbors(root, node);
+        /*Node[] neighbors = FindNeighbors(root, node);
 
         int currentSide = 1;
 
@@ -265,19 +266,19 @@ public static class Ops {
                 lod |= (byte)currentSide;
             }
             currentSide = currentSide << (byte)1;
-        }
+        }*/
 
 
 		sbyte[][][][] data = GenerateChunkData(resolution, sample);
 
-        MCMesh m = SE.MarchingCubes.PolygonizeArea(new Vector3(0, 0, 0), lod, resolution, data);
+        MCMesh m = SE.MarchingCubes.PolygonizeArea(new Vector3(0, 0, 0), node.LODSides, resolution, data);
 
-		Mesh m2 = new Mesh();
-		m2.SetVertices(m.Vertices);
-		m2.SetNormals(m.Normals);
-		m2.triangles = m.Triangles;
+		//Mesh m2 = new Mesh();
+		//m2.SetVertices(m.Vertices);
+		//m2.SetNormals(m.Normals);
+		//m2.triangles = m.Triangles;
 
-        return m2;
+        return m;
     }
 
 	public static sbyte[][][][] GenerateChunkData(int resolution, UtilFuncs.Sampler sample) {

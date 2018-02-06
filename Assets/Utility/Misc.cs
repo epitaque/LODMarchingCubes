@@ -10,13 +10,15 @@ public static class UtilFuncs {
     public delegate float Sampler(float x, float y, float z);
 
     public static float Sample(float x, float y, float z) {
-        float r = 0.023f;
+        float r = 0.23f;
 
+		//float radius = 128f;
         //float valueAtXY = (float)s.Evaluate((double)x * r, (double)z * r) * 12f;
 
-        float result = (Sample2D(x * r, z * r) * 15f + y - 7.5f) * 128f;
+        //float result = (Sample2D(x * r, z * r) * 15f + y - 7.5f) * 128f;
 		//float result = y + 1f;
-		//float result = (y - (Mathf.Sin(x) * Mathf.Sin(z))) * 128f;
+		//float result = (x*x + y*y + z*z) - radius*radius;
+		float result = (y - (Mathf.Sin(x * r) * Mathf.Sin(z * r) * Mathf.Sin(z * r)) * 3f);
         //float result = (float)s.Evaluate((double)x * r, (double)y * r, (double)z * r);
         return result;
     }
