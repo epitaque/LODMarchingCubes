@@ -54,6 +54,7 @@ namespace SE.Octree {
 		}
 
         public void Update(Vector3 position) {
+			//Debug.Log("updating at position " + position);
 			if(position != lastPosition) {
 				if(AsynchronousOctreeUpdate) {
 					Queuer.EnqueueUpdate(position / WorldSize, MaxDepth);
@@ -137,7 +138,12 @@ namespace SE.Octree {
 			sw.Stop();
 			totalAllBeforeTime += (float)sw.ElapsedMilliseconds/1000f;
 			sw.Reset(); sw.Start();
-			mf.mesh = SE.Octree.Ops.PolyganizeNode(GetRoot(), node, WorldSize, Resolution);
+			MCMesh mcm = SE.Octree.Ops.PolyganizeNode(node, WorldSize, Resolution);
+			Mesh m = new Mesh();
+			m.SetVertices(mcm.Vertices);
+			m.SetNormals(mcm.Normals);
+			m.triangles = mcm.Triangles;
+			mf.mesh = m;
 			sw.Stop();
 			totalPolyganizeNodeTime += (float)sw.ElapsedMilliseconds/1000f;
 			clone.GetComponent<Transform>().SetParent(Parent);

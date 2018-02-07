@@ -267,7 +267,7 @@ public static class Ops {
             }
             currentSide = currentSide << (byte)1;
         }*/
-
+        node.LODSides = 0;
 
 		sbyte[][][][] data = GenerateChunkData(resolution, sample);
 

@@ -23,11 +23,13 @@ public class OldController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+		//Debug.Log("Update loop");
 		if(Running) {
 			if(Input.GetKeyDown(KeyCode.R)) {
 				Wrapper.Mesh();
 			}
 			if(Input.GetKeyDown(KeyCode.F) || UpdateEveryFrame) {
+				//Debug.Log("Updating wrapper...");
 				Wrapper.Update(Viewer.GetComponent<Transform>().position);
 			}
 			if(Input.GetKeyDown(KeyCode.C)) {

@@ -16,6 +16,9 @@ public class OctreeMeshQueuer {
 	public OctreeMeshJob currentJob;
 	public OctreeMeshJob nextJob;
 	
+	public GameObject MeshPrefab;
+	public Transform Parent;
+
 	public int WorldSize;
 	public int Resolution;
 
@@ -25,6 +28,14 @@ public class OctreeMeshQueuer {
 	public Task currentTask = null;
 
 	public Root Root;
+
+	public OctreeMeshQueuer(Root root, int worldSize, int resolution, Transform parent, GameObject meshPrefab) {
+		Root = root;
+		WorldSize = worldSize;
+		Resolution = resolution;
+		Parent = parent;
+		MeshPrefab = meshPrefab;
+	}
 
 	public void ProcessOctreeUpdate(Root root, int worldSize, int resolution) {
 		WorldSize = worldSize;
@@ -79,7 +90,7 @@ public class OctreeMeshQueuer {
 		currentTask = Task.Factory.StartNew(job, currentJob);
 	}
 
-	private static void UpdateJobList(Root root, List<Node> MeshedNodes, Hashtable UnityObjects) {
+	private void UpdateJobList(Root root, List<Node> MeshedNodes, Hashtable UnityObjects) {
 		List<Node> newLeafNodes = new List<Node>();
 		PopulateLeafNodeList(root.RootNode, newLeafNodes);
 
@@ -92,9 +103,8 @@ public class OctreeMeshQueuer {
 			UnityEngine.Object.Destroy((GameObject)UnityObjects[n.ID]);
 			UnityObjects.Remove(n.ID);
 		}
-		foreach(Node n in newLeafNodes.Except(MeshedNodes)) {
-			MeshNode(n, ref totalPolyganizeNodeTime, ref totalAllBeforeTime, sw);
-		}
+		IEnumerable<Node> toBePolyganized = newLeafNodes.Except(MeshedNodes);
+		PolyganizeNodesAsync(toBePolyganized);
 
 		Debug.Log("BENCH-MESH: AllBefore time: " + totalAllBeforeTime + " seconds.");
 		Debug.Log("BENCH-MESH: PolyganizeNode time: " + totalPolyganizeNodeTime + " seconds.");
@@ -102,33 +112,51 @@ public class OctreeMeshQueuer {
 		MeshedNodes = newLeafNodes;
 	}
 
-	private static async void PolyganizeNodesAsync(List<Node> toBePolyganized) {
-		await Task.WhenAll(toBePolyganized.Select(node => DoSomething(1, i, blogClient)));
+	private async void PolyganizeNodesAsync(IEnumerable<Node> toBePolyganized) {
+		List<Task<MCMesh>> tasks = new List<Task<MCMesh>>();
+		foreach(Node n in toBePolyganized) {
+			tasks.Add(MeshNode(n));
+		}
+
+		var continuation = Task.WhenAll(tasks);
+
+		await continuation;
+		if (continuation.Status == TaskStatus.RanToCompletion) {
+			foreach(MCMesh m in continuation.Result) {
+				RealizeNode(m);
+			}
+		}
+		//Task<MCMesh> polyganizeNodesTasks = Task.WhenAll(toBePolyganized.Select(node => MeshNode(node)));
 	}
 
-	public MCMesh MeshNode(Node node) {
-		return SE.Octree.Ops.PolyganizeNode(node, WorldSize, Resolution);
+	public async Task<MCMesh> MeshNode(Node node) {
+		MCMesh m = await Task.Run(() => SE.Octree.Ops.PolyganizeNode(node, WorldSize, Resolution));
+		m.nodeDepth = node.Depth;
+		m.nodeID = node.ID;
+		m.nodeSize = node.Size;
+		m.nodePosition = node.Position;
+
+		return m;
 	}
 
-	private static RealizeNode(MCMesh m) {
-		GameObject clone = Object.Instantiate(MeshPrefab, new Vector3(0, 0, 0), Quaternion.identity);
-		Color c = UtilFuncs.SinColor(node.Depth * 3f);
+	private void RealizeNode(MCMesh m) {
+		GameObject clone = UnityEngine.Object.Instantiate(MeshPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+		Color c = UtilFuncs.SinColor(m.nodeDepth * 3f);
 		clone.GetComponent<MeshRenderer>().material.color = new Color(c.r, c.g, c.b, 0.9f);
-		clone.transform.localScale = Vector3.one * (WorldSize * node.Size / Resolution);
-		clone.name = "Node " + node.ID + ", Depth " + node.Depth;
+		clone.transform.localScale = Vector3.one * (WorldSize * m.nodeSize / Resolution);
+		clone.name = "Node " + m.nodeID + ", Depth " + m.nodeDepth;
 		
 
 		MeshFilter mf = clone.GetComponent<MeshFilter>();
-		sw.Stop();
-		totalAllBeforeTime += (float)sw.ElapsedMilliseconds/1000f;
-		sw.Reset(); sw.Start();
-		mf.mesh = SE.Octree.Ops.PolyganizeNode(GetRoot(), node, WorldSize, Resolution);
-		sw.Stop();
-		totalPolyganizeNodeTime += (float)sw.ElapsedMilliseconds/1000f;
-		clone.GetComponent<Transform>().SetParent(Parent);
-		clone.GetComponent<Transform>().SetPositionAndRotation(node.Position * WorldSize, Quaternion.identity);
+		Mesh um = new UnityEngine.Mesh();
+		um.SetVertices(m.Vertices);
+		um.SetNormals(m.Normals);
+		um.triangles = m.Triangles;
 
-		UnityObjects[node.ID] = clone;
+		clone.GetComponent<Transform>().SetParent(Parent);
+		clone.GetComponent<Transform>().SetPositionAndRotation(m.nodePosition * WorldSize, Quaternion.identity);
+
+		UnityObjects[m.nodeID] = clone;
 	}
 
 	private static void PopulateLeafNodeList(Node node, List<Node> leafNodes) {
