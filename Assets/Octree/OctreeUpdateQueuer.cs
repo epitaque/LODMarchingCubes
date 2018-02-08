@@ -50,11 +50,10 @@ public class OctreeUpdateQueuer {
 	private void StartTask() {
 		if(currentJob == null || currentTask != null) return;
 
-		Debug.Log("Starting update job");
+		Debug.Log("Starting Octree Update job");
 
 		currentJob.Root.Locked = true;
 		Action<object> job = (object data) => {
-			Debug.Log("This is a print statement inside a job");
 			OctreeUpdateJob cData = (OctreeUpdateJob)data;
 			Root realRoot = Root;
 			Root copy = realRoot.DeepCopy();

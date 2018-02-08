@@ -14,7 +14,8 @@ namespace SE.Octree {
 		//Root Root;
         List<Node> MeshedNodes; 
 		Hashtable UnityObjects;
-		OctreeUpdateQueuer Queuer;
+		OctreeUpdateQueuer OctreeQueuer;
+		OctreeMeshQueuer MeshQueuer;
 
 		public Root Root = null;
         public float WorldSize;
@@ -24,7 +25,7 @@ namespace SE.Octree {
 		public bool AsynchronousOctreeUpdate = false;
 		public bool AsynchronousMeshUpdate = false;
 
-        public Wrapper(Transform parent, GameObject meshPrefab, float worldSize, int maxDepth, int resolution, Console console, bool meshEveryFrame, bool asynchronousOctreeUpdate, bool AsynchronousMeshUpdate) {
+        public Wrapper(Transform parent, GameObject meshPrefab, float worldSize, int maxDepth, int resolution, Console console, bool meshEveryFrame, bool asynchronousOctreeUpdate, bool asynchronousMeshUpdate) {
             Parent = parent;
             MeshPrefab = meshPrefab;
             MeshedNodes = new List<Node>();
@@ -35,47 +36,59 @@ namespace SE.Octree {
 			Console = console;
 			MeshEveryFrame = meshEveryFrame;
 			AsynchronousOctreeUpdate = asynchronousOctreeUpdate;
+			AsynchronousMeshUpdate = asynchronousMeshUpdate;
 			if(!AsynchronousOctreeUpdate) {
 				Root = Ops.Create();
 			}
 			else {
-				Queuer = new OctreeUpdateQueuer(Ops.Create());
+				OctreeQueuer = new OctreeUpdateQueuer(Ops.Create());
+			}
+
+			if(AsynchronousMeshUpdate) {
+				MeshQueuer = new OctreeMeshQueuer(WorldSize, Resolution, Parent, MeshPrefab);
 			}
 			lastPosition = new Vector3(-999999, -999999, -999999);
         }
 
 		public Root GetRoot() {
 			if(AsynchronousOctreeUpdate) {
-				return this.Queuer.Root;
+				return this.OctreeQueuer.Root;
 			}
 			else {
 				return Root;
 			}
 		}
 
-        public void Update(Vector3 position) {
+        public void Update(Vector3 position, bool Manual) {
 			//Debug.Log("updating at position " + position);
 			if(position != lastPosition) {
 				if(AsynchronousOctreeUpdate) {
-					Queuer.EnqueueUpdate(position / WorldSize, MaxDepth);
+					OctreeQueuer.EnqueueUpdate(position / WorldSize, MaxDepth);
 				}
 				else {
 					Octree.Ops.Adapt(GetRoot(), position / WorldSize, MaxDepth, 100);
 				}
+
+				if(AsynchronousMeshUpdate && (Manual || MeshEveryFrame)) {
+					MeshQueuer.EnqueueMeshUpdate(GetRoot());
+				}
+
 				lastPosition = position;
+			}
+			else {
+				if(AsynchronousOctreeUpdate) {
+					OctreeQueuer.Update();
+				}
+				if(AsynchronousMeshUpdate) {
+					MeshQueuer.Update();
+				}
 			}
 			System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
-			if(AsynchronousOctreeUpdate) {
-				Queuer.Update();
-			}
 			//sw.Start();
 			//SE.Octree.Ops.Adapt(Root, position / WorldSize, MaxDepth, 15);
         	//sw.Stop(); Debug.Log("BENCH-UPDATE: SE.Octree.Ops.Adapt time: " + (float)sw.ElapsedMilliseconds/1000f + " seconds.");
 			//sw.Reset(); sw.Start();
-			if(MeshEveryFrame) {
-				Mesh();
-			}
 			//sw.Stop(); Debug.Log("BENCH-UPDATE: Mesh time: " + (float)sw.ElapsedMilliseconds/1000f + " seconds.");
         }
 
@@ -92,6 +105,16 @@ namespace SE.Octree {
         }
 
         public void Mesh() {
+			if(AsynchronousMeshUpdate) {
+				Debug.Log("Meshing async");
+				MeshAsync();
+			}
+			else {
+				MeshSynchronous();
+			}
+        }
+
+		public void MeshSynchronous() {
 			List<Node> newLeafNodes = new List<Node>();
             PopulateLeafNodeList(GetRoot().RootNode, newLeafNodes);
 
@@ -112,7 +135,11 @@ namespace SE.Octree {
         	Debug.Log("BENCH-MESH: PolyganizeNode time: " + totalPolyganizeNodeTime + " seconds.");
 
             MeshedNodes = newLeafNodes;
-        }
+		}
+
+		public void MeshAsync() {
+			MeshQueuer.EnqueueMeshUpdate(GetRoot());
+		}
 
 		public void PopulateLeafNodeList(Node node, List<Node> leafNodes) {
 			if(node.IsLeaf) {

@@ -19,106 +19,88 @@ public class OctreeMeshQueuer {
 	public GameObject MeshPrefab;
 	public Transform Parent;
 
-	public int WorldSize;
+	public float WorldSize;
 	public int Resolution;
 
-	List<Node> MeshedNodes; 
-	Hashtable UnityObjects;
+	List<Node> MeshedNodes = new List<Node>(); 
+	Hashtable UnityObjects = new Hashtable();
 
-	public Task currentTask = null;
+	public bool DoneFirstTask = false;
 
-	public Root Root;
-
-	public OctreeMeshQueuer(Root root, int worldSize, int resolution, Transform parent, GameObject meshPrefab) {
-		Root = root;
+	public OctreeMeshQueuer(float worldSize, int resolution, Transform parent, GameObject meshPrefab) {
 		WorldSize = worldSize;
 		Resolution = resolution;
 		Parent = parent;
 		MeshPrefab = meshPrefab;
 	}
 
-	public void ProcessOctreeUpdate(Root root, int worldSize, int resolution) {
-		WorldSize = worldSize;
-		Resolution = resolution;
-
+	public void EnqueueMeshUpdate(Root root) {
 		OctreeMeshJob jobData = new OctreeMeshJob();
-		jobData.Root = Root; 
+		jobData.Root = root; 
 
 		nextJob = jobData;
 		Update();
 	}
 
 	public void Update() {
-		if(currentTask != null && currentTask.Status == TaskStatus.RanToCompletion) {
-			Debug.Log("Current task completed execution ");
+		if(DoneFirstTask) {
+			Debug.Log("Finished octree update...");
 		}
-
-		if(currentTask == null || currentTask.Status == TaskStatus.RanToCompletion) {
-			currentTask = null;
+		if(currentJob == null || DoneFirstTask) {
 			currentJob = nextJob;
 			nextJob = null;
+			DoneFirstTask = false;
 			StartTask();
 		}
 	}
 
 	private void StartTask() {
-		if(currentJob == null || currentTask != null) return;
+		if(currentJob == null) return;
 
 		Debug.Log("Starting update job");
 
-		currentJob.Root.Locked = true;
 
-		Task.Factory.StartNew((object data) => {
-			// Find which new nodes to polyganize/deletes
-		}, "asdf");
-
-		Action<object> job = (object data) => {
-			Debug.Log("This is a print statement inside a job");
-			OctreeUpdateJob cData = (OctreeUpdateJob)data;
-			Root realRoot = Root;
-			Root copy = realRoot.DeepCopy();
-
-			Root = copy;
-			SE.Octree.Ops.Adapt(realRoot, cData.Position, cData.MaxDepth, 100);
-			Root = realRoot;
-
-			Debug.Log("Adapt finished");
-
-			//Root = copy;
-		};
-
-		currentTask = Task.Factory.StartNew(job, currentJob);
+		MeshOctree(currentJob.Root.DeepCopy());
 	}
 
-	private void UpdateJobList(Root root, List<Node> MeshedNodes, Hashtable UnityObjects) {
+	private void MeshOctree(Root root) {
+		Debug.Log("Mesh Octree called");
 		List<Node> newLeafNodes = new List<Node>();
 		PopulateLeafNodeList(root.RootNode, newLeafNodes);
 
-		float totalPolyganizeNodeTime = 0f;
-		float totalAllBeforeTime = 0f;
+		//float totalPolyganizeNodeTime = 0f;
+		//float totalAllBeforeTime = 0f;
 
-		System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+		//System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
 		foreach(Node n in MeshedNodes.Except(newLeafNodes)) {
 			UnityEngine.Object.Destroy((GameObject)UnityObjects[n.ID]);
 			UnityObjects.Remove(n.ID);
 		}
+
+		Debug.Log("Got here 2");
+
 		IEnumerable<Node> toBePolyganized = newLeafNodes.Except(MeshedNodes);
+
+		Debug.Log("Boutta PolyganizeNodesAsync");
+
 		PolyganizeNodesAsync(toBePolyganized);
-
-		Debug.Log("BENCH-MESH: AllBefore time: " + totalAllBeforeTime + " seconds.");
-		Debug.Log("BENCH-MESH: PolyganizeNode time: " + totalPolyganizeNodeTime + " seconds.");
-
 		MeshedNodes = newLeafNodes;
+
+		//Debug.Log("Async BENCH-MESH: AllBefore time: " + totalAllBeforeTime + " seconds.");
+		//Debug.Log("Async BENCH-MESH: PolyganizeNode time: " + totalPolyganizeNodeTime + " seconds.");
+
 	}
 
 	private async void PolyganizeNodesAsync(IEnumerable<Node> toBePolyganized) {
+		Debug.Log("PolyganizeNodesAsync called");
 		List<Task<MCMesh>> tasks = new List<Task<MCMesh>>();
 		foreach(Node n in toBePolyganized) {
 			tasks.Add(MeshNode(n));
 		}
 
 		var continuation = Task.WhenAll(tasks);
+		Debug.Log("Boutta await continuation");
 
 		await continuation;
 		if (continuation.Status == TaskStatus.RanToCompletion) {
@@ -126,7 +108,8 @@ public class OctreeMeshQueuer {
 				RealizeNode(m);
 			}
 		}
-		//Task<MCMesh> polyganizeNodesTasks = Task.WhenAll(toBePolyganized.Select(node => MeshNode(node)));
+
+		DoneFirstTask = true;
 	}
 
 	public async Task<MCMesh> MeshNode(Node node) {
@@ -140,6 +123,8 @@ public class OctreeMeshQueuer {
 	}
 
 	private void RealizeNode(MCMesh m) {
+		Debug.Log("Realizing node!");
+
 		GameObject clone = UnityEngine.Object.Instantiate(MeshPrefab, new Vector3(0, 0, 0), Quaternion.identity);
 		Color c = UtilFuncs.SinColor(m.nodeDepth * 3f);
 		clone.GetComponent<MeshRenderer>().material.color = new Color(c.r, c.g, c.b, 0.9f);
@@ -152,6 +137,7 @@ public class OctreeMeshQueuer {
 		um.SetVertices(m.Vertices);
 		um.SetNormals(m.Normals);
 		um.triangles = m.Triangles;
+		mf.mesh = um;
 
 		clone.GetComponent<Transform>().SetParent(Parent);
 		clone.GetComponent<Transform>().SetPositionAndRotation(m.nodePosition * WorldSize, Quaternion.identity);

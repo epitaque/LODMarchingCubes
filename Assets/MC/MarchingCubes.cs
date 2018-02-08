@@ -58,13 +58,13 @@ namespace SE
 
             Triangulate(edges, begin, end, triangles, resolution, data);
 
-			Debug.Log("Phase 1 of surface extraction took " + sw.ElapsedMilliseconds + " ms.");
+			//Debug.Log("Phase 1 of surface extraction took " + sw.ElapsedMilliseconds + " ms.");
 
 			sw.Restart();
 
             GenerateTransitionCells(vertices, normals, triangles, resolution, data, lod);
 
-			Debug.Log("Phase 2 of surface extraction took " + sw.ElapsedMilliseconds + " ms.");
+			//Debug.Log("Phase 2 of surface extraction took " + sw.ElapsedMilliseconds + " ms.");
             //MCVT(vertices, triangles, normals, resolution, lod, data);
 
             m.Vertices = vertices;
@@ -465,7 +465,7 @@ namespace SE
 
         public static void CreateVertices(ushort[] edges, Vector3Int begin, Vector3Int end, List<Vector3> vertices, List<Vector3> normals, int res1, sbyte[][][][] data)
         {
-			Debug.Log("CreateVertices called with begin " + begin + ", end: " + end);
+			//Debug.Log("CreateVertices called with begin " + begin + ", end: " + end);
 
             int edgeNum = 0;
             ushort vertNum = 0;

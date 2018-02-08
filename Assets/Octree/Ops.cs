@@ -78,6 +78,7 @@ public static class Ops {
         //sw.Stop(); Debug.Log("BENCH-ADAPT: LoopCoarsen time: " + (float)sw.ElapsedMilliseconds/1000f + " seconds.");
         //sw.Reset(); sw.Start();
         LoopMakeConforming(root, maxIterations);
+		AssignLODS(root, root.RootNode);
         sw.Stop(); Debug.Log("BENCH-ADAPT: Adapt time: " + (float)sw.ElapsedMilliseconds + "ms.");
     }
 
@@ -267,7 +268,7 @@ public static class Ops {
             }
             currentSide = currentSide << (byte)1;
         }*/
-        node.LODSides = 0;
+        //node.LODSides = 0;
 
 		sbyte[][][][] data = GenerateChunkData(resolution, sample);
 
@@ -280,6 +281,30 @@ public static class Ops {
 
         return m;
     }
+
+	public static void AssignLODS(Root root, Node node) {
+		if(node.IsLeaf) {
+			Node[] neighbors = FindNeighbors(root, node);
+
+			int currentSide = 1;
+			byte lod = 0;
+
+			for(int i = 0; i < 6; i++) {
+				if(neighbors[i] != null && neighbors[i].Depth < node.Depth) {
+					lod |= (byte)currentSide;
+				}
+				currentSide = currentSide << (byte)1;
+			}
+			node.LODSides = lod;
+
+		}
+		else {
+			for(int i = 0; i < node.Children.Length; i++) {
+				AssignLODS(root, node.Children[i]);
+			}
+		}
+
+	}
 
 	public static sbyte[][][][] GenerateChunkData(int resolution, UtilFuncs.Sampler sample) {
 		int res1 = resolution + 1;

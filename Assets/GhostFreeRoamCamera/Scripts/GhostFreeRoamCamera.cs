@@ -26,13 +26,15 @@ public class GhostFreeRoamCamera : MonoBehaviour
     {
         if (cursorToggleAllowed)
         {
-            Screen.lockCursor = true;
-            Cursor.visible = false;
+            //Screen.lockCursor = true;
+            //Cursor.visible = false;
         }
     }
 
     private void Update()
     {
+		allowRotation = Input.GetMouseButton(1);
+
         if (allowMovement)
         {
             bool lastMoving = moving;
@@ -76,8 +78,8 @@ public class GhostFreeRoamCamera : MonoBehaviour
                 if (!togglePressed)
                 {
                     togglePressed = true;
-                    Screen.lockCursor = !Screen.lockCursor;
-                    Cursor.visible = !Cursor.visible;
+                    //Screen.lockCursor = !Screen.lockCursor;
+                    //Cursor.visible = !Cursor.visible;
                 }
             }
             else togglePressed = false;
@@ -85,7 +87,7 @@ public class GhostFreeRoamCamera : MonoBehaviour
         else
         {
             togglePressed = false;
-            Cursor.visible = false;
+            //Cursor.visible = false;
         }
     }
 
