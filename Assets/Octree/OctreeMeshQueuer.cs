@@ -73,10 +73,7 @@ public class OctreeMeshQueuer {
 
 		//System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
-		foreach(Node n in MeshedNodes.Except(newLeafNodes)) {
-			UnityEngine.Object.Destroy((GameObject)UnityObjects[n.ID]);
-			UnityObjects.Remove(n.ID);
-		}
+		IEnumerable<Node> destroyList = MeshedNodes.Except(newLeafNodes);
 
 		Debug.Log("Got here 2");
 
@@ -84,7 +81,7 @@ public class OctreeMeshQueuer {
 
 		Debug.Log("Boutta PolyganizeNodesAsync");
 
-		PolyganizeNodesAsync(toBePolyganized);
+		PolyganizeNodesAsync(toBePolyganized, destroyList);
 		MeshedNodes = newLeafNodes;
 
 		//Debug.Log("Async BENCH-MESH: AllBefore time: " + totalAllBeforeTime + " seconds.");
@@ -92,7 +89,7 @@ public class OctreeMeshQueuer {
 
 	}
 
-	private async void PolyganizeNodesAsync(IEnumerable<Node> toBePolyganized) {
+	private async void PolyganizeNodesAsync(IEnumerable<Node> toBePolyganized, IEnumerable<Node> destroyList) {
 		Debug.Log("PolyganizeNodesAsync called");
 		List<Task<MCMesh>> tasks = new List<Task<MCMesh>>();
 		foreach(Node n in toBePolyganized) {
@@ -103,6 +100,12 @@ public class OctreeMeshQueuer {
 		Debug.Log("Boutta await continuation");
 
 		await continuation;
+
+		foreach(Node n in destroyList) {
+			UnityEngine.Object.Destroy((GameObject)UnityObjects[n.ID]);
+			UnityObjects.Remove(n.ID);
+		}
+
 		if (continuation.Status == TaskStatus.RanToCompletion) {
 			foreach(MCMesh m in continuation.Result) {
 				RealizeNode(m);
